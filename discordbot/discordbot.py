@@ -37,8 +37,7 @@ async def on_message(message):
     if message.content == '!help' or client.user in message.mentions:
         await client.send_message(message.channel, 'available commands:\n'
                                                    '`!meme` - generate a random meme\n'
-                                                   '`!help` - show this text\n'
-                                                   'https://lambdabot.morchkovalski.com')
+                                                   '`!help` - show this text')
 
     elif message.content.startswith('!meme'):
         await client.send_typing(message.channel)
