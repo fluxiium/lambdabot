@@ -35,9 +35,9 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.content == '!help' or client.user in message.mentions:
-        await client.send_message(message.channel, 'available commands:\n'
+        await client.send_message(message.channel, '{0} available commands:\n'
                                                    '`!meme` - generate a random meme\n'
-                                                   '`!help` - show this text')
+                                                   '`!help` - show this text'.format(message.author.mention))
 
     elif message.content.startswith('!meme'):
         await client.send_typing(message.channel)
@@ -52,10 +52,11 @@ async def on_message(message):
                 else:
                     await client.send_message(
                         message.channel,
-                        "You can only generate {0} memes every {1} minutes. Please wait {2} more minutes.".format(
+                        "{3} you can only generate {0} memes every {1} minutes. Please wait {2} more minutes.".format(
                             LIMIT_COUNT,
                             LIMIT_TIME,
-                            int(((meme_time + meme_delta) - datetime.datetime.now()).total_seconds() / 60)
+                            int(((meme_time + meme_delta) - datetime.datetime.now()).total_seconds() / 60),
+                            message.author.mention,
                         )
                     )
                     return
