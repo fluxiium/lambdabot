@@ -41,7 +41,7 @@ def meme_info_view(request, meme_id):
         'template_url': template_url,
         'template_bg_url': template_bg_url,
         'source_urls': source_urls,
-        'context': CONTEXTS[context],
+        'context': CONTEXTS.get(context, context),
         'gen_date': gen_date,
         'num': num,
     }
