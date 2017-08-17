@@ -26,7 +26,7 @@ def connect_db():
 
 # todo: blacklist for template
 
-def make_meme(context, template_file=None):
+def make_meme(context='default', template_file=None):
     """ generates a random meme """
 
     template_file = template_file or next_template(context)
