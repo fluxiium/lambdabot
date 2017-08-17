@@ -42,12 +42,13 @@ async def on_message(message):
     elif message.content.startswith('!meme'):
         await client.send_typing(message.channel)
 
-        if meme_times.get(message.author.id) is not None:
-            if len(meme_times[message.author.id]) == LIMIT_COUNT:
+        meme_time_id = "{0}{1}".format(message.author.id, message.server.id)
+        if meme_times.get(meme_time_id) is not None:
+            if len(meme_times[meme_time_id]) == LIMIT_COUNT:
                 meme_delta = datetime.timedelta(minutes=LIMIT_TIME)
-                meme_time = meme_times[message.author.id][0]
+                meme_time = meme_times[meme_time_id][0]
                 if datetime.datetime.now() - meme_delta > meme_time:
-                    meme_times[message.author.id].pop(0)
+                    meme_times[meme_time_id].pop(0)
                 else:
                     await client.send_message(
                         message.channel,
@@ -58,9 +59,9 @@ async def on_message(message):
                         )
                     )
                     return
-            meme_times[message.author.id].append(datetime.datetime.now())
+            meme_times[meme_time_id].append(datetime.datetime.now())
         else:
-            meme_times[message.author.id] = [datetime.datetime.now()]
+            meme_times[meme_time_id] = [datetime.datetime.now()]
 
         meme_id = make_meme(context=SERVER_CONTEXTS.get(message.server.id, 'default'))
         minfo = meme_info(meme_id)
