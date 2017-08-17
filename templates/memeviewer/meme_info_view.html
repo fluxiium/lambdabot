@@ -1,0 +1,71 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>lambdabot - {{ gen_date }}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'memeviewer/style.css' %}">
+</head>
+<body>
+
+<h1>random meme #{{ num }}</h1>
+<p>{{ gen_date }}</p>
+
+<table>
+    <tr>
+        <th>preview</th>
+    </tr>
+    <tr>
+        <td>
+            <a href="/meme/{{ meme_id }}" target="_blank">
+                <img src="/meme/{{ meme_id }}" alt="meme">
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <th>
+            {% if template_bg_url %}
+                template foreground
+            {% else %}
+                template
+            {% endif %}
+        </th>
+    </tr>
+    <tr>
+        <td>
+            <a href="/resource/{{ template_url }}" target="_blank">
+                <img src="/resource/{{ template_url }}" alt="template">
+            </a>
+        </td>
+    </tr>
+    {% if template_bg_url %}
+        <tr>
+            <th>
+                template background
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <a href="/resource/{{ template_bg_url }}" target="_blank">
+                    <img src="/resource/{{ template_bg_url }}" alt="template">
+                </a>
+            </td>
+        </tr>
+    {% endif %}
+    <tr>
+        <th>source images</th>
+    </tr>
+    {% for source_url in source_urls %}
+        <tr>
+            <td>
+                <a href="/resource/{{ source_url }}" target="_blank">
+                    <img src="/resource/{{ source_url }}" alt="source image">
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
