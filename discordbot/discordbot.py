@@ -7,7 +7,7 @@ from lambdabot.db import make_meme, meme_info
 from lambdabot.settings import *
 
 LIMIT_COUNT = 3
-LIMIT_TIME = 30  # minutes
+LIMIT_TIME = 10  # minutes
 
 SERVER_CONTEXTS = {
     '154305477323390976': 'hldiscord',
