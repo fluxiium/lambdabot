@@ -21,7 +21,6 @@ def meme_view(request, meme_id):
 
 def resource_view(request, resource_id):
     resource_path, content_type = get_resource_path(resource_id)
-    print("shit")
 
     if resource_path is None:
         raise Http404("Invalid resource ID")

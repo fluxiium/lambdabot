@@ -13,7 +13,6 @@ def preview_meme(meme_id=None, template_file=None, source_files=None, add_waterm
 
     if meme_id is not None:
         if os.path.isfile(meme_file):
-            print("hi")
             return Image.open(meme_file)
         else:
             os.makedirs(os.path.join(DATA_DIR, 'previews'), exist_ok=True)
