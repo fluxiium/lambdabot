@@ -1022,6 +1022,10 @@ TEMPLATES = {
     "2017.jpg": {
         'src': [{'x': 0, 'y': 216, 'w': 842, 'h': 696}],
     },
+    "hldiscord/runnibba.png": {
+        'src': [{'x': 0, 'y': 0, 'w': 1024, 'h': 768, 'mask': True}],
+        'context': 'hldiscord',
+    },
 }
 
 _a = {

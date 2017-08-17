@@ -50,12 +50,17 @@ async def on_message(message):
                 if datetime.datetime.now() - meme_delta > meme_time:
                     meme_times[meme_time_id].pop(0)
                 else:
+                    seconds_left = int(((meme_time + meme_delta) - datetime.datetime.now()).total_seconds()) + 1
+                    if seconds_left >= 3 * 60:
+                        timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
+                    else:
+                        timestr = "{0} more seconds".format(seconds_left)
                     await client.send_message(
                         message.channel,
-                        "{3} you can only generate {0} memes every {1} minutes. Please wait {2} more minutes.".format(
+                        "{3} you can only generate {0} memes every {1} minutes. Please wait {2}.".format(
                             LIMIT_COUNT,
                             LIMIT_TIME,
-                            int(((meme_time + meme_delta) - datetime.datetime.now()).total_seconds() / 60),
+                            timestr,
                             message.author.mention,
                         )
                     )
