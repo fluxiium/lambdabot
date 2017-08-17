@@ -43,6 +43,9 @@ def next_template(context):
                     (type(template_context) is list and context in template_context):
                 available_templates.append(template_name)
 
+        if len(available_templates) == 0:
+            raise FileNotFoundError
+
         # create queue
         SYS_RANDOM.shuffle(available_templates)
         template_queue = available_templates[0:(min(TEMPLATE_QUEUE_LENGTH, len(available_templates)))]
@@ -88,6 +91,9 @@ def next_sourceimg(context):
             available_sourceimgs += \
                 (context + '/' + file for file in os.listdir(SOURCEIMG_DIR + '/' + context)
                  if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE))
+
+        if len(available_sourceimgs) == 0:
+            raise FileNotFoundError
 
         # create queue
         SYS_RANDOM.shuffle(available_sourceimgs)
