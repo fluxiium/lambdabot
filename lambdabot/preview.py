@@ -103,5 +103,6 @@ def preview_meme(meme_id=None, template_file=None, source_files=None, add_waterm
 
         meme_image = watermarked_meme_image
 
+    meme_image = meme_image.convert('RGB')
     meme_image.save(meme_file)
     return meme_image
