@@ -92,4 +92,10 @@ async def on_message(message):
         print('meme generated:', message.author.name, meme_id, minfo)
 
 
+# noinspection PyCompatibility
+@client.event
+async def on_ready():
+    await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
+
+
 client.run(TOKEN)
