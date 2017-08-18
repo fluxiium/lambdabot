@@ -62,7 +62,9 @@ def next_template(context):
     c.commit()
     c.close()
 
-    if not os.path.isfile(TEMPLATE_DIR + '/' + template):
+    if TEMPLATES.get(template) is None:
+        return next_template(context)
+    elif not os.path.isfile(os.path.join(TEMPLATE_DIR, template)):
         raise FileNotFoundError
     else:
         return template
@@ -84,9 +86,9 @@ def next_sourceimg(context):
             [file for file in os.listdir(SOURCEIMG_DIR) if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE)]
 
         # add context's source images to list
-        if os.path.isdir(SOURCEIMG_DIR + '/' + context):
+        if os.path.isdir(os.path.join(SOURCEIMG_DIR, context)):
             available_sourceimgs += \
-                (context + '/' + file for file in os.listdir(SOURCEIMG_DIR + '/' + context)
+                (os.path.join(context, file) for file in os.listdir(os.path.join(SOURCEIMG_DIR, context))
                  if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE))
 
         if len(available_sourceimgs) == 0:
@@ -111,4 +113,7 @@ def next_sourceimg(context):
     c.commit()
     c.close()
 
-    return sourceimg
+    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
+        return next_sourceimg(context)
+    else:
+        return sourceimg
