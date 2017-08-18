@@ -9,10 +9,11 @@ from lambdabot.settings import *
 LIMIT_COUNT = 3
 LIMIT_TIME = 10  # minutes
 
-SERVER_CONTEXTS = {
+SERVER_WHITELIST = {
     '154305477323390976': 'hldiscord',
     '257494913623523329': 'arschschmerz',
     '291537367452614658': 'testserver',
+    '257193139561824256': 'abs',
 }
 
 token_file = open(os.path.join(DATA_DIR, 'discordtoken.txt'), 'r')
@@ -35,11 +36,19 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.content == '!help' or client.user in message.mentions:
+
+        if message.server.id not in list(SERVER_WHITELIST):
+            return
+
         await client.send_message(message.channel, '{0} available commands:\n'
                                                    '`!meme` - generate a random meme\n'
                                                    '`!help` - show this text'.format(message.author.mention))
 
     elif message.content.startswith('!meme'):
+
+        if message.server.id not in list(SERVER_WHITELIST):
+            return
+
         await client.send_typing(message.channel)
 
         meme_time_id = "{0}{1}".format(message.author.id, message.server.id)
@@ -69,7 +78,7 @@ async def on_message(message):
         else:
             meme_times[meme_time_id] = [datetime.datetime.now()]
 
-        meme_id = make_meme(context=SERVER_CONTEXTS.get(message.server.id, 'default'))
+        meme_id = make_meme(context=SERVER_WHITELIST.get(message.server.id, 'default'))
         minfo = meme_info(meme_id)
         preview_meme(meme_id)
 
