@@ -1026,6 +1026,111 @@ TEMPLATES = {
         'src': [{'x': 0, 'y': 0, 'w': 1024, 'h': 768, 'mask': True}],
         'context': 'hldiscord',
     },
+    "sex book.png": {
+        'src': [[{'x': 192, 'y': 41, 'w': 89, 'h': 92, 'mask': True},
+                 {'x': 130, 'y': 774, 'w': 229, 'h': 219, 'mask': True}],
+                {'x': 93, 'y': 413, 'w': 304, 'h': 172, 'mask': True}],
+        'bgimg': 'sex book.png-bg.jpg'
+    },
+    "childhood crushes.jpg": {
+        'src': [{'x': 0, 'y': 55, 'w': 358, 'h': 481},
+                {'x': 358, 'y': 55, 'w': 350, 'h': 481}],
+    },
+    "bathroom without phone.jpg": {
+        'src': [{'x': 0, 'y': 86, 'w': 480, 'h': 317}],
+    },
+    "wish that were me.jpg": {
+        'src': [{'x': 0, 'y': 65, 'w': 800, 'h': 472}],
+    },
+    "coming out.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 1080, 'h': 591}],
+    },
+    "life on mars.png": {
+        'src': [{'x': 264, 'y': 0, 'w': 408, 'h': 307, 'mask': True}],
+    },
+    "theres me.jpg": {
+        'src': [{'x': 0, 'y': 462, 'w': 483, 'h': 245}],
+    },
+    "who that bitch.jpg": {
+        'src': [{'x': 0, 'y': 171, 'w': 640, 'h': 402}],
+    },
+    "tag.jpg": {
+        'src': [{'x': 0, 'y': 99, 'w': 468, 'h': 381}],
+    },
+    "follow on insta.jpg": {
+        'src': [{'x': 0, 'y': 191, 'w': 960, 'h': 595}],
+    },
+    "stealing girl.jpg": {
+        'src': [{'x': 0, 'y': 133, 'w': 640, 'h': 502}],
+    },
+    "vaccines 2.jpg": {
+        'src': [{'x': 0, 'y': 140, 'w': 760, 'h': 517}],
+    },
+    "end in 2017.jpg": {
+        'src': [{'x': 0, 'y': 143, 'w': 243, 'h': 213},
+                {'x': 243, 'y': 143, 'w': 235, 'h': 213},
+                {'x': 243, 'y': 356, 'w': 235, 'h': 215},
+                {'x': 0, 'y': 356, 'w': 243, 'h': 215}],
+    },
+    "not ok.jpg": {
+        'src': [{'x': 155, 'y': 302, 'w': 733, 'h': 556}],
+    },
+    "mainstream media silent.jpg": {
+        'src': [{'x': 0, 'y': 166, 'w': 745, 'h': 534}],
+    },
+    "not photoshopped.jpg": {
+        'src': [{'x': 0, 'y': 73, 'w': 500, 'h': 372}],
+    },
+    "doggo real shit.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 483, 'h': 366},
+                {'x': 0, 'y': 375, 'w': 483, 'h': 399}],
+    },
+    "send pic.jpg": {
+        'src': [{'x': 149, 'y': 235, 'w': 446, 'h': 333}],
+    },
+    "religion.jpg": {
+        'src': [{'x': 176, 'y': 333, 'w': 490, 'h': 494}],
+    },
+    "brain on drugs.jpg": {
+        'src': [{'x': 492, 'y': 114, 'w': 554, 'h': 455}],
+    },
+    "well written joke.jpg": {
+        'src': [{'x': 0, 'y': 244, 'w': 240, 'h': 192}],
+    },
+    "bathroom.jpg": {
+        'src': [{'x': 0, 'y': 144, 'w': 640, 'h': 495}],
+    },
+    "white ppl culture.jpg": {
+        'src': [{'x': 0, 'y': 169, 'w': 500, 'h': 441}],
+    },
+    "dont text back.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 476, 'h': 343}],
+    },
+    "erectile dysfunction.jpg": {
+        'src': [{'x': 24, 'y': 96, 'w': 513, 'h': 293}],
+    },
+    "assume gender.jpg": {
+        'src': [{'x': 0, 'y': 244, 'w': 958, 'h': 655}],
+    },
+    "every1 looks like this.jpg": {
+        'src': [{'x': 0, 'y': 224, 'w': 722, 'h': 446}],
+    },
+    "hero not hero.jpg": {
+        'src': [{'x': 0, 'y': 45, 'w': 254, 'h': 240},
+                {'x': 254, 'y': 45, 'w': 252, 'h': 240}],
+    },
+    "babysitting.jpg": {
+        'src': [{'x': 0, 'y': 82, 'w': 720, 'h': 523}],
+    },
+    "squad goals.jpg": {
+        'src': [{'x': 0, 'y': 82, 'w': 499, 'h': 381}],
+    },
+    "dat smile.jpg": {
+        'src': [{'x': 441, 'y': 0, 'w': 434, 'h': 507}],
+    },
+    "most feared weapons.jpg": {
+        'src': [{'x': 548, 'y': 633, 'w': 412, 'h': 250}],
+    },
 }
 
 _a = {
