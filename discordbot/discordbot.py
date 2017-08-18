@@ -41,10 +41,10 @@ async def on_message(message):
             return
 
         await client.send_message(message.channel, '{0} available commands:\n'
-                                                   '`!meme` - generate a random meme\n'
+                                                   '`!meem` - generate a random meme\n'
                                                    '`!help` - show this text'.format(message.author.mention))
 
-    elif message.content.startswith('!meme'):
+    elif message.content.startswith('!meem'):
 
         if message.server.id not in list(SERVER_WHITELIST):
             return
