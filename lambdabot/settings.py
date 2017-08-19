@@ -1191,6 +1191,9 @@ TEMPLATES = {
         'src': [{'x': 136, 'y': 0, 'w': 187, 'h': 115, 'mask': True}],
         'bg': 'white',
     },
+    "artwork.png": {
+        'src': [{'x': 240, 'y': 94, 'w': 475, 'h': 485, 'mask': True}],
+    },
 }
 
 _a = {
