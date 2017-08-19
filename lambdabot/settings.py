@@ -1022,9 +1022,8 @@ TEMPLATES = {
     "2017.jpg": {
         'src': [{'x': 0, 'y': 216, 'w': 842, 'h': 696}],
     },
-    "hldiscord/runnibba.png": {
+    "runnibba.png": {
         'src': [{'x': 0, 'y': 0, 'w': 1024, 'h': 768, 'mask': True}],
-        'context': 'hldiscord',
     },
     "sex book.png": {
         'src': [[{'x': 192, 'y': 41, 'w': 89, 'h': 92, 'mask': True},
@@ -1130,6 +1129,22 @@ TEMPLATES = {
     },
     "most feared weapons.jpg": {
         'src': [{'x': 548, 'y': 633, 'w': 412, 'h': 250}],
+    },
+    "hldiscord/noice pic.jpg": {
+        'src': [{'x': 65, 'y': 31, 'w': 305, 'h': 274}],
+    },
+    "gaben yay nay.jpg": {
+        'src': [{'x': 335, 'y': 0, 'w': 365, 'h': 357},
+                {'x': 335, 'y': 360, 'w': 365, 'h': 347}],
+    },
+    "otis5.png": {
+        'src': [{'x': 0, 'y': 0, 'w': 1024, 'h': 768, 'mask': True}],
+    },
+    "trump defenses.jpg": {
+        'src': [{'x': 0, 'y': 145, 'w': 563, 'h': 366}],
+    },
+    "portal 2 art.jpg": {
+        'src': [{'x': 168, 'y': 131, 'w': 479, 'h': 321}],
     },
 }
 
