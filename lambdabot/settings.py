@@ -1247,6 +1247,21 @@ TEMPLATES = {
     "science experiments.jpg": {
         'src': [{'x': 0, 'y': 0, 'w': 719, 'h': 405}],
     },
+    "betrayals.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 1092, 'h': 613}],
+    },
+    "protect.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 400, 'h': 354}],
+    },
+    "how sexy.jpg": {
+        'src': [{'x': 182, 'y': 111, 'w': 382, 'h': 377}],
+    },
+    "brutal anime deaths.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 322, 'h': 241}],
+    },
+    "anime villains.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 800, 'h': 479}],
+    },
 }
 
 _a = {
