@@ -1262,6 +1262,9 @@ TEMPLATES = {
     "anime villains.jpg": {
         'src': [{'x': 0, 'y': 0, 'w': 800, 'h': 479}],
     },
+    "speed weed.png": {
+        'src': [{'x': 0, 'y': 0, 'w': 535, 'h': 503, 'mask': True}],
+    },
 }
 
 _a = {
