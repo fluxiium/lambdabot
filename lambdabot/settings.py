@@ -1194,6 +1194,59 @@ TEMPLATES = {
     "artwork.png": {
         'src': [{'x': 240, 'y': 94, 'w': 475, 'h': 485, 'mask': True}],
     },
+    "4 types white ppl.jpg": {
+        'src': [{'x': 0, 'y': 135, 'w': 633, 'h': 527},
+                {'x': 633, 'y': 135, 'w': 567, 'h': 527},
+                {'x': 0, 'y': 662, 'w': 633, 'h': 538},
+                {'x': 633, 'y': 662, 'w': 567, 'h': 538}],
+    },
+    "oscars pic.jpg": {
+        'src': [{'x': 177, 'y': 441, 'w': 305, 'h': 189}],
+    },
+    "dermatologists cunt.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 610, 'h': 459}],
+    },
+    "meemay bad.jpg": {
+        'src': [{'x': 302, 'y': 0, 'w': 293, 'h': 248}],
+    },
+    "trump supporter.jpg": {
+        'src': [{'x': 0, 'y': 133, 'w': 645, 'h': 358}],
+    },
+    "whats wrong.jpg": {
+        'src': [{'x': 0, 'y': 131, 'w': 640, 'h': 420}],
+    },
+    "admin pic.jpg": {
+        'src': [{'x': 0, 'y': 79, 'w': 750, 'h': 691}],
+    },
+    "feel.png": {
+        'src': [{'x': 643, 'y': 483, 'w': 290, 'h': 275, 'rotate': -17, 'mask': True}],
+    },
+    "buttons.png": {
+        'src': [{'x': 69, 'y': 115, 'w': 251, 'h': 135, 'rotate': 11, 'mask': True},
+                {'x': 306, 'y': 75, 'w': 198, 'h': 116, 'rotate': 11, 'mask': True}],
+        'bg': 'white',
+    },
+    "fictional characters.jpg": {
+        'src': [{'x': 247, 'y': 0, 'w': 253, 'h': 245},
+                {'x': 247, 'y': 245, 'w': 253, 'h': 252},
+                {'x': 0, 'y': 245, 'w': 247, 'h': 252}],
+    },
+    "uncle photoshop.jpg": {
+        'src': [{'x': 0, 'y': 99, 'w': 480, 'h': 331}],
+    },
+    "aint in the mood.jpg": {
+        'src': [{'x': 0, 'y': 79, 'w': 675, 'h': 480}],
+    },
+    "dress on weekends.jpg": {
+        'src': [{'x': 0, 'y': 133, 'w': 674, 'h': 833},
+                {'x': 686, 'y': 133, 'w': 606, 'h': 836}],
+    },
+    "chernobyl.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 544, 'h': 303}],
+    },
+    "science experiments.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 719, 'h': 405}],
+    },
 }
 
 _a = {
