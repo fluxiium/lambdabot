@@ -1265,6 +1265,19 @@ TEMPLATES = {
     "speed weed.png": {
         'src': [{'x': 0, 'y': 0, 'w': 535, 'h': 503, 'mask': True}],
     },
+    "glowing knife.png": {
+        'src': [{'x': 12, 'y': 231, 'w': 653, 'h': 425, 'mask': True}],
+        'bg': 'white',
+    },
+    "inappropriate content.jpg": {
+        'src': [{'x': 155, 'y': 117, 'w': 515, 'h': 434}],
+    },
+    "truth about sans.png": {
+        'src': [{'x': 0, 'y': 0, 'w': 687, 'h': 720, 'mask': True}],
+    },
+    "why.jpg": {
+        'src': [{'x': 0, 'y': 247, 'w': 434, 'h': 279}],
+    },
 }
 
 _a = {
