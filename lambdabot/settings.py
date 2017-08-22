@@ -1360,6 +1360,21 @@ TEMPLATES = {
     "male body.jpg": {
         'src': [{'x': 0, 'y': 256, 'w': 960, 'h': 762}],
     },
+    "the shit i find.jpg": {
+        'src': [{'x': 0, 'y': 93, 'w': 620, 'h': 547}],
+    },
+    "beer or two.jpg": {
+        'src': [{'x': 0, 'y': 153, 'w': 700, 'h': 448}],
+    },
+    "dora weed.jpg": {
+        'src': [{'x': 464, 'y': 243, 'w': 483, 'h': 664}],
+    },
+    "end racism.jpg": {
+        'src': [{'x': 0, 'y': 52, 'w': 575, 'h': 364}],
+    },
+    "so deep.jpg": {
+        'src': [{'x': 0, 'y': 91, 'w': 870, 'h': 777}],
+    },
 }
 
 _a = {
