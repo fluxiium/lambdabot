@@ -49,7 +49,7 @@ async def on_message(message):
         await client.send_message(message.channel,
                                   ':cry: https://soundcloud.com/morchkovalski/triage-at-dawn-bass-boosted/s-22Aa2')
 
-    elif message.content == '!meem':
+    elif message.content in ['!meem', '!goodmeme', '!goodmeem']:
 
         await client.send_typing(message.channel)
 
