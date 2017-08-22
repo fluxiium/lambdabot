@@ -1126,6 +1126,7 @@ TEMPLATES = {
     },
     "hldiscord/noice pic.jpg": {
         'src': [{'x': 65, 'y': 31, 'w': 305, 'h': 274}],
+        'context': 'hldiscord',
     },
     "gaben yay nay.jpg": {
         'src': [{'x': 335, 'y': 0, 'w': 365, 'h': 357},

@@ -62,7 +62,7 @@ def next_template(context):
     c.commit()
     c.close()
 
-    if TEMPLATES.get(template) is None:
+    if TEMPLATES.get(template) is None or TEMPLATES[template].get('context', context) != context:
         return next_template(context)
     elif not os.path.isfile(os.path.join(TEMPLATE_DIR, template)):
         raise FileNotFoundError
