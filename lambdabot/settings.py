@@ -1357,6 +1357,9 @@ TEMPLATES = {
     "breen.png": {
         'src': [{'x': 385, 'y': 159, 'w': 216, 'h': 169, 'mask': True}],
     },
+    "male body.jpg": {
+        'src': [{'x': 0, 'y': 256, 'w': 960, 'h': 762}],
+    },
 }
 
 _a = {
