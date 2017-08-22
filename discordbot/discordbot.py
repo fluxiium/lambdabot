@@ -35,19 +35,21 @@ async def on_ready():
 # noinspection PyCompatibility
 @client.event
 async def on_message(message):
+
+    if message.server.id not in list(SERVER_WHITELIST):
+        return
+
     if message.content == '!help' or client.user in message.mentions:
-
-        if message.server.id not in list(SERVER_WHITELIST):
-            return
-
         await client.send_message(message.channel, '{0} available commands:\n'
                                                    '`!meem` - generate a random meme\n'
+                                                   '`!hypersad`\n'
                                                    '`!help` - show this text'.format(message.author.mention))
 
-    elif message.content.startswith('!meem'):
+    elif message.content == '!hypersad':
+        await client.send_message(message.channel,
+                                  ':cry: https://soundcloud.com/morchkovalski/triage-at-dawn-bass-boosted/s-22Aa2')
 
-        if message.server.id not in list(SERVER_WHITELIST):
-            return
+    elif message.content == '!meem':
 
         await client.send_typing(message.channel)
 
