@@ -1281,6 +1281,81 @@ TEMPLATES = {
     "trust with life.jpg": {
         'src': [{'x': 96, 'y': 39, 'w': 381, 'h': 381}],
     },
+    "succ.jpg": {
+        'src': [{'x': 401, 'y': 9, 'w': 305, 'h': 176}],
+    },
+    "this cool.jpg": {
+        'src': [{'x': 0, 'y': 150, 'w': 910, 'h': 611}],
+    },
+    "long day.jpg": {
+        'src': [{'x': 0, 'y': 213, 'w': 960, 'h': 747}],
+    },
+    "demon days.jpg": {
+        'src': [{'x': 751, 'y': 745, 'w': 672, 'h': 555}],
+    },
+    "protect kill.jpg": {
+        'src': [{'x': 0, 'y': 115, 'w': 242, 'h': 191},
+                {'x': 253, 'y': 115, 'w': 227, 'h': 191},
+                {'x': 0, 'y': 312, 'w': 242, 'h': 191},
+                {'x': 253, 'y': 312, 'w': 227, 'h': 191}],
+    },
+    "diet.jpg": {
+        'src': [{'x': 35, 'y': 253, 'w': 419, 'h': 485},
+                {'x': 497, 'y': 253, 'w': 419, 'h': 485}],
+    },
+    "hallucinations.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 571, 'h': 341}],
+    },
+    "everyone poops.png": {
+        'src': [{'x': 277, 'y': 367, 'w': 179, 'h': 162}],
+    },
+    "in 10 years.jpg": {
+        'src': [{'x': 0, 'y': 111, 'w': 473, 'h': 363}],
+    },
+    "press a to pound.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 539, 'h': 383}],
+    },
+    "perfect women.jpg": {
+        'src': [{'x': 0, 'y': 147, 'w': 999, 'h': 852}],
+    },
+    "big mistakes.png": {
+        'src': [{'x': 0, 'y': 443, 'w': 898, 'h': 517, 'mask': True}],
+        'bg': 'white',
+    },
+    "dafuq.png": {
+        'src': [{'x': 45, 'y': 419, 'w': 494, 'h': 311, 'mask': True}],
+    },
+    "unnerving.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 649, 'h': 372}],
+    },
+    "naked characters.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 719, 'h': 407}],
+    },
+    "real face of jesus.jpg": {
+        'src': [{'x': 0, 'y': 68, 'w': 372, 'h': 327}],
+    },
+    "otaku.jpg": {
+        'src': [{'x': 5, 'y': 11, 'w': 223, 'h': 186},
+                {'x': 228, 'y': 11, 'w': 216, 'h': 186}],
+    },
+    "all she needs.jpg": {
+        'src': [{'x': 0, 'y': 49, 'w': 480, 'h': 382}],
+    },
+    "send the photo.png": {
+        'src': [{'x': 192, 'y': 116, 'w': 339, 'h': 341, 'mask': True}],
+    },
+    "snowden.jpg": {
+        'src': [{'x': 0, 'y': 250, 'w': 777, 'h': 606}],
+    },
+    "2 genders.jpg": {
+        'src': [{'x': 0, 'y': 132, 'w': 720, 'h': 588}],
+    },
+    "still single.jpg": {
+        'src': [{'x': 0, 'y': 137, 'w': 460, 'h': 311}],
+    },
+    "breen.png": {
+        'src': [{'x': 385, 'y': 159, 'w': 216, 'h': 169, 'mask': True}],
+    },
 }
 
 _a = {
