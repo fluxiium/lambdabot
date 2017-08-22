@@ -87,7 +87,7 @@ async def on_message(message):
         await client.send_file(
             message.channel,
             os.path.join(DATA_DIR, 'previews', meme_id + '.jpg'),
-            content="{0} here's a meme:\nhttps://lambdabot.morchkovalski.com/meme_info/{1}".format(
+            content="{0} here's a meme:\n<https://lambdabot.morchkovalski.com/meme_info/{1}>".format(
                 message.author.mention, meme_id)
         )
 
