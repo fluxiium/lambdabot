@@ -13,7 +13,7 @@ api = twitter.Api(consumer_key=TOKENS[0],
                   access_token_key=TOKENS[2],
                   access_token_secret=TOKENS[3])
 
-meme_id = make_meme(context='facebook')
+meme_id = make_meme(context='twitter')
 preview_meme(meme_id)
 
 status = api.PostUpdate(
