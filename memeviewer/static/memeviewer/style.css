@@ -3,13 +3,22 @@
     padding: 0;
 }
 
+@font-face {
+    font-family: 'hlfont';
+    src: url('/static/memeviewer/hlfont.woff2') format('woff2'),
+    url('/static/memeviewer/hlfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
+    font-family: hlfont, sans-serif;
     background-color: #222;
     color: #ddd;
-    font-family: sans-serif;
     text-align: center;
     padding-top: 20px;
     padding-bottom: 20px;
+    letter-spacing: 2px;
 }
 
 img {
@@ -21,8 +30,9 @@ img {
 table {
     /*background-color: #ddd;*/
     max-width: 700px;
-    width: 700px;
+    /*width: 700px;*/
     margin: 0 auto;
+    padding-top: 10px;
 }
 
 table, td, th {
@@ -30,9 +40,26 @@ table, td, th {
 }
 
 td {
-    padding-top: 10px;
+    /*padding-top: 10px;*/
 }
 
 th {
     padding: 20px 10px 10px;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 40px;
+}
+
+#date {
+    margin-top: 10px;
+}
+
+.fb_iframe_widget span {
+    vertical-align: baseline !important;
+}
+
+#social {
+    height: 30px;
 }
