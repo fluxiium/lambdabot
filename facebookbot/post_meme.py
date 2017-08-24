@@ -24,7 +24,7 @@ print(post_status)
 
 comment_status = api.put_comment(
     post_status['id'],
-    "template and source images: https://lambdabot.morchkovalski.com/meme_info/" + meme.meme_id
+    "template and source images: {0}".format(meme.get_info_url())
 )
 print("comment added!")
 print(comment_status)

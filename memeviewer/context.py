@@ -4,7 +4,7 @@ import re
 import sqlite3
 
 from lamdabotweb.settings import DATA_DIR, MEME_TEMPLATES, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR, SOURCEIMG_DIR, \
-    ALLOWED_EXTENSIONS, SOURCEIMG_QUEUE_LENGTH
+    ALLOWED_EXTENSIONS, SOURCEIMG_QUEUE_LENGTH, SOURCEIMG_BLACKLIST
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -114,7 +114,7 @@ def next_sourceimg(context):
     c.commit()
     c.close()
 
-    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
+    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)) or sourceimg in SOURCEIMG_BLACKLIST:
         return next_sourceimg(context)
     else:
         return sourceimg

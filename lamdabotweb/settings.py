@@ -132,6 +132,8 @@ CONTEXTS = {
     'facebook': 'Facebook Page',
 }
 
+SOURCEIMG_BLACKLIST = []
+
 MEME_TEMPLATES = {
     "chatroulette.jpeg": {
         'src': [{'x': 18, 'y': 349, 'w': 320, 'h': 240}]

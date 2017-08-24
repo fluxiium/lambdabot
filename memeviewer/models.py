@@ -5,7 +5,7 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
-from lamdabotweb.settings import MEMES_DIR, STATIC_URL
+from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE
 from memeviewer.context import next_template, MEME_TEMPLATES, next_sourceimg
 
 
@@ -53,6 +53,9 @@ class Meem(models.Model):
 
     def get_url(self):
         return STATIC_URL + 'lambdabot/resources/memes/' + self.meme_id + '.jpg'
+
+    def get_info_url(self):
+        return WEBSITE + 'meme/' + self.meme_id
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)

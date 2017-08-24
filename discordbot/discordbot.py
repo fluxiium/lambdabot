@@ -94,8 +94,8 @@ async def cmd_meem(message):
     await client.send_file(
         message.channel,
         meme.get_local_path(),
-        content="{0} here's a meme:\n<https://lambdabot.morchkovalski.com/meme_info/{1}>".format(
-            message.author.mention, meme.meme_id)
+        content="{0} here's a meme:\n<{1}>".format(
+            message.author.mention, meme.get_info_url())
     )
 
     print('meme generated:', message.author.name, meme)
