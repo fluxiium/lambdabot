@@ -1,5 +1,7 @@
 import datetime
 import os
+from collections import OrderedDict
+
 import django
 import discord
 
@@ -103,25 +105,25 @@ async def cmd_meem(message):
 
 meme_times = {}
 
-COMMANDS = {
-    'help': {
+COMMANDS = OrderedDict([
+    ('help', {
         'fun': cmd_help,
         'help': 'show this text'
-    },
-    'meem': {
+    }),
+    ('meem', {
         'fun': cmd_meem,
         'help': 'generate a random meme'
-    },
-    'hypersad': {
+    }),
+    ('hypersad', {
         'fun': cmd_hypersad,
         'servers': [
             '154305477323390976'  # hldiscord
         ]
-    },
-    'choo': {
+    }),
+    ('choo', {
         'fun': cmd_choo
-    }
-}
+    })
+])
 
 
 @client.event
