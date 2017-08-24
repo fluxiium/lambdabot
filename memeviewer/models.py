@@ -65,12 +65,21 @@ class FacebookMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     post = models.CharField(max_length=40)
 
+    def __str__(self):
+        return "{0} - {1}".format(self.meme.number, self.post)
+
 
 class TwitterMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     post = models.CharField(max_length=40)
 
+    def __str__(self):
+        return "{0} - {1}".format(self.meme.number, self.post)
+
 
 class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     server = models.CharField(max_length=64)
+
+    def __str__(self):
+        return "{0} - {1}".format(self.meme.number, self.server)
