@@ -21,11 +21,13 @@ def next_meme_number():
     return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
 
 
-def next_template(context):
+def next_template(context_link):
     """ returns next template filename """
 
+    context = context_link.short_name
+
     # read queue from db
-    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_TEMPLATE, context=context)
+    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_TEMPLATE, context_link=context_link)
 
     # if empty, make new queue
     if len(result) == 0:
@@ -112,12 +114,50 @@ def next_sourceimg(context):
         return sourceimg
 
 
+class MemeContext(models.Model):
+    short_name = models.CharField(max_length=32, primary_key=True)
+    name = models.CharField(max_length=64)
+
+    def __str__(self):
+        return self.name
+
+
+class MemeTemplate(models.Model):
+    name = models.CharField(max_length=64, primary_key=True)
+    contexts = models.ManyToManyField(MemeContext)
+    bg_color = models.CharField(max_length=16, null=True, default=None)
+    bg_img = models.CharField(max_length=64, null=True, default=None)
+
+    def __str__(self):
+        return self.name
+
+
+class MemeTemplateSlot(models.Model):
+    template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE)
+    slot_order = models.IntegerField()
+    x = models.IntegerField()
+    y = models.IntegerField()
+    w = models.PositiveIntegerField()
+    h = models.PositiveIntegerField()
+    rotate = models.IntegerField(default=0)
+    mask = models.BooleanField(default=False)
+    blur = models.BooleanField(default=False)
+    grayscale = models.BooleanField(default=False)
+    cover = models.BooleanField(default=False)
+    disabled = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "{0} - slot #{1}".format(self.template, self.slot_order)
+
+
 class Meem(models.Model):
     number = models.IntegerField(default=next_meme_number)
     meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4)
     template = models.CharField(max_length=64)
+    template_link = models.ForeignKey(MemeTemplate, null=True)
     sourceimgs = models.TextField()
     context = models.CharField(max_length=32)
+    context_link = models.ForeignKey(MemeContext, null=True)
     gen_date = models.DateTimeField(default=timezone.now)
 
     @classmethod
@@ -190,6 +230,7 @@ class ImageInContext(models.Model):
     image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES)
     image_name = models.CharField(max_length=64)
     context = models.CharField(max_length=32)
+    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return "{0} ({1}) - {2}".format(self.image_name, self.image_type, self.context)
+        return "{0} - {1} ({2})".format(self.image_name, self.context, self.IMAGE_TYPE_CHOICES[self.image_type][1])
