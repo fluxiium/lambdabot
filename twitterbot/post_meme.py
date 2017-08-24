@@ -1,8 +1,14 @@
+import os
+import django
 import twitter
 
-from lambdabot.preview import preview_meme
-from lambdabot.db import make_meme
-from lambdabot.settings import *
+from lamdabotweb.settings import DATA_DIR
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
+django.setup()
+
+from memeviewer.models import Meem
+from memeviewer.preview import preview_meme
 
 token_file = open(os.path.join(DATA_DIR, 'twittertokens.txt'), 'r')
 TOKENS = token_file.read().splitlines()
@@ -13,12 +19,12 @@ api = twitter.Api(consumer_key=TOKENS[0],
                   access_token_key=TOKENS[2],
                   access_token_secret=TOKENS[3])
 
-meme_id = make_meme(context='twitter')
-preview_meme(meme_id)
+meme = Meem.generate(context='facebook')
+preview_meme(meme)
 
 status = api.PostUpdate(
-    "https://lambdabot.morchkovalski.com/meme_info/" + meme_id,
-    media=open(os.path.join(DATA_DIR, 'previews', meme_id + '.jpg'), 'rb')
+    "https://lambdabot.morchkovalski.com/meme_info/" + meme.meme_id,
+    media=meme.get_local_path()
 )
 print("post added!")
 print(status.id)

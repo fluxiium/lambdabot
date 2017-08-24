@@ -3,7 +3,8 @@ import random
 import re
 import sqlite3
 
-from lambdabot.settings import *
+from lamdabotweb.settings import DATA_DIR, MEME_TEMPLATES, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR, SOURCEIMG_DIR, \
+    ALLOWED_EXTENSIONS, SOURCEIMG_QUEUE_LENGTH
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -37,7 +38,7 @@ def next_template(context):
 
         # get list of templates
         available_templates = []
-        for template_name, template_data in TEMPLATES.items():
+        for template_name, template_data in MEME_TEMPLATES.items():
             template_context = template_data.get('context')
             if template_context is None or template_context == context or\
                     (type(template_context) is list and context in template_context):
@@ -62,7 +63,7 @@ def next_template(context):
     c.commit()
     c.close()
 
-    if TEMPLATES.get(template) is None or TEMPLATES[template].get('context', context) != context:
+    if MEME_TEMPLATES.get(template) is None or MEME_TEMPLATES[template].get('context', context) != context:
         return next_template(context)
     elif not os.path.isfile(os.path.join(TEMPLATE_DIR, template)):
         raise FileNotFoundError

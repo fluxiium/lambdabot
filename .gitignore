@@ -104,6 +104,4 @@ ENV/
 desktop.ini
 /lamdabotweb/settings_secret.py
 /db.sqlite3
-/lambdabot/resources/sourceimg
-/lambdabot/resources/templates
 /static
