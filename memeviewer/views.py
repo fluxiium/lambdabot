@@ -21,9 +21,13 @@ def meme_info_view(request, meme_id):
     if templatebg is not None:
         templatebg = STATIC_URL + 'lambdabot/resources/templates/' + templatebg
 
+    fb_meme = meme.facebookmeem_set.first()
+    twitter_meme = meme.twittermeem_set.first()
+
     context = {
         'meme_id': meme_id,
         'meme_url': meme.get_url(),
+        'meme_info_url': meme.get_info_url(),
         'template_url': STATIC_URL + 'lambdabot/resources/templates/' + meme.template,
         'template_bg_url': templatebg,
         'source_urls':
@@ -31,5 +35,8 @@ def meme_info_view(request, meme_id):
         'context': CONTEXTS.get(meme.context, meme.context),
         'gen_date': meme.gen_date,
         'num': meme.number,
+        'facebook_url': fb_meme and 'https://facebook.com/{0}'.format(fb_meme.post),
+        'twitter_url': twitter_meme and 'https://twitter.com/lambdabot3883/status/{0}'.format(twitter_meme.post),
     }
+
     return render(request, 'memeviewer/meme_info_view.html', context)
