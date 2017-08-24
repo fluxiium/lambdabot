@@ -446,8 +446,8 @@ MEME_TEMPLATES = {
     "shit.jpg": {
         'src': [{'x': 245, 'y': 327, 'w': 235, 'h': 153}],
     },
-    "spongebob shit.png": {
-        'src': [{'x': 183, 'y': 545, 'w': 211, 'h': 182, 'mask': True}],
+    "spongebob shit.jpg": {
+        'src': [{'x': 196, 'y': 564, 'w': 192, 'h': 158}],
     },
     "phone in prison.png": {
         'src': [{'x': 13, 'y': 145, 'w': 341, 'h': 457, 'mask': True}],
@@ -1486,6 +1486,25 @@ MEME_TEMPLATES = {
     },
     "so deep.jpg": {
         'src': [{'x': 0, 'y': 91, 'w': 870, 'h': 777}],
+    },
+    "been up to.jpg": {
+        'src': [{'x': 0, 'y': 260, 'w': 736, 'h': 504}],
+    },
+    "cry in class.jpg": {
+        'src': [{'x': 213, 'y': 163, 'w': 494, 'h': 358}],
+    },
+    "bestfriend black.jpg": {
+        'src': [{'x': 0, 'y': 116, 'w': 480, 'h': 366}],
+    },
+    "no upgrade required.jpg": {
+        'src': [{'x': 0, 'y': 0, 'w': 478, 'h': 326}],
+    },
+    "stepped in shit.jpg": {
+        'src': [{'x': 161, 'y': 707, 'w': 345, 'h': 246}],
+    },
+    "hldiscord/crypto made this.jpg": {
+        'src': [{'x': 70, 'y': 56, 'w': 400, 'h': 231}],
+        'context': 'hldiscord',
     },
 }
 
