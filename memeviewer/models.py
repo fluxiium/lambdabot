@@ -9,9 +9,17 @@ from lamdabotweb.settings import MEMES_DIR, STATIC_URL
 from memeviewer.context import next_template, MEME_TEMPLATES, next_sourceimg
 
 
+def struuid4():
+    return str(uuid.uuid4())
+
+
+def next_meme_number():
+    return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
+
+
 class Meem(models.Model):
-    number = models.AutoField(primary_key=True)
-    meme_id = models.CharField(max_length=36)
+    number = models.IntegerField(default=next_meme_number)
+    meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4)
     template = models.CharField(max_length=64)
     sourceimgs = models.TextField()
     context = models.CharField(max_length=32)
@@ -19,7 +27,9 @@ class Meem(models.Model):
 
     @classmethod
     def create(cls, template, sourceimgs, context):
-        return cls(template=template, sourceimgs=json.dumps(sourceimgs), context=context, meme_id=str(uuid.uuid4()))
+        meem = cls(template=template, sourceimgs=json.dumps(sourceimgs), context=context)
+        meem.save()
+        return meem
 
     @classmethod
     def generate(cls, template_file=None, context='default'):
@@ -33,7 +43,6 @@ class Meem(models.Model):
                     break
             source_files.append(source_file)
         meem = cls.create(template_file, source_files, context)
-        meem.save()
         return meem
 
     def get_sourceimgs(self):
@@ -47,3 +56,18 @@ class Meem(models.Model):
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)
+
+
+class FacebookMeem(models.Model):
+    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    url = models.CharField(max_length=256)
+
+
+class TwitterMeem(models.Model):
+    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    url = models.CharField(max_length=256)
+
+
+class DiscordMeem(models.Model):
+    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    server = models.CharField(max_length=64)
