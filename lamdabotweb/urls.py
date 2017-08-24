@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    # url(r'^admin/', admin.site.urls),
+    url(r'^admin/', admin.site.urls),
     url(r'^', include('memeviewer.urls')),
     url(r'^$', RedirectView.as_view(url='https://fb.com/lambdabot')),
 ]

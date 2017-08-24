@@ -5,8 +5,8 @@
 
 @font-face {
     font-family: 'hlfont';
-    src: url('/static/memeviewer/hlfont.woff2') format('woff2'),
-    url('/static/memeviewer/hlfont.woff') format('woff');
+    src: url('https://static.morchkovalski.com/memeviewer/hlfont.woff2') format('woff2'),
+    url('https://static.morchkovalski.com/memeviewer/hlfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -25,6 +25,7 @@ img {
     max-height: 400px;
     max-width: 100%;
     vertical-align: bottom;
+    margin-bottom: 10px;
 }
 
 table {
@@ -62,4 +63,17 @@ h1 {
 
 #social {
     height: 30px;
+}
+
+a {
+    text-decoration: none;
+    color: #ff8222;
+}
+
+a:hover {
+    color: #ffac61;
+}
+
+a:active {
+    color: #fff;
 }

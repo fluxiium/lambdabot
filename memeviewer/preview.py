@@ -1,27 +1,23 @@
+import os
 
 from PIL import Image
 from PIL import ImageFilter
 
-from lambdabot.db import meme_info
-from lambdabot.settings import *
+from lamdabotweb.settings import MEME_TEMPLATES, TEMPLATE_DIR, SOURCEIMG_DIR, RESOURCE_DIR
 
 
-def preview_meme(meme_id=None, template_file=None, source_files=None, add_watermark=False):
+def preview_meme(meme, add_watermark=False):
     """ retrieve a previously generated meme """
 
-    meme_file = os.path.join(DATA_DIR, 'previews', meme_id + '.jpg')
+    meme_file = meme.get_local_path()
 
-    if meme_id is not None:
-        if os.path.isfile(meme_file):
-            return Image.open(meme_file)
-        else:
-            os.makedirs(os.path.join(DATA_DIR, 'previews'), exist_ok=True)
-            template_file, source_files = meme_info(meme_id=meme_id)[0:2]
+    if os.path.isfile(meme_file):
+        return Image.open(meme_file)
+    else:
+        template_file = meme.template
+        source_files = meme.get_sourceimgs()
 
-    elif template_file is None or source_files is None:
-        raise KeyError
-
-    template_data = TEMPLATES[template_file]
+    template_data = MEME_TEMPLATES[template_file]
     template_bg_file = template_data.get('bgimg')
 
     foreground = Image.open(os.path.join(TEMPLATE_DIR, template_file)).convert("RGBA")
@@ -30,10 +26,10 @@ def preview_meme(meme_id=None, template_file=None, source_files=None, add_waterm
     else:
         background = Image.open(os.path.join(TEMPLATE_DIR, template_bg_file)).convert('RGBA')
 
-    for source_file, slot_id in zip(source_files, range(0, len(TEMPLATES[template_file]['src']))):
+    for source_file, slot_id in zip(source_files, range(0, len(MEME_TEMPLATES[template_file]['src']))):
 
         source_image_original = Image.open(os.path.join(SOURCEIMG_DIR, source_file)).convert("RGBA")
-        sources_data = TEMPLATES[template_file]['src'][slot_id]
+        sources_data = MEME_TEMPLATES[template_file]['src'][slot_id]
 
         if not type(sources_data) is list:
             sources_data = [sources_data]

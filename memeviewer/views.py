@@ -1,47 +1,42 @@
+import os
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
-from django.http import HttpResponse
 from django.shortcuts import render
 
-from lambdabot.preview import preview_meme
-from lambdabot.settings import *
-from lambdabot.db import get_resource_path, meme_info_page
-
-
-def meme_view(request, meme_id):
-
-    try:
-        meme_img = preview_meme(meme_id=meme_id)
-    except KeyError:
-        raise Http404("Invalid meme ID")
-
-    response = HttpResponse(content_type='image/png')
-    meme_img.save(response, 'PNG')
-    return response
-
-
-def resource_view(request, resource_id):
-    resource_path, content_type = get_resource_path(resource_id)
-
-    if resource_path is None:
-        raise Http404("Invalid resource ID")
-
-    resource = open(os.path.join(RESOURCE_DIR, resource_path), 'rb').read()
-    return HttpResponse(resource, content_type=content_type)
+from lamdabotweb.settings import CONTEXTS, MEME_TEMPLATES, STATIC_URL
+from memeviewer.models import Meem
+from memeviewer.preview import preview_meme
 
 
 def meme_info_view(request, meme_id):
     try:
-        template_url, template_bg_url, source_urls, context, gen_date, num = meme_info_page(meme_id=meme_id)
-    except KeyError:
+        meme = Meem.objects.get(meme_id=meme_id)
+        if not os.path.isfile(meme.get_local_path()):
+            preview_meme(meme)
+    except ObjectDoesNotExist:
         raise Http404("Invalid meme ID")
+
+    templatebg = MEME_TEMPLATES[meme.template].get('bgimg')
+    if templatebg is not None:
+        templatebg = STATIC_URL + 'lambdabot/resources/templates/' + templatebg
+
+    fb_meme = meme.facebookmeem_set.first()
+    twitter_meme = meme.twittermeem_set.first()
 
     context = {
         'meme_id': meme_id,
-        'template_url': template_url,
-        'template_bg_url': template_bg_url,
-        'source_urls': source_urls,
-        'context': CONTEXTS.get(context, context),
-        'gen_date': gen_date,
-        'num': num,
+        'meme_url': meme.get_url(),
+        'meme_info_url': meme.get_info_url(),
+        'template_url': STATIC_URL + 'lambdabot/resources/templates/' + meme.template,
+        'template_bg_url': templatebg,
+        'source_urls':
+            [STATIC_URL + 'lambdabot/resources/sourceimg/' + sourceimg for sourceimg in meme.get_sourceimgs()],
+        'context': CONTEXTS.get(meme.context, meme.context),
+        'gen_date': meme.gen_date,
+        'num': meme.number,
+        'facebook_url': fb_meme and 'https://facebook.com/{0}'.format(fb_meme.post),
+        'twitter_url': twitter_meme and 'https://twitter.com/lambdabot3883/status/{0}'.format(twitter_meme.post),
     }
+
     return render(request, 'memeviewer/meme_info_view.html', context)
