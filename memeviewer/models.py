@@ -60,12 +60,12 @@ class Meem(models.Model):
 
 class FacebookMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    url = models.CharField(max_length=256)
+    post = models.CharField(max_length=40)
 
 
 class TwitterMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    url = models.CharField(max_length=256)
+    post = models.CharField(max_length=40)
 
 
 class DiscordMeem(models.Model):

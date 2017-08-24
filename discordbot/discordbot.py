@@ -8,7 +8,7 @@ from lamdabotweb.settings import MEMES_DIR, DATA_DIR
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem
+from memeviewer.models import Meem, DiscordMeem
 from memeviewer.preview import preview_meme
 
 PREFIX = '!'
@@ -87,6 +87,9 @@ async def cmd_meem(message):
 
     meme = Meem.generate(context=SERVER_WHITELIST.get(message.server.id, 'default'))
     preview_meme(meme)
+
+    discord_meme = DiscordMeem(meme=meme, server=message.server.id)
+    discord_meme.save()
 
     await client.send_file(
         message.channel,

@@ -7,7 +7,7 @@ from lamdabotweb.settings import DATA_DIR
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem
+from memeviewer.models import Meem, FacebookMeem
 from memeviewer.preview import preview_meme
 
 token_file = open(os.path.join(DATA_DIR, 'fbtoken.txt'), 'r')
@@ -28,3 +28,6 @@ comment_status = api.put_comment(
 )
 print("comment added!")
 print(comment_status)
+
+facebook_meme = FacebookMeem(meme=meme, post=post_status['post_id'])
+facebook_meme.save()
