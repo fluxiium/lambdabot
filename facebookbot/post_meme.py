@@ -18,7 +18,7 @@ api = facebook.GraphAPI(PAGE_TOKEN)
 meme = Meem.generate(context='facebook')
 preview_meme(meme)
 
-post_status = api.put_photo(meme.get_local_path())
+post_status = api.put_photo(open(meme.get_local_path(), 'rb'))
 print("post added!")
 print(post_status)
 

@@ -24,7 +24,7 @@ preview_meme(meme)
 
 status = api.PostUpdate(
     "https://lambdabot.morchkovalski.com/meme_info/" + meme.meme_id,
-    media=meme.get_local_path()
+    media=open(meme.get_local_path(), 'rb')
 )
 print("post added!")
 print(status.id)
