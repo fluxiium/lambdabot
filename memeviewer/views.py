@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import render
 
@@ -6,8 +7,9 @@ from memeviewer.models import Meem
 
 
 def meme_info_view(request, meme_id):
-    meme = Meem.objects.get(meme_id=meme_id)
-    if meme is None:
+    try:
+        meme = Meem.objects.get(meme_id=meme_id)
+    except ObjectDoesNotExist:
         raise Http404("Invalid meme ID")
 
     templatebg = MEME_TEMPLATES[meme.template].get('bgimg')
