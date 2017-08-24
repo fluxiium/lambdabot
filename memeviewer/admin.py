@@ -19,11 +19,17 @@ class DiscordInline(admin.TabularInline):
 
 
 class MeemAdmin(admin.ModelAdmin):
-    list_display = ('number', 'meme_id', 'template', 'context', 'gen_date')
+    list_display = ('number', 'meme_id', 'template', 'context', 'gen_date', 'meme_url')
     ordering = ('-number',)
     list_display_links = ('meme_id',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
     search_fields = ('number', 'meme_id', 'context', 'template')
+
+    def meme_url(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Meme page")
+
+    meme_url.allow_tags = True
+    meme_url.short_description = 'Page'
 
 admin.site.register(Meem, MeemAdmin)
 
