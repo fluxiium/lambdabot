@@ -1,14 +1,19 @@
+import os
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import render
 
 from lamdabotweb.settings import CONTEXTS, MEME_TEMPLATES, STATIC_URL
 from memeviewer.models import Meem
+from memeviewer.preview import preview_meme
 
 
 def meme_info_view(request, meme_id):
     try:
         meme = Meem.objects.get(meme_id=meme_id)
+        if not os.path.isfile(meme.get_local_path()):
+            preview_meme(meme)
     except ObjectDoesNotExist:
         raise Http404("Invalid meme ID")
 
