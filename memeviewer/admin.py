@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from memeviewer.models import Meem, FacebookMeem, TwitterMeem, DiscordMeem
+from memeviewer.models import Meem, FacebookMeem, TwitterMeem, DiscordMeem, ImageInContext
 
 
 class FacebookInline(admin.TabularInline):
@@ -26,3 +26,12 @@ class MeemAdmin(admin.ModelAdmin):
     search_fields = ('number', 'meme_id', 'context', 'template')
 
 admin.site.register(Meem, MeemAdmin)
+
+
+class ImageInContextAdmin(admin.ModelAdmin):
+    list_display = ('image_name', 'image_type', 'context')
+    list_display_links = ('image_name',)
+    search_fields = ('image_name', 'image_type', 'context')
+
+
+admin.site.register(ImageInContext, ImageInContextAdmin)

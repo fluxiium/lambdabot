@@ -1,12 +1,16 @@
 import json
 import os
+import random
+import re
 import uuid
 
 from django.db import models
 from django.utils import timezone
 
-from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE
-from memeviewer.context import next_template, MEME_TEMPLATES, next_sourceimg
+from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, SOURCEIMG_BLACKLIST, \
+    SOURCEIMG_QUEUE_LENGTH, ALLOWED_EXTENSIONS, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR, MEME_TEMPLATES
+
+SYS_RANDOM = random.SystemRandom()
 
 
 def struuid4():
@@ -15,6 +19,97 @@ def struuid4():
 
 def next_meme_number():
     return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
+
+
+def next_template(context):
+    """ returns next template filename """
+
+    # read queue from db
+    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_TEMPLATE, context=context)
+
+    # if empty, make new queue
+    if len(result) == 0:
+
+        # get list of templates
+        available_templates = []
+        for template_name, template_data in MEME_TEMPLATES.items():
+            template_context = template_data.get('context')
+            if template_context is None or template_context == context or \
+                    (type(template_context) is list and context in template_context):
+                available_templates.append(template_name)
+
+        # create queue
+        SYS_RANDOM.shuffle(available_templates)
+        template_queue = available_templates[0:(min(TEMPLATE_QUEUE_LENGTH, len(available_templates)))]
+
+        # get one template and remvoe it from queue
+        template = template_queue.pop()
+
+        # save queue to db
+        for t in template_queue:
+            template_in_context = ImageInContext(image_name=t, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE,
+                                                 context=context)
+            template_in_context.save()
+
+    # otherwise, get one template and remove it from queue
+    else:
+        template_in_context = result.first()
+        template = template_in_context.image_name
+        template_in_context.delete()
+
+    if MEME_TEMPLATES.get(template) is None or MEME_TEMPLATES[template].get('context', context) != context:
+        return next_template(context)
+    elif not os.path.isfile(os.path.join(TEMPLATE_DIR, template)):
+        raise FileNotFoundError
+    else:
+        return template
+
+
+def next_sourceimg(context):
+    """ returns next source image filename """
+
+    # read queue from db
+    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG, context=context)
+
+    # if empty, make new queue
+    if len(result) == 0:
+
+        # add common source images to list
+        available_sourceimgs = \
+            [file for file in os.listdir(SOURCEIMG_DIR) if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE)]
+
+        # add context's source images to list
+        if os.path.isdir(os.path.join(SOURCEIMG_DIR, context)):
+            available_sourceimgs += \
+                (os.path.join(context, file) for file in os.listdir(os.path.join(SOURCEIMG_DIR, context))
+                 if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE))
+
+        if len(available_sourceimgs) == 0:
+            raise FileNotFoundError
+
+        # create queue
+        SYS_RANDOM.shuffle(available_sourceimgs)
+        sourceimg_queue = available_sourceimgs[0:(min(SOURCEIMG_QUEUE_LENGTH, len(available_sourceimgs)))]
+
+        # get one source image and remvoe it from queue
+        sourceimg = sourceimg_queue.pop()
+
+        # save queue to db
+        for s in sourceimg_queue:
+            sourceimg_in_context = ImageInContext(image_name=s, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG,
+                                                  context=context)
+            sourceimg_in_context.save()
+
+    # otherwise, get one source image and remove it from queue
+    else:
+        sourceimg_in_context = result.first()
+        sourceimg = sourceimg_in_context.image_name
+        sourceimg_in_context.delete()
+
+    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)) or sourceimg in SOURCEIMG_BLACKLIST:
+        return next_sourceimg(context)
+    else:
+        return sourceimg
 
 
 class Meem(models.Model):
@@ -83,3 +178,18 @@ class DiscordMeem(models.Model):
 
     def __str__(self):
         return "{0} - {1}".format(self.meme.number, self.server)
+
+
+class ImageInContext(models.Model):
+    IMAGE_TYPE_TEMPLATE = 0
+    IMAGE_TYPE_SOURCEIMG = 1
+    IMAGE_TYPE_CHOICES = (
+        (IMAGE_TYPE_TEMPLATE, "Template"),
+        (IMAGE_TYPE_SOURCEIMG, "Source Image"),
+    )
+    image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES)
+    image_name = models.CharField(max_length=64)
+    context = models.CharField(max_length=32)
+
+    def __str__(self):
+        return "{0} ({1}) - {2}".format(self.image_name, self.image_type, self.context)
