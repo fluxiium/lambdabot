@@ -155,15 +155,15 @@ COMMANDS = OrderedDict([
     }),
     ('hypersad', {
         'fun': cmd_hypersad,
-        # 'servers': [
-        #     '154305477323390976'  # hldiscord
-        # ]
     }),
     ('choo', {
         'fun': cmd_choo
     }),
     ('hl3kill', {
-        'fun': cmd_hl3kill
+        'fun': cmd_hl3kill,
+        'servers': [
+            '154305477323390976'  # hldiscord
+        ]
     }),
     ('about', {
         'fun': cmd_about
