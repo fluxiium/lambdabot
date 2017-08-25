@@ -115,8 +115,6 @@ STATICFILES_DIRS = [
 ]
 
 
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-
 # RESOURCE_DIR = os.path.join(STATIC_ROOT, 'lambdabot', 'resources')
 MEMES_DIR = os.path.join(RESOURCE_DIR, 'memes')
 SOURCEIMG_DIR = os.path.join(RESOURCE_DIR, 'sourceimg')

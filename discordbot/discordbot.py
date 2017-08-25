@@ -5,12 +5,10 @@ from collections import OrderedDict
 import django
 import discord
 
-from lamdabotweb.settings import MEMES_DIR, DATA_DIR
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, DiscordMeem
+from memeviewer.models import Meem, DiscordMeem, AccessToken
 from memeviewer.preview import preview_meme
 
 PREFIX = '!'
@@ -161,7 +159,4 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 
-token_file = open(os.path.join(DATA_DIR, 'discordtoken.txt'), 'r')
-TOKEN = token_file.read()
-token_file.close()
-client.run(TOKEN)
+client.run(AccessToken.objects.get(name="discord").token)

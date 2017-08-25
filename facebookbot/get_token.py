@@ -16,6 +16,4 @@ for page in resp['data']:
     if page['id'] == cfg['page_id']:
         page_access_token = page['access_token']
 
-token_file = open(os.path.join(DATA_DIR, 'fbtoken.txt'), 'w')
-token_file.write(page_access_token)
-token_file.close()
+print(page_access_token)
