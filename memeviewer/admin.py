@@ -51,6 +51,7 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 class MemeTemplateAdmin(admin.ModelAdmin):
     list_display = ('name',)
+    ordering = ('name',)
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
 
