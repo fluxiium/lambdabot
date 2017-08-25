@@ -5,7 +5,7 @@ import twitter
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, TwitterMeem, AccessToken
+from memeviewer.models import Meem, TwitterMeem, AccessToken, MemeContext
 from memeviewer.preview import preview_meme
 
 TOKENS = AccessToken.objects.get(name="twitter").token.splitlines()
@@ -15,7 +15,7 @@ api = twitter.Api(consumer_key=TOKENS[0],
                   access_token_key=TOKENS[2],
                   access_token_secret=TOKENS[3])
 
-meme = Meem.generate(context='twitter')
+meme = Meem.generate(context=MemeContext.by_id('twitter'))
 preview_meme(meme)
 
 status = api.PostUpdate(

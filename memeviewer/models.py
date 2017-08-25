@@ -59,6 +59,20 @@ def next_template(context):
         return template_obj
 
 
+def sourceimg_count(context):
+    available_sourceimgs = 0
+    for file in os.listdir(SOURCEIMG_DIR):
+        if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
+            available_sourceimgs += 1
+
+    if os.path.isdir(os.path.join(SOURCEIMG_DIR, context.short_name)):
+        for file in os.listdir(os.path.join(SOURCEIMG_DIR, context.short_name)):
+            if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
+                available_sourceimgs += 1
+
+    return available_sourceimgs
+
+
 def next_sourceimg(context):
     """ returns next source image filename """
 
@@ -111,6 +125,10 @@ class MemeContext(models.Model):
     short_name = models.CharField(max_length=32, primary_key=True)
     name = models.CharField(max_length=64)
 
+    @classmethod
+    def by_id(cls, name):
+        return cls.objects.get(short_name=name)
+
     def __str__(self):
         return self.name
 
@@ -121,6 +139,26 @@ class MemeTemplate(models.Model):
     bg_color = models.CharField(max_length=16, null=True, default=None)
     bg_img = models.CharField(max_length=64, null=True, default=None)
     disabled = models.BooleanField(default=False)
+
+    @classmethod
+    def count(cls, context):
+        return cls.by_context(context).count()
+
+    @classmethod
+    def by_context(cls, context):
+        return cls.objects.filter(Q(contexts=context) | Q(contexts=None))
+
+    def possible_combinations(self, context):
+        possible = 1
+        slots = MemeTemplateSlot.objects.filter(template=self)
+        srcimgs = sourceimg_count(context)
+        prev_slot_id = None
+        for slot in slots:
+            if slot.slot_order == prev_slot_id:
+                continue
+            possible *= srcimgs
+            srcimgs -= 1
+        return possible
 
     def __str__(self):
         return self.name
@@ -158,9 +196,8 @@ class Meem(models.Model):
         return meem
 
     @classmethod
-    def generate(cls, context, template_file=None):
-        context_obj = MemeContext.objects.get(short_name=context)
-        template = template_file and MemeTemplate.objects.get(name=template_file) or next_template(context_obj)
+    def generate(cls, context, template=None):
+        template = template or next_template(context)
         source_files = []
         prev_slot_id = None
         for slot in template.memetemplateslot_set.order_by('slot_order').all():
@@ -168,13 +205,20 @@ class Meem(models.Model):
                 continue
             # pick source file that hasn't been used
             while True:
-                source_file = next_sourceimg(context_obj)
+                source_file = next_sourceimg(context)
                 if source_file not in source_files:
                     break
             source_files.append(source_file)
             prev_slot_id = slot.slot_order
-        meem = cls.create(template, source_files, context_obj)
+        meem = cls.create(template, source_files, context)
         return meem
+
+    @classmethod
+    def possible_combinations(cls, context):
+        possible = 0
+        for template in MemeTemplate.by_context(context):
+            possible += template.possible_combinations(context)
+        return possible
 
     def get_sourceimgs(self):
         return json.loads(self.sourceimgs)
