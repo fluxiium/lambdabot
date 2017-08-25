@@ -146,9 +146,9 @@ class MemeTemplateSlot(models.Model):
 class Meem(models.Model):
     number = models.IntegerField(default=next_meme_number)
     meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4)
-    template_link = models.ForeignKey(MemeTemplate, null=True)
+    template_link = models.ForeignKey(MemeTemplate)
     sourceimgs = models.TextField()
-    context_link = models.ForeignKey(MemeContext, null=True)
+    context_link = models.ForeignKey(MemeContext)
     gen_date = models.DateTimeField(default=timezone.now)
 
     @classmethod
@@ -225,7 +225,15 @@ class ImageInContext(models.Model):
     )
     image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES)
     image_name = models.CharField(max_length=64)
-    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE, null=True)
+    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{0} - {1} ({2})".format(self.image_name, self.context, self.IMAGE_TYPE_CHOICES[self.image_type][1])
+
+
+class AccessToken(models.Model):
+    name = models.CharField(max_length=32, primary_key=True)
+    token = models.TextField()
+
+    def __str__(self):
+        return self.name

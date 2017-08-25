@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from memeviewer.models import Meem, FacebookMeem, TwitterMeem, DiscordMeem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext
+    MemeTemplateSlot, MemeContext, AccessToken
 
 
 class FacebookInline(admin.TabularInline):
@@ -63,3 +63,9 @@ class MemeContextAdmin(admin.ModelAdmin):
     search_fields = ('short_name', 'name')
 
 admin.site.register(MemeContext, MemeContextAdmin)
+
+
+class AccessTokenAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(AccessToken, AccessTokenAdmin)

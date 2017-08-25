@@ -127,9 +127,4 @@ ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'
 TEMPLATE_QUEUE_LENGTH = 77
 SOURCEIMG_QUEUE_LENGTH = 133
 
-CONTEXTS = {
-    'hldiscord': 'Half-Life Discord Server',
-    'facebook': 'Facebook Page',
-}
-
 SOURCEIMG_BLACKLIST = []
