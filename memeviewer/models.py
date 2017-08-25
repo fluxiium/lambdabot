@@ -228,7 +228,8 @@ class ImageInContext(models.Model):
     context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{0} - {1} ({2})".format(self.image_name, self.context, self.IMAGE_TYPE_CHOICES[self.image_type][1])
+        return "{0} - {1} ({2})"\
+            .format(self.image_name, self.context_link.short_name, self.IMAGE_TYPE_CHOICES[self.image_type][1])
 
 
 class AccessToken(models.Model):
