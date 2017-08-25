@@ -26,6 +26,8 @@ NO_LIMIT_WHITELIST = [
 MEEM_LIMIT_COUNT = 3
 MEEM_LIMIT_TIME = 10  # minutes
 
+DISCORD_RESOURCE_DIR = 'resources'
+
 client = discord.Client()
 
 
@@ -55,6 +57,15 @@ async def cmd_hypersad(message):
 async def cmd_choo(message):
     await client.send_message(message.channel,
                               'https://soundcloud.com/breadcrab/whydididothis/s-6dZ0y')
+
+
+# noinspection PyCompatibility
+@client.event
+async def cmd_hl3kill(message):
+    await client.send_file(
+        message.channel,
+        os.path.join(DISCORD_RESOURCE_DIR, "hl3 kill.png"),
+    )
 
 
 # noinspection PyCompatibility
@@ -150,6 +161,9 @@ COMMANDS = OrderedDict([
     }),
     ('choo', {
         'fun': cmd_choo
+    }),
+    ('hl3kill', {
+        'fun': cmd_hl3kill
     }),
     ('about', {
         'fun': cmd_about
