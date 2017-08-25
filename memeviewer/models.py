@@ -225,7 +225,6 @@ class ImageInContext(models.Model):
     )
     image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES)
     image_name = models.CharField(max_length=64)
-    context = models.CharField(max_length=32)
     context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
 
     def __str__(self):
