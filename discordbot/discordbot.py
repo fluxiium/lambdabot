@@ -26,7 +26,7 @@ NO_LIMIT_WHITELIST = [
 MEEM_LIMIT_COUNT = 3
 MEEM_LIMIT_TIME = 10  # minutes
 
-DISCORD_RESOURCE_DIR = 'resources'
+DISCORD_RESOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources')
 
 client = discord.Client()
 
@@ -162,7 +162,8 @@ COMMANDS = OrderedDict([
     ('hl3kill', {
         'fun': cmd_hl3kill,
         'servers': [
-            '154305477323390976'  # hldiscord
+            '154305477323390976',  # hldiscord
+            '291537367452614658',  # testserver
         ]
     }),
     ('about', {
