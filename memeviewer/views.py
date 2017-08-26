@@ -2,11 +2,28 @@ import os
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
-from django.shortcuts import render
+from django.http import HttpResponseForbidden
+from django.shortcuts import render, redirect
 
 from lamdabotweb.settings import STATIC_URL
-from memeviewer.models import Meem
+from memeviewer.models import Meem, MemeContext, MemeTemplate
 from memeviewer.preview import preview_meme
+
+
+def template_preview_view(request, template_name):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+
+    try:
+        meme = Meem.generate(
+            context=MemeContext.by_id('template_preview'),
+            template=MemeTemplate.objects.get(name=template_name),
+        )
+    except ObjectDoesNotExist:
+        raise Http404("template does not exist")
+
+    preview_meme(meme)
+    return redirect(meme.get_url())
 
 
 def meme_info_view(request, meme_id):
