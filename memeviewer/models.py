@@ -135,9 +135,9 @@ class MemeContext(models.Model):
 
 class MemeTemplate(models.Model):
     name = models.CharField(max_length=64, primary_key=True)
-    contexts = models.ManyToManyField(MemeContext)
-    bg_color = models.CharField(max_length=16, null=True, default=None)
-    bg_img = models.CharField(max_length=64, null=True, default=None)
+    contexts = models.ManyToManyField(MemeContext, blank=True)
+    bg_color = models.CharField(max_length=16, null=True, default=None, blank=True)
+    bg_img = models.CharField(max_length=64, null=True, default=None, blank=True)
     disabled = models.BooleanField(default=False)
 
     @classmethod
