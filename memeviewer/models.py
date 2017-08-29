@@ -6,10 +6,12 @@ import uuid
 
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, SOURCEIMG_BLACKLIST, \
     SOURCEIMG_QUEUE_LENGTH, ALLOWED_EXTENSIONS, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR
+from memeviewer.preview import preview_meme
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -160,6 +162,9 @@ class MemeTemplate(models.Model):
             possible *= srcimgs
             srcimgs -= 1
         return possible
+
+    def get_preview_url(self):
+        return reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name})
 
     def __str__(self):
         return self.name

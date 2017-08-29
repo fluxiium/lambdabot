@@ -50,10 +50,17 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'add_date')
+    list_display = ('name', 'add_date', 'preview_url')
     ordering = ('-add_date', 'name')
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
+
+    def preview_url(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_preview_url(), "Preview")
+
+    preview_url.allow_tags = True
+    preview_url.short_description = 'Preview'
+
 
 admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
