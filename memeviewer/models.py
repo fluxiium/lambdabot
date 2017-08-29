@@ -139,6 +139,7 @@ class MemeTemplate(models.Model):
     bg_color = models.CharField(max_length=16, null=True, default=None, blank=True)
     bg_img = models.CharField(max_length=64, null=True, default=None, blank=True)
     disabled = models.BooleanField(default=False)
+    add_date = models.DateTimeField(default=timezone.now)
 
     @classmethod
     def count(cls, context):

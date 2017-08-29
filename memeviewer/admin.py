@@ -21,7 +21,7 @@ class DiscordInline(admin.TabularInline):
 
 class MeemAdmin(admin.ModelAdmin):
     list_display = ('number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
-    ordering = ('-number',)
+    ordering = ('-number', 'meme_id')
     list_display_links = ('meme_id',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
     search_fields = ('number', 'meme_id', 'context_link', 'template_link')
@@ -50,8 +50,8 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    ordering = ('name',)
+    list_display = ('name', 'add_date')
+    ordering = ('-add_date', 'name')
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
 
