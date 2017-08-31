@@ -67,6 +67,12 @@ async def cmd_hl3kill(message):
 
 # noinspection PyCompatibility
 @client.event
+async def cmd_no(message):
+    await client.send_file(message.channel, os.path.join(DISCORD_RESOURCE_DIR, "monopoly.jpg"))
+
+
+# noinspection PyCompatibility
+@client.event
 async def cmd_ravejohnson(message):
     await client.send_file(message.channel, os.path.join(DISCORD_RESOURCE_DIR, "rave johnson.png"))
 
@@ -175,6 +181,9 @@ COMMANDS = OrderedDict([
             '154305477323390976',  # hldiscord
             '291537367452614658',  # testserver
         ]
+    }),
+    ('no', {
+        'fun': cmd_no,
     }),
     ('about', {
         'fun': cmd_about
