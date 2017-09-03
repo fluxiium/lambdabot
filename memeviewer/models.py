@@ -288,3 +288,42 @@ class AccessToken(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DiscordServer(models.Model):
+    server_id = models.CharField(max_length=32, primary_key=True)
+    context = models.ForeignKey(MemeContext)
+    prefix = models.CharField(max_length=8, default='!')
+    meme_limit_count = models.IntegerField(default=3)
+    meme_limit_time = models.IntegerField(default=10)
+
+    @classmethod
+    def get_by_id(cls, server_id):
+        return cls.objects.filter(server_id=server_id).first()
+
+    @classmethod
+    def get_all(cls):
+        return cls.objects.all()
+
+    def get_commands(self):
+        return DiscordCommand.objects.filter(Q(server_whitelist=None) | Q(server_whitelist=self))
+
+    def __str__(self):
+        return "{0} - {1}".format(self.server_id, self.context)
+
+
+class DiscordCommand(models.Model):
+    cmd = models.CharField(max_length=32, primary_key=True)
+    help = models.TextField(null=True, blank=True)
+    server_whitelist = models.ManyToManyField(DiscordServer, blank=True)
+    message = models.TextField(null=True, blank=True)
+
+    @classmethod
+    def get_cmd(cls, cmd, server=None):
+        result = cls.objects.filter(cmd=cmd)
+        if server is not None:
+            result = result.filter(Q(server_whitelist=None) | Q(server_whitelist=server))
+        return result.first()
+
+    def __str__(self):
+        return self.cmd

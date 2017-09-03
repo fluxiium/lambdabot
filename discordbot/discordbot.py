@@ -1,6 +1,5 @@
 import datetime
 import os
-from collections import OrderedDict
 
 import django
 import discord
@@ -8,110 +7,41 @@ import discord
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, DiscordMeem, AccessToken, MemeContext, MemeTemplate, sourceimg_count
+from memeviewer.models import Meem, DiscordMeem, AccessToken, MemeTemplate, sourceimg_count, DiscordServer, \
+    DiscordCommand
 from memeviewer.preview import preview_meme
-
-PREFIX = '!'
-SERVER_WHITELIST = {
-    '154305477323390976': 'hldiscord',
-    '257494913623523329': 'arschschmerz',
-    '291537367452614658': 'testserver',
-    '257193139561824256': 'abs',
-}
 
 NO_LIMIT_WHITELIST = [
     '257499042039332866',  # yackson
 ]
 
-MEEM_LIMIT_COUNT = 3
-MEEM_LIMIT_TIME = 10  # minutes
-
 DISCORD_RESOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources')
 
 client = discord.Client()
+meme_times = {}
 
 
 # noinspection PyCompatibility
 @client.event
-async def cmd_help(message):
+async def cmd_help(server, message):
     helpstr = "{0} available commands:".format(message.author.mention)
-    for cmd, cmd_data in COMMANDS.items():
-        server_whitelist = cmd_data.get('servers')
-        if server_whitelist is not None and message.server.id not in server_whitelist:
-            continue
-        helpstr += "\n**{0}{1}**".format(PREFIX, cmd)
-        if cmd_data.get('help'):
-            helpstr += " - {0}".format(cmd_data['help'])
+    for cmd_data in server.get_commands():
+        helpstr += "\n**{0}{1}**".format(server.prefix, cmd_data.cmd)
+        if cmd_data.help:
+            helpstr += " - {0}".format(cmd_data.help)
     await client.send_message(message.channel, helpstr)
 
 
 # noinspection PyCompatibility
 @client.event
-async def cmd_hypersad(message):
-    await client.send_message(message.channel,
-                              ':cry: https://soundcloud.com/morchkovalski/triage-at-dawn-bass-boosted/s-22Aa2')
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_choo(message):
-    await client.send_message(message.channel,
-                              'https://soundcloud.com/breadcrab/whydididothis/s-6dZ0y')
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_hl3kill(message):
-    await client.send_file(message.channel, os.path.join(DISCORD_RESOURCE_DIR, "hl3 kill.png"))
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_no(message):
-    await client.send_file(message.channel, os.path.join(DISCORD_RESOURCE_DIR, "monopoly.jpg"))
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_ravejohnson(message):
-    await client.send_file(message.channel, os.path.join(DISCORD_RESOURCE_DIR, "rave johnson.png"))
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_about(message):
-    context = MemeContext.by_id(SERVER_WHITELIST.get(message.server.id))
-    await client.send_message(
-        message.channel,
-        "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
-        "random meme template and combining it with one or more randomly picked source images related to "
-        "Half-Life. Currently there are **{1:,}** available templates and **{2:,}** available source images, for a "
-        "total of **{3:,}** possible combinations.\n"
-        "\n"
-        "Type **!help** to see a list of available commands.\n"
-        "\n"
-        "*Homepage: https://lambdabot.morchkovalski.com\n"
-        "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
-            message.author.mention,
-            MemeTemplate.count(context),
-            sourceimg_count(context),
-            Meem.possible_combinations(context)
-        )
-    )
-
-
-# noinspection PyCompatibility
-@client.event
-async def cmd_meem(message):
-    context = MemeContext.by_id(SERVER_WHITELIST.get(message.server.id))
-
+async def cmd_meem(server, message):
     await client.send_typing(message.channel)
 
     if message.author.id not in NO_LIMIT_WHITELIST:
         meme_time_id = "{0}{1}".format(message.author.id, message.server.id)
         if meme_times.get(meme_time_id) is not None:
-            if len(meme_times[meme_time_id]) == MEEM_LIMIT_COUNT:
-                meme_delta = datetime.timedelta(minutes=MEEM_LIMIT_TIME)
+            if len(meme_times[meme_time_id]) == server.meme_limit_count:
+                meme_delta = datetime.timedelta(minutes=server.meme_limit_time)
                 meme_time = meme_times[meme_time_id][0]
                 if datetime.datetime.now() - meme_delta > meme_time:
                     meme_times[meme_time_id].pop(0)
@@ -124,8 +54,8 @@ async def cmd_meem(message):
                     await client.send_message(
                         message.channel,
                         "{3} you can only generate {0} memes every {1} minutes. Please wait {2}.".format(
-                            MEEM_LIMIT_COUNT,
-                            MEEM_LIMIT_TIME,
+                            server.meme_limit_count,
+                            server.meme_limit_time,
                             timestr,
                             message.author.mention,
                         )
@@ -135,7 +65,7 @@ async def cmd_meem(message):
         else:
             meme_times[meme_time_id] = [datetime.datetime.now()]
 
-    meme = Meem.generate(context=context)
+    meme = Meem.generate(context=server.context)
     preview_meme(meme)
 
     discord_meme = DiscordMeem(meme=meme, server=message.server.id)
@@ -151,44 +81,10 @@ async def cmd_meem(message):
     print('meme generated:', message.author.name, meme)
 
 
-meme_times = {}
-
-COMMANDS = OrderedDict([
-    ('help', {
-        'fun': cmd_help,
-        'help': 'show this text'
-    }),
-    ('meem', {
-        'fun': cmd_meem,
-        'help': 'generate a random meme'
-    }),
-    ('hypersad', {
-        'fun': cmd_hypersad,
-    }),
-    ('choo', {
-        'fun': cmd_choo
-    }),
-    ('hl3kill', {
-        'fun': cmd_hl3kill,
-        'servers': [
-            '154305477323390976',  # hldiscord
-            '291537367452614658',  # testserver
-        ]
-    }),
-    ('ravejohnson', {
-        'fun': cmd_ravejohnson,
-        'servers': [
-            '154305477323390976',  # hldiscord
-            '291537367452614658',  # testserver
-        ]
-    }),
-    ('no', {
-        'fun': cmd_no,
-    }),
-    ('about', {
-        'fun': cmd_about
-    })
-])
+CMD_FUN = {
+    'help': cmd_help,
+    'meem': cmd_meem,
+}
 
 
 @client.event
@@ -203,24 +99,46 @@ async def on_ready():
 @client.event
 async def on_message(message):
     server_id = message.server.id
+    server = DiscordServer.get_by_id(server_id)
 
-    if server_id not in list(SERVER_WHITELIST):
+    if server is None:
         return
 
     msg = message.content
 
     if client.user in message.mentions:
-        splitcmd = ['about']
-    elif not msg.startswith(PREFIX):
+        await client.send_message(
+            message.channel,
+            "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
+            "random meme template and combining it with one or more randomly picked source images related to "
+            "Half-Life. Currently there are **{1:,}** available templates and **{2:,}** available source images, for a "
+            "total of **{3:,}** possible combinations.\n"
+            "\n"
+            "Type **!help** to see a list of available commands.\n"
+            "\n"
+            "*Homepage: https://lambdabot.morchkovalski.com\n"
+            "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
+                message.author.mention,
+                MemeTemplate.count(server.context),
+                sourceimg_count(server.context),
+                Meem.possible_combinations(server.context)
+            )
+        )
+        return
+    elif not msg.startswith(server.prefix):
         return
     else:
-        splitcmd = msg[len(PREFIX):].split(' ')
+        splitcmd = msg[len(server.prefix):].split(' ')
 
-    cmd_data = COMMANDS.get(splitcmd[0])
-    server_whitelist = cmd_data.get('servers')
+    cmd = DiscordCommand.get_cmd(splitcmd[0], server)
 
-    if cmd_data and (server_whitelist is None or server_id in server_whitelist):
-        await COMMANDS[splitcmd[0]]['fun'](message)
+    if cmd is not None:
+        if cmd.message is not None and len(cmd.message) > 0:
+            await client.send_message(message.channel, cmd.message)
+
+        cmd_fun = CMD_FUN.get(cmd.cmd)
+        if cmd_fun is not None:
+            await cmd_fun(server, message)
 
 
 # noinspection PyCompatibility
