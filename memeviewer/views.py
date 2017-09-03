@@ -22,8 +22,7 @@ def template_preview_view(request, template_name):
     except ObjectDoesNotExist:
         raise Http404("template does not exist")
 
-    preview_meme(meme)
-    return redirect(meme.get_url())
+    return redirect(meme.get_info_url())
 
 
 def meme_info_view(request, meme_id):
