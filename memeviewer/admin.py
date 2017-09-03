@@ -87,7 +87,7 @@ admin.site.register(DiscordServer, DiscordServerAdmin)
 
 
 class DiscordCommandAdmin(admin.ModelAdmin):
-    list_display = ('cmd',)
+    list_display = ('cmd', 'help', 'message')
     ordering = ('cmd',)
     search_fields = ('cmd',)
 
