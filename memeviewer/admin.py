@@ -24,7 +24,7 @@ class MeemAdmin(admin.ModelAdmin):
     ordering = ('-number', 'meme_id')
     list_display_links = ('meme_id',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
-    search_fields = ('number', 'meme_id', 'context_link', 'template_link')
+    search_fields = ('number', 'meme_id', 'context_link__name', 'context_link__short_name', 'template_link__name')
 
     def meme_url(self, obj):
         return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Meme page")
@@ -38,7 +38,7 @@ admin.site.register(Meem, MeemAdmin)
 class ImageInContextAdmin(admin.ModelAdmin):
     list_display = ('image_name', 'image_type', 'context_link')
     list_display_links = ('image_name',)
-    search_fields = ('image_name', 'image_type', 'context_link')
+    search_fields = ('image_name', 'image_type', 'context_link__name', 'context_link__short_name')
 
 
 admin.site.register(ImageInContext, ImageInContextAdmin)
