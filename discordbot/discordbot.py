@@ -71,11 +71,9 @@ async def cmd_meem(server, message):
     discord_meme = DiscordMeem(meme=meme, server=message.server.id)
     discord_meme.save()
 
-    await client.send_file(
+    await client.send_message(
         message.channel,
-        meme.get_local_path(),
-        content="{0} here's a meme:\n<{1}>".format(
-            message.author.mention, meme.get_info_url())
+        content="{0} here's a meme:\n{1}".format(message.author.mention, meme.get_info_url())
     )
 
     print('meme generated:', message.author.name, meme)
