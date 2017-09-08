@@ -1,7 +1,10 @@
 from django.contrib import admin
 
-from memeviewer.models import Meem, FacebookMeem, TwitterMeem, DiscordMeem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext, AccessToken, DiscordServer, DiscordCommand
+from discordbot.models import DiscordMeem
+from facebookbot.models import FacebookMeem
+from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
+    MemeTemplateSlot, MemeContext, AccessToken
+from twitterbot.models import TwitterMeem
 
 
 class FacebookInline(admin.TabularInline):
@@ -77,20 +80,3 @@ class AccessTokenAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(AccessToken, AccessTokenAdmin)
-
-
-class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('server_id', 'context')
-    ordering = ('context', 'server_id')
-    search_fields = ('server_id', 'context__name', 'context__short_name')
-
-admin.site.register(DiscordServer, DiscordServerAdmin)
-
-
-class DiscordCommandAdmin(admin.ModelAdmin):
-    list_display = ('cmd', 'help', 'message')
-    ordering = ('cmd',)
-    search_fields = ('cmd',)
-
-
-admin.site.register(DiscordCommand, DiscordCommandAdmin)

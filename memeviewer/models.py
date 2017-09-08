@@ -11,7 +11,6 @@ from django.utils import timezone
 
 from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, SOURCEIMG_BLACKLIST, \
     SOURCEIMG_QUEUE_LENGTH, ALLOWED_EXTENSIONS, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR
-from memeviewer.preview import preview_meme
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -123,9 +122,16 @@ def next_sourceimg(context):
         return sourceimg
 
 
+# MODELS --------------------------------------------------------------------------------------------------------
+
+
 class MemeContext(models.Model):
-    short_name = models.CharField(max_length=32, primary_key=True)
-    name = models.CharField(max_length=64)
+
+    class Meta:
+        verbose_name = "Context"
+
+    short_name = models.CharField(max_length=32, primary_key=True, verbose_name='Short name')
+    name = models.CharField(max_length=64, verbose_name='Name')
 
     @classmethod
     def by_id(cls, name):
@@ -136,12 +142,16 @@ class MemeContext(models.Model):
 
 
 class MemeTemplate(models.Model):
-    name = models.CharField(max_length=64, primary_key=True)
-    contexts = models.ManyToManyField(MemeContext, blank=True)
-    bg_color = models.CharField(max_length=16, null=True, default=None, blank=True)
-    bg_img = models.CharField(max_length=64, null=True, default=None, blank=True)
-    disabled = models.BooleanField(default=False)
-    add_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "Template"
+
+    name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
+    contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
+    bg_color = models.CharField(max_length=16, null=True, default=None, blank=True, verbose_name='Background color')
+    bg_img = models.CharField(max_length=64, null=True, default=None, blank=True, verbose_name='Background image')
+    disabled = models.BooleanField(default=False, verbose_name='Disabled')
+    add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
     @classmethod
     def count(cls, context):
@@ -171,29 +181,37 @@ class MemeTemplate(models.Model):
 
 
 class MemeTemplateSlot(models.Model):
-    template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE)
-    slot_order = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Template slot"
+
+    template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE, verbose_name='Template')
+    slot_order = models.IntegerField(verbose_name='Slot order')
     x = models.IntegerField()
     y = models.IntegerField()
     w = models.PositiveIntegerField()
     h = models.PositiveIntegerField()
-    rotate = models.IntegerField(default=0)
-    mask = models.BooleanField(default=False)
-    blur = models.BooleanField(default=False)
-    grayscale = models.BooleanField(default=False)
-    cover = models.BooleanField(default=False)
+    rotate = models.IntegerField(default=0, verbose_name='Rotation')
+    mask = models.BooleanField(default=False, verbose_name='Mask')
+    blur = models.BooleanField(default=False, verbose_name='Blur')
+    grayscale = models.BooleanField(default=False, verbose_name='Grayscale')
+    cover = models.BooleanField(default=False, verbose_name='Cover')
 
     def __str__(self):
         return "{0} - slot #{1}".format(self.template, self.slot_order)
 
 
 class Meem(models.Model):
-    number = models.IntegerField(default=next_meme_number)
-    meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4)
-    template_link = models.ForeignKey(MemeTemplate)
-    sourceimgs = models.TextField()
-    context_link = models.ForeignKey(MemeContext)
-    gen_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "Meme"
+
+    number = models.IntegerField(default=next_meme_number, verbose_name='Number')
+    meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4, verbose_name='ID')
+    template_link = models.ForeignKey(MemeTemplate, verbose_name='Template')
+    sourceimgs = models.TextField(verbose_name='Source images')
+    context_link = models.ForeignKey(MemeContext, verbose_name='Context')
+    gen_date = models.DateTimeField(default=timezone.now, verbose_name='Date generated')
 
     @classmethod
     def create(cls, template, sourceimgs, context):
@@ -242,40 +260,20 @@ class Meem(models.Model):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)
 
 
-class FacebookMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    post = models.CharField(max_length=40)
-
-    def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.post)
-
-
-class TwitterMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    post = models.CharField(max_length=40)
-
-    def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.post)
-
-
-class DiscordMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    server = models.CharField(max_length=64)
-
-    def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.server)
-
-
 class ImageInContext(models.Model):
+
+    class Meta:
+        verbose_name = "Queued image"
+
     IMAGE_TYPE_TEMPLATE = 0
     IMAGE_TYPE_SOURCEIMG = 1
     IMAGE_TYPE_CHOICES = (
         (IMAGE_TYPE_TEMPLATE, "Template"),
         (IMAGE_TYPE_SOURCEIMG, "Source Image"),
     )
-    image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES)
-    image_name = models.CharField(max_length=64)
-    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
+    image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES, verbose_name='Image type')
+    image_name = models.CharField(max_length=64, verbose_name='File name')
+    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE, verbose_name='Context')
 
     def __str__(self):
         return "{0} - {1} ({2})"\
@@ -283,47 +281,12 @@ class ImageInContext(models.Model):
 
 
 class AccessToken(models.Model):
-    name = models.CharField(max_length=32, primary_key=True)
-    token = models.TextField()
+
+    class Meta:
+        verbose_name = "Access token"
+
+    name = models.CharField(max_length=32, primary_key=True, verbose_name='Name')
+    token = models.TextField(verbose_name='Token')
 
     def __str__(self):
         return self.name
-
-
-class DiscordServer(models.Model):
-    server_id = models.CharField(max_length=32, primary_key=True)
-    context = models.ForeignKey(MemeContext)
-    prefix = models.CharField(max_length=8, default='!')
-    meme_limit_count = models.IntegerField(default=3)
-    meme_limit_time = models.IntegerField(default=10)
-
-    @classmethod
-    def get_by_id(cls, server_id):
-        return cls.objects.filter(server_id=server_id).first()
-
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    def get_commands(self):
-        return DiscordCommand.objects.filter(Q(server_whitelist=None) | Q(server_whitelist=self))
-
-    def __str__(self):
-        return "{0} - {1}".format(self.server_id, self.context)
-
-
-class DiscordCommand(models.Model):
-    cmd = models.CharField(max_length=32, primary_key=True)
-    help = models.TextField(null=True, blank=True)
-    server_whitelist = models.ManyToManyField(DiscordServer, blank=True)
-    message = models.TextField(null=True, blank=True)
-
-    @classmethod
-    def get_cmd(cls, cmd, server=None):
-        result = cls.objects.filter(cmd=cmd)
-        if server is not None:
-            result = result.filter(Q(server_whitelist=None) | Q(server_whitelist=server))
-        return result.first()
-
-    def __str__(self):
-        return self.cmd

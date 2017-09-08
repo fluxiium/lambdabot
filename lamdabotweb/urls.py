@@ -22,3 +22,5 @@ urlpatterns = [
     url(r'^', include('memeviewer.urls')),
     url(r'^$', RedirectView.as_view(url='https://fb.com/lambdabot')),
 ]
+
+admin.site.site_header = 'LambdaBot administration'
