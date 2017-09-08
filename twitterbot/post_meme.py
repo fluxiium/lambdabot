@@ -2,13 +2,12 @@ import os
 import django
 import twitter
 
-from twitterbot.models import TwitterMeem
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
 from memeviewer.models import Meem, AccessToken, MemeContext
 from memeviewer.preview import preview_meme
+from twitterbot.models import TwitterMeem
 
 TOKENS = AccessToken.objects.get(name="twitter").token.splitlines()
 

@@ -2,13 +2,12 @@ import os
 import django
 import facebook
 
-from facebookbot.models import FacebookMeem
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
 from memeviewer.models import Meem, AccessToken, MemeContext
 from memeviewer.preview import preview_meme
+from facebookbot.models import FacebookMeem
 
 api = facebook.GraphAPI(AccessToken.objects.get(name="facebook").token)
 meme = Meem.generate(context=MemeContext.by_id('facebook'))
