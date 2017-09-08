@@ -25,4 +25,4 @@ class DiscordMeemAdmin(admin.ModelAdmin):
     search_fields = ('meme__number', 'meme__meme_id', 'meme__context_link__name', 'meme__context_link__short_name',
                      'meme__template_link__name', 'meme__sourceimgs', 'server__server_id')
 
-admin.site.register(DiscordMeem, DiscordMeemAdmin)
+# admin.site.register(DiscordMeem, DiscordMeemAdmin)

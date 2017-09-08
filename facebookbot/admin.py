@@ -8,4 +8,4 @@ class FacebookMeemAdmin(admin.ModelAdmin):
     search_fields = ('meme__number', 'meme__meme_id', 'meme__context_link__name', 'meme__context_link__short_name',
                      'meme__template_link__name', 'meme__sourceimgs', 'post')
 
-admin.site.register(FacebookMeem, FacebookMeemAdmin)
+# admin.site.register(FacebookMeem, FacebookMeemAdmin)
