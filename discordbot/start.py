@@ -29,8 +29,9 @@ def cmd_help(server, message):
 @client.event
 @asyncio.coroutine
 def cmd_meem(server, message):
-    from memeviewer.models import Meem, DiscordMeem
+    from memeviewer.models import Meem
     from memeviewer.preview import preview_meme
+    from discordbot.models import DiscordMeem
 
     yield from client.send_typing(message.channel)
 
