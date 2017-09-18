@@ -1,6 +1,5 @@
 import datetime
 import os
-import asyncio
 import django
 import discord
 
@@ -16,24 +15,22 @@ meme_times = {}
 
 
 @client.event
-@asyncio.coroutine
-def cmd_help(server, message):
+async def cmd_help(server, message):
     helpstr = "{0} available commands:".format(message.author.mention)
     for cmd_data in server.get_commands():
         helpstr += "\n**{0}{1}**".format(server.prefix, cmd_data.cmd)
         if cmd_data.help:
             helpstr += " - {0}".format(cmd_data.help)
-    yield from client.send_message(message.channel, helpstr)
+    await client.send_message(message.channel, helpstr)
 
 
 @client.event
-@asyncio.coroutine
-def cmd_meem(server, message):
+async def cmd_meem(server, message):
     from memeviewer.models import Meem
     from memeviewer.preview import preview_meme
     from discordbot.models import DiscordMeem
 
-    yield from client.send_typing(message.channel)
+    await client.send_typing(message.channel)
 
     if message.author.id not in NO_LIMIT_WHITELIST:
         meme_time_id = "{0}{1}".format(message.author.id, message.server.id)
@@ -49,7 +46,7 @@ def cmd_meem(server, message):
                         timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
                     else:
                         timestr = "{0} more seconds".format(seconds_left)
-                    yield from client.send_message(
+                    await client.send_message(
                         message.channel,
                         "{3} you can only generate {0} memes every {1} minutes. Please wait {2}.".format(
                             server.meme_limit_count,
@@ -69,7 +66,7 @@ def cmd_meem(server, message):
     discord_meme = DiscordMeem(meme=meme, server=message.server.id)
     discord_meme.save()
 
-    yield from client.send_message(
+    await client.send_message(
         message.channel,
         content="{0} here's a meme:\n{1}".format(message.author.mention, meme.get_info_url())
     )
@@ -84,8 +81,7 @@ CMD_FUN = {
 
 
 @client.event
-@asyncio.coroutine
-def process_message(message):
+async def process_message(message):
     from memeviewer.models import Meem, MemeTemplate, sourceimg_count
     from discordbot.models import DiscordServer, DiscordCommand
 
@@ -98,7 +94,7 @@ def process_message(message):
     msg = message.content
 
     if client.user in message.mentions:
-        yield from client.send_message(
+        await client.send_message(
             message.channel,
             "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
             "random meme template and combining it with one or more randomly picked source images related to "
@@ -125,33 +121,30 @@ def process_message(message):
 
     if cmd is not None:
         if cmd.message is not None and len(cmd.message) > 0:
-            yield from client.send_message(message.channel, cmd.message)
+            await client.send_message(message.channel, cmd.message)
 
         cmd_fun = CMD_FUN.get(cmd.cmd)
         if cmd_fun is not None:
-            yield from cmd_fun(server, message)
+            await cmd_fun(server, message)
 
 
 @client.event
-@asyncio.coroutine
-def on_message(message):
-    yield from process_message(message)
+async def on_message(message):
+    await process_message(message)
 
 
 @client.event
-@asyncio.coroutine
-def on_message_edit(_, message):
-    yield from process_message(message)
+async def on_message_edit(_, message):
+    await process_message(message)
 
 
 @client.event
-@asyncio.coroutine
-def on_ready():
+async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
-    yield from client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
+    await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 
 from memeviewer.models import AccessToken
