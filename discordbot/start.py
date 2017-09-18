@@ -147,5 +147,37 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 
+from discord import Status, Server, Game, Channel
 from memeviewer.models import AccessToken
-client.run(AccessToken.objects.get(name="discord").token)
+
+
+# noinspection PyBroadException,PyArgumentList
+def _sync_patched(self, data):
+    if 'large' in data:
+        self.large = data['large']
+
+    for presence in data.get('presences', []):
+        user_id = presence['user']['id']
+        member = self.get_member(user_id)
+        if member is not None:
+            member.status = presence['status']
+            try:
+                member.status = Status(member.status)
+            except:
+                pass
+            game = presence.get('game', {})
+            try:
+                member.game = Game(**game) if game else None
+            except:
+                member.game = None
+
+    if 'channels' in data:
+        channels = data['channels']
+        for c in channels:
+            channel = Channel(server=self, **c)
+            self._add_channel(channel)
+
+
+# noinspection PyUnresolvedReferences
+Server._sync = _sync_patched
+client.run(AccessToken.objects.get(name="discord2").token)
