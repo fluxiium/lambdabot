@@ -180,4 +180,4 @@ def _sync_patched(self, data):
 
 # noinspection PyUnresolvedReferences
 Server._sync = _sync_patched
-client.run(AccessToken.objects.get(name="discord2").token)
+client.run(AccessToken.objects.get(name="discord").token)
