@@ -1,27 +1,97 @@
-import datetime
 import os
+import asyncio
 import django
 import discord
+import datetime
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
-django.setup()
+from discord import Client, Status, Server, Game, Channel
 
 NO_LIMIT_WHITELIST = [
     '257499042039332866',  # yackson
 ]
 
-client = discord.Client()
-meme_times = {}
 
+# ============================================================================================
+
+class DelayedTask:
+    def __init__(self, delay, callback, data):
+        self._delay = delay
+        self._callback = callback
+        self._data = data
+        self._task = None
+
+    def run(self):
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._delay)
+        await self._callback(self._data)
+
+    def cancel(self):
+        if self._task is not None:
+            self._task.cancel()
+
+
+# noinspection PyBroadException,PyArgumentList
+def _sync_patched(self, data):
+    if 'large' in data:
+        self.large = data['large']
+
+    for presence in data.get('presences', []):
+        user_id = presence['user']['id']
+        member = self.get_member(user_id)
+        if member is not None:
+            member.status = presence['status']
+            try:
+                member.status = Status(member.status)
+            except:
+                pass
+            game = presence.get('game', {})
+            try:
+                member.game = Game(**game) if game else None
+            except:
+                member.game = None
+
+    if 'channels' in data:
+        channels = data['channels']
+        for c in channels:
+            channel = Channel(server=self, **c)
+            self._add_channel(channel)
+
+
+# noinspection PyUnresolvedReferences
+Server._sync = _sync_patched
+
+
+# ============================================================================================
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
+django.setup()
+
+client = discord.Client()
+
+CMD_FUN = {}
+
+
+# ------------------------------------------------
 
 @client.event
 async def cmd_help(server, message):
     helpstr = "{0} available commands:".format(message.author.mention)
     for cmd_data in server.get_commands():
+        if cmd_data.hidden:
+            continue
         helpstr += "\n**{0}{1}**".format(server.prefix, cmd_data.cmd)
         if cmd_data.help:
             helpstr += " - {0}".format(cmd_data.help)
     await client.send_message(message.channel, helpstr)
+
+CMD_FUN['help'] = cmd_help
+
+
+# ------------------------------------------------
+
+meme_times = {}
 
 
 @client.event
@@ -71,14 +141,30 @@ async def cmd_meem(server, message):
         content="{0} here's a meme:\n{1}".format(message.author.mention, meme.get_info_url())
     )
 
-    print('meme generated:', message.author.name, meme)
+    print('meme generated:', meme)
+
+CMD_FUN['meem'] = cmd_meem
 
 
-CMD_FUN = {
-    'help': cmd_help,
-    'meem': cmd_meem,
-}
+# ------------------------------------------------
 
+async def delay_message(data):
+    await client.send_message(*data)
+
+
+async def delay_typing(channel):
+    await client.send_typing(channel)
+
+
+@client.event
+async def cmd_meme_hl(_, message):
+    DelayedTask(1, delay_typing, message.channel).run()
+    DelayedTask(1.3, delay_message, (message.channel, "<@238650794679730178> kys")).run()
+
+CMD_FUN['meme'] = cmd_meme_hl
+
+
+# ============================================================================================
 
 @client.event
 async def process_message(message):
@@ -120,6 +206,8 @@ async def process_message(message):
     cmd = DiscordCommand.get_cmd(splitcmd[0], server)
 
     if cmd is not None:
+        print(datetime.datetime.now(), "{0}, {1}: {2}{3}".format(server.context, message.author.name, server.prefix, cmd.cmd))
+
         if cmd.message is not None and len(cmd.message) > 0:
             await client.send_message(message.channel, cmd.message)
 
@@ -140,44 +228,9 @@ async def on_message_edit(_, message):
 
 @client.event
 async def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
+    print(datetime.datetime.now(), 'Logged in as', client.user.name, client.user.id)
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 
-from discord import Status, Server, Game, Channel
 from memeviewer.models import AccessToken
-
-
-# noinspection PyBroadException,PyArgumentList
-def _sync_patched(self, data):
-    if 'large' in data:
-        self.large = data['large']
-
-    for presence in data.get('presences', []):
-        user_id = presence['user']['id']
-        member = self.get_member(user_id)
-        if member is not None:
-            member.status = presence['status']
-            try:
-                member.status = Status(member.status)
-            except:
-                pass
-            game = presence.get('game', {})
-            try:
-                member.game = Game(**game) if game else None
-            except:
-                member.game = None
-
-    if 'channels' in data:
-        channels = data['channels']
-        for c in channels:
-            channel = Channel(server=self, **c)
-            self._add_channel(channel)
-
-
-# noinspection PyUnresolvedReferences
-Server._sync = _sync_patched
 client.run(AccessToken.objects.get(name="discord").token)
