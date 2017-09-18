@@ -158,8 +158,8 @@ async def delay_typing(channel):
 
 @client.event
 async def cmd_meme_hl(_, message):
-    DelayedTask(1, delay_typing, message.channel).run()
-    DelayedTask(1.3, delay_message, (message.channel, "<@238650794679730178> kys")).run()
+    DelayedTask(1.4, delay_typing, message.channel).run()
+    DelayedTask(1.7, delay_message, (message.channel, "<@238650794679730178> kys")).run()
 
 CMD_FUN['meme'] = cmd_meme_hl
 
