@@ -24,7 +24,7 @@ class DiscordServer(models.Model):
         return cls.objects.all()
 
     def get_commands(self):
-        return DiscordCommand.objects.filter(Q(server_whitelist=None) | Q(server_whitelist=self))
+        return DiscordCommand.objects.filter(Q(server_whitelist=None) | Q(server_whitelist=self)).order_by('cmd')
 
     def __str__(self):
         return "{0} - {1}".format(self.server_id, self.context)
@@ -39,6 +39,7 @@ class DiscordCommand(models.Model):
     help = models.TextField(null=True, blank=True, verbose_name='Help string')
     server_whitelist = models.ManyToManyField(DiscordServer, blank=True, verbose_name='Server whitelist')
     message = models.TextField(null=True, blank=True, verbose_name='Text message')
+    hidden = models.BooleanField(default=False)
 
     @classmethod
     def get_cmd(cls, cmd, server=None):
