@@ -4,6 +4,14 @@ from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, 
     DiscordServerUserPermission, DiscordServerPermission
 
 
+class DiscordServerPermissionAdmin(admin.ModelAdmin):
+    list_display = ('server', 'permission', 'allow')
+    search_fields = ('permission', 'server__server_id', 'server__name', 'server__context__short_name')
+    ordering = ('server', 'permission')
+
+admin.site.register(DiscordServerPermission, DiscordServerPermissionAdmin)
+
+
 class DiscordServerPermissionInline(admin.TabularInline):
     model = DiscordServerPermission
     extra = 0
@@ -38,6 +46,15 @@ class DiscordUserAdmin(admin.ModelAdmin):
     inlines = [DiscordServerUserInline]
 
 admin.site.register(DiscordUser, DiscordUserAdmin)
+
+
+class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
+    list_display = ('server_user', 'permission', 'allow')
+    search_fields = ('permission', 'server_user__nickname', 'server_user__user__user_id', 'server_user__user__name',
+                     'server_user__server__name')
+    ordering = ('server_user', 'permission')
+
+admin.site.register(DiscordServerUserPermission, DiscordServerUserPermissionAdmin)
 
 
 class DiscordServerUserPermissionInline(admin.TabularInline):
