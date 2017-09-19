@@ -41,8 +41,9 @@ class DiscordServerUserInline(admin.TabularInline):
 
 
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'name')
+    list_display = ('name', 'user_id')
     search_fields = ('user_id', 'name')
+    ordering = ('name',)
     inlines = [DiscordServerUserInline]
 
 admin.site.register(DiscordUser, DiscordUserAdmin)
@@ -65,6 +66,7 @@ class DiscordServerUserPermissionInline(admin.TabularInline):
 class DiscordServerUserAdmin(admin.ModelAdmin):
     list_display = ('nickname', 'user', 'server')
     search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name')
+    ordering = ('nickname', 'server')
     inlines = [DiscordServerUserPermissionInline]
 
 admin.site.register(DiscordServerUser, DiscordServerUserAdmin)
