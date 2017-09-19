@@ -66,7 +66,7 @@ class DiscordServerUserPermissionInline(admin.TabularInline):
 class DiscordServerUserAdmin(admin.ModelAdmin):
     list_display = ('nickname', 'user', 'server')
     search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name')
-    ordering = ('nickname', 'server')
+    ordering = ('server', 'nickname')
     inlines = [DiscordServerUserPermissionInline]
 
 admin.site.register(DiscordServerUser, DiscordServerUserAdmin)
