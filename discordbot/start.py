@@ -179,7 +179,8 @@ async def process_message(message):
 
     msg = message.content
 
-    if client.user in message.mentions:
+    if msg == client.user.mention:
+        await client.send_typing(message.channel)
         await client.send_message(
             message.channel,
             "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
@@ -209,6 +210,7 @@ async def process_message(message):
         print(datetime.datetime.now(), "{0}, {1}: {2}{3}".format(server.context, message.author.name, server.prefix, cmd.cmd))
 
         if cmd.message is not None and len(cmd.message) > 0:
+            await client.send_typing(message.channel)
             await client.send_message(message.channel, cmd.message)
 
         cmd_fun = CMD_FUN.get(cmd.cmd)
