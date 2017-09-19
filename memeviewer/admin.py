@@ -70,8 +70,15 @@ admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
 
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('short_name', 'name')
+    list_display = ('name', 'short_name', 'reset_url')
     search_fields = ('short_name', 'name')
+    ordering = ('name',)
+
+    def reset_url(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset")
+
+    reset_url.allow_tags = True
+    reset_url.short_description = 'Reset queue'
 
 admin.site.register(MemeContext, MemeContextAdmin)
 

@@ -137,6 +137,9 @@ class MemeContext(models.Model):
     def by_id(cls, name):
         return cls.objects.get(short_name=name)
 
+    def get_reset_url(self):
+        return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
+
     def __str__(self):
         return self.name
 

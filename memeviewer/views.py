@@ -3,10 +3,11 @@ import os
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.http import HttpResponseForbidden
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 
 from lamdabotweb.settings import STATIC_URL
-from memeviewer.models import Meem, MemeContext, MemeTemplate
+from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
 from memeviewer.preview import preview_meme
 
 
@@ -23,6 +24,27 @@ def template_preview_view(request, template_name):
         raise Http404("template does not exist")
 
     return redirect(meme.get_info_url())
+
+
+def context_reset_view(request, context):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+
+    queue = ImageInContext.objects.filter(context_link=MemeContext.by_id(context))
+    templates = []
+    sourceimgs = []
+
+    for item in queue:
+        if item.image_type == ImageInContext.IMAGE_TYPE_TEMPLATE:
+            templates.append(item.image_name)
+        else:
+            sourceimgs.append(item.image_name)
+        item.delete()
+
+    return JsonResponse({
+        'templates': templates,
+        'sourceimgs': sourceimgs,
+    })
 
 
 def meme_info_view(request, meme_id):
