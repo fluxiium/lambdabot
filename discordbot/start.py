@@ -154,14 +154,16 @@ CMD_FUN['meme'] = cmd_meme_hl
 
 # ------------------------------------------------
 
+CP_MENTION = "<@289816859002273792>"
+CP_HELLOS = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
+CP_BYES = ['ok bye', 'cya', 'see ya', 'bye', 'later', 'gtg bye']
+
 cptalk = None
-cpmention = "<@289816859002273792>"
-hellos = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
 
 
-async def cptalk_say(channel, message):
-    DelayedTask(1.4, delay_typing, channel).run()
-    DelayedTask(1.4 + (0.2 * len(message)), delay_message, (channel, "{0} {1}".format(cpmention, message))).run()
+async def cptalk_say(channel, message, delay):
+    DelayedTask(delay, delay_typing, channel).run()
+    DelayedTask(delay + min(0.2 * len(message), 4), delay_message, (channel, "{0} {1}".format(CP_MENTION, message))).run()
 
 
 @client.event
@@ -169,7 +171,7 @@ async def cmd_cptalk(message, **_):
     global cptalk
     if cptalk is None:
         cptalk = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-        await cptalk_say(message.channel, random.choice(hellos))
+        await cptalk_say(message.channel, random.choice(CP_HELLOS), 0)
     else:
         cptalk = None
 
@@ -223,7 +225,7 @@ async def process_message(message):
     elif cptalk is not None and client.user in message.mentions and message.author.id == "289816859002273792":
         cpmessage = msg.replace(client.user.mention, "")
         response = cptalk.say(cpmessage)
-        await cptalk_say(message.channel, response)
+        await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(cpmessage), 4))
         return
 
     elif not msg.startswith(server.prefix):
