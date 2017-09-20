@@ -6,6 +6,7 @@ import discord
 import datetime
 
 from cleverwrap import CleverWrap
+from discord import Member
 from discord import Status, Server, Game, Channel
 from django.utils import timezone
 
@@ -196,7 +197,7 @@ async def process_message(message):
     server.update(name=message.server.name)
 
     member = DiscordServerUser.get_by_id(message.author.id, server)
-    member.update(nickname=(message.author.nick if message.author.nick is not None else message.author.name))
+    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
     member.user.update(name=message.author.name)
 
     msg = message.content
