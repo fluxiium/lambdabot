@@ -1,9 +1,11 @@
 import os
 import asyncio
+import random
 import django
 import discord
 import datetime
 
+from cleverwrap import CleverWrap
 from discord import Status, Server, Game, Channel
 from django.utils import timezone
 
@@ -150,6 +152,30 @@ async def cmd_meme_hl(message, **_):
 CMD_FUN['meme'] = cmd_meme_hl
 
 
+# ------------------------------------------------
+
+cptalk = None
+cpmention = "<@289816859002273792>"
+hellos = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
+
+
+async def cptalk_say(channel, message):
+    DelayedTask(1.4, delay_typing, channel).run()
+    DelayedTask(1.4 + (0.2 * len(message)), delay_message, (channel, "{0} {1}".format(cpmention, message))).run()
+
+
+@client.event
+async def cmd_cptalk(message, **_):
+    global cptalk
+    if cptalk is None:
+        cptalk = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
+        await cptalk_say(message.channel, random.choice(hellos))
+    else:
+        cptalk = None
+
+CMD_FUN['cptalk'] = cmd_cptalk
+
+
 # ============================================================================================
 
 from memeviewer.models import Meem, MemeTemplate, AccessToken, sourceimg_count
@@ -193,6 +219,13 @@ async def process_message(message):
             )
         )
         return
+
+    elif cptalk is not None and client.user in message.mentions and message.author.id == "289816859002273792":
+        cpmessage = msg.replace(client.user.mention, "")
+        response = cptalk.say(cpmessage)
+        await cptalk_say(message.channel, response)
+        return
+
     elif not msg.startswith(server.prefix):
         return
     else:
@@ -201,7 +234,9 @@ async def process_message(message):
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
     if cmd is not None and cmd.check_permission(member):
-        print(datetime.datetime.now(), "{0}, {1}: {2}{3}".format(server.context, message.author.name, server.prefix, cmd.cmd))
+        print(datetime.datetime.now(), "{0}, {1}: {2}{3}".format(
+            server.context, message.author.name, server.prefix, cmd.cmd
+        ))
 
         if cmd.message is not None and len(cmd.message) > 0:
             await client.send_typing(message.channel)

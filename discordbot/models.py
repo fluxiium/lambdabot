@@ -67,7 +67,7 @@ class DiscordServerPermission(models.Model):
 class DiscordUser(models.Model):
 
     class Meta:
-        verbose_name = "Discord user"
+        verbose_name = "User"
 
     user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
     name = models.CharField(max_length=64, verbose_name='Username')
@@ -145,7 +145,7 @@ class DiscordServerUser(models.Model):
 class DiscordServerUserPermission(models.Model):
 
     class Meta:
-        verbose_name = "User permission"
+        verbose_name = "Server user permission"
         unique_together = ('server_user', 'permission')
 
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, verbose_name="Server user")
