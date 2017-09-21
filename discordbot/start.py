@@ -240,7 +240,7 @@ async def cmd_murphybot(message, **_):
     else:
         client.send_message(message.channel, "MurphyBot deactivated")
 
-CMD_FUN['murphybot'] = cmd_cptalk
+CMD_FUN['murphybot'] = cmd_murphybot
 
 
 # ============================================================================================
