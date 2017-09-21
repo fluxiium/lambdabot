@@ -18,8 +18,12 @@ from telethon import TelegramClient
 from telethon.tl.types import UpdateShortMessage
 
 
-def log(*args):
-    print(timezone.now(), *args)
+def log(*args, tag=None):
+    if tag is not None:
+        tag = "[{}]".format(tag)
+    else:
+        tag = ""
+    print(timezone.now(), tag, *args)
 
 
 class DelayedTask:
@@ -240,10 +244,10 @@ async def cmd_murphybot(message, **_):
     murphybot_request = None
     murphybot_media = None
     if murphybot_active:
-        log("murphybot activated")
+        log("activated", tag="murphy")
         await client.send_message(message.channel, "MurphyBot activated")
     else:
-        log("murphybot deactivated")
+        log("deactivated", tag="murphy")
         await client.send_message(message.channel, "MurphyBot deactivated")
 
 CMD_FUN['murphybot'] = cmd_murphybot
@@ -369,12 +373,12 @@ async def process_murphy():
                 murphybot_request = request
                 murphybot_request.start_process()
                 await client.send_typing(client.get_channel(murphybot_request.channel_id))
-                log('sending murphybot request {0}', murphybot_request)
+                log('sending request {0}', murphybot_request, tag="murphy")
                 telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
 
         elif murphybot_media is not None:
             await client.send_typing(client.get_channel(murphybot_request.channel_id))
-            log('sending murphybot response')
+            log('sending response', tag="murphy")
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
 
@@ -397,7 +401,7 @@ async def process_murphy():
             murphybot_request = None
             murphybot_media = None
 
-            log('murphybot request answered')
+            log('answered', tag="murphy")
 
         elif timezone.now() - datetime.timedelta(seconds=10) > murphybot_request.process_date and \
                 not murphybot_request.accepted:
@@ -411,7 +415,7 @@ async def process_murphy():
             murphybot_request = None
             murphybot_media = None
 
-            log('murphybot idk')
+            log('idk', tag="murphy")
 
         await asyncio.sleep(1)
 
@@ -426,7 +430,7 @@ def murphybot_handler(update_object):
 
         # received text message
 
-        log('received murphybot message: {0}', textwrap.shorten(update_object.message, width=30))
+        log('received message: {0}', textwrap.shorten(update_object.message, width=30), tag="murphy")
 
         if murphybot_request is not None:
             if update_object.message.startswith("You asked:"):
@@ -440,7 +444,7 @@ def murphybot_handler(update_object):
 
         # received media
 
-        log('received murphybot media')
+        log('received media', tag="murphy")
         murphybot_media = update_object.updates[0].message.media
 
 
@@ -450,7 +454,7 @@ try:
     if telegram_client.is_user_authorized():
         murphybot_active = True
     else:
-        log("no telegram session file")
+        log("no telegram session file", tag="murphy")
         murphybot_error = True
 
 except Exception as ex:
@@ -459,11 +463,11 @@ except Exception as ex:
     murphybot_error = True
 
 if murphybot_active:
-    log('murphybot active')
+    log('active', tag="murphy")
     telegram_client.add_update_handler(murphybot_handler)
     client.loop.create_task(process_murphy())
 else:
-    log('murphybot not active')
+    log('not active', tag="murphy")
 
 # ============================================================================================
 
