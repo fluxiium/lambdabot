@@ -2,4 +2,5 @@
 stty rows 30
 stty cols 100
 source /srv/lambdabot.morchkovalski.com/venv/bin/activate
-PYTHONPATH=/srv/lambdabot.morchkovalski.com/lambdabot python /srv/lambdabot.morchkovalski.com/lambdabot/discordbot/start.py
+cd /srv/lambdabot.morchkovalski.com/lambdabot/discordbot
+PYTHONPATH=/srv/lambdabot.morchkovalski.com/lambdabot python start.py

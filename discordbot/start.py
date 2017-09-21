@@ -378,13 +378,13 @@ def murphybot_handler(update_object):
 murphybot_active = False
 
 # noinspection PyBroadException
-# try:
-telegram_client.connect()
-if telegram_client.is_user_authorized():
-    murphybot_active = True
+try:
+    telegram_client.connect()
+    if telegram_client.is_user_authorized():
+        murphybot_active = True
 
-# except Exception as e:
-#     print(e)
+except Exception as e:
+    print(e)
 
 if murphybot_active:
     print(datetime.datetime.now(), 'murphybot active')
