@@ -2,6 +2,7 @@ import os
 import asyncio
 import random
 import textwrap
+import traceback
 from tempfile import mkdtemp
 
 import django
@@ -359,7 +360,13 @@ async def process_murphy():
             else:
                 tmpdir = mkdtemp()
                 output = telegram_client.download_media(murphybot_media, file=tmpdir)
-                await client.send_file(channel, output, content=mention)
+                # noinspection PyBroadException
+                try:
+                    await client.send_file(channel, output, content=mention)
+                except Exception as ex:
+                    print(ex)
+                    print(traceback.format_exc())
+                    await client.send_message("{0} error ;_;".format(mention))
                 shutil.rmtree(tmpdir)
 
             murphybot_request.mark_processed()
@@ -394,8 +401,9 @@ try:
     if telegram_client.is_user_authorized():
         murphybot_active = True
 
-except Exception as e:
-    print(e)
+except Exception as ex:
+    print(ex)
+    print(traceback.format_exc())
 
 if murphybot_active:
     print(datetime.datetime.now(), 'murphybot active')
