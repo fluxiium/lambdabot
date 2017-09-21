@@ -236,8 +236,10 @@ async def cmd_murphybot(message, **_):
     murphybot_request = None
     murphybot_media = None
     if murphybot_active:
+        print(datetime.datetime.now(), "murphybot activated")
         await client.send_message(message.channel, "MurphyBot activated")
     else:
+        print(datetime.datetime.now(), "murphybot deactivated")
         await client.send_message(message.channel, "MurphyBot deactivated")
 
 CMD_FUN['murphybot'] = cmd_murphybot
@@ -296,7 +298,7 @@ async def process_message(message):
             await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(msg), 4))
             return
 
-        elif msg.lower().startswith("what if ") and member.check_permission("murphybot"):
+        elif msg.lower().startswith("what if ") and member.check_permission("murphybot") and murphybot_active:
             MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
             print(datetime.datetime.now(), "{0}, {1}: {2}".format(server.context, message.author.name, msg))
             return
