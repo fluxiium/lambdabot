@@ -1,5 +1,6 @@
 import textwrap
 
+import datetime
 from django.db import models
 from django.utils import timezone
 
@@ -176,16 +177,28 @@ class MurphyRequest(models.Model):
     request = models.CharField(max_length=256, verbose_name="Request")
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
+    process_date = models.DateTimeField(default=None, null=True, verbose_name='Process start')
+    answer_date = models.DateTimeField(default=None, null=True, verbose_name='Date answered')
     channel_id = models.CharField(max_length=32)
-    processed = models.BooleanField(default=False)
 
     @classmethod
     def ask(cls, question, server_user, channel_id):
         request = cls(request=question, server_user=server_user, channel_id=channel_id)
         request.save()
 
+    @classmethod
+    def get_next(cls, minutes=None):
+        requests = MurphyRequest.objects.filter(process_date__isnull=True)
+        if minutes is not None:
+            requests = requests.filter(ask_date__gte=(timezone.now() - datetime.timedelta(minutes=minutes)))
+        return requests.order_by('ask_date').first()
+
+    def start_process(self):
+        self.processed = timezone.now()
+        self.save()
+
     def mark_processed(self):
-        self.processed = True
+        self.answer_date = timezone.now()
         self.save()
 
     def __str__(self):

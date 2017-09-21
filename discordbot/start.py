@@ -119,7 +119,6 @@ CMD_FUN = {}
 
 # ------------------------------------------------
 
-@client.event
 async def cmd_help(server, member, message, **_):
     helpstr = "{0} available commands:".format(message.author.mention)
     for cmd_data in member.get_commands():
@@ -135,7 +134,6 @@ CMD_FUN['help'] = cmd_help
 
 # ------------------------------------------------
 
-@client.event
 async def cmd_meem(server, member, message, **_):
     from memeviewer.models import Meem
     from memeviewer.preview import preview_meme
@@ -191,7 +189,6 @@ async def delay_typing(channel):
     await client.send_typing(channel)
 
 
-@client.event
 async def cmd_meme_hl(message, **_):
     DelayedTask(1.4, delay_typing, message.channel).run()
     DelayedTask(1.7, delay_message, (message.channel, "<@238650794679730178> kys")).run()
@@ -213,7 +210,6 @@ async def cptalk_say(channel, message, delay):
     DelayedTask(delay + min(0.2 * len(message), 4), delay_message, (channel, "{0} {1}".format(CP_MENTION, message))).run()
 
 
-@client.event
 async def cmd_cptalk(message, **_):
     global cptalk
     if cptalk is None:
@@ -223,6 +219,25 @@ async def cmd_cptalk(message, **_):
         cptalk = None
 
 CMD_FUN['cptalk'] = cmd_cptalk
+
+
+# ------------------------------------------------
+
+murphybot_active = False
+murphybot_request = None
+murphybot_media = None
+
+async def cmd_murphybot(message, **_):
+    global murphybot_active, murphybot_request, murphybot_media
+    murphybot_active = not murphybot_active
+    murphybot_request = None
+    murphybot_media = None
+    if murphybot_active:
+        client.send_message(message.channel, "MurphyBot activated")
+    else:
+        client.send_message(message.channel, "MurphyBot deactivated")
+
+CMD_FUN['murphybot'] = cmd_cptalk
 
 
 # ============================================================================================
@@ -328,22 +343,22 @@ async def on_ready():
 
 # ============================================================================================
 
-murphybot_request = None
-murphybot_media = None
 TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
 telegram_client = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
 
 async def process_murphy():
-    global murphybot_media, murphybot_request
+    global murphybot_media, murphybot_request, murphybot_active
     await client.wait_until_ready()
     while not client.is_closed:
-        if murphybot_request is None:
-            request = MurphyRequest.objects.filter(
-                processed=False,
-                ask_date__gte=(timezone.now() - datetime.timedelta(minutes=5))
-            ).order_by('ask_date').first()
+        if not murphybot_active:
+            await asyncio.sleep(5)
+            continue
+
+        elif murphybot_request is None:
+            request = MurphyRequest.get_next(minutes=5)
             if request is not None:
                 murphybot_request = request
+                murphybot_request.start_process()
                 await client.send_typing(client.get_channel(murphybot_request.channel_id))
                 print(datetime.datetime.now(), 'sending murphybot request {0}', murphybot_request)
                 telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
@@ -366,34 +381,47 @@ async def process_murphy():
                 except Exception as ex:
                     print(ex)
                     print(traceback.format_exc())
-                    await client.send_message("{0} error ;_;".format(mention))
+                    await client.send_message(channel, "{0} error ;_;".format(mention))
                 shutil.rmtree(tmpdir)
 
             murphybot_request.mark_processed()
             murphybot_request = None
             murphybot_media = None
 
+            print(datetime.datetime.now(), 'murphybot request answered')
+
+        else:
+            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date:
+                channel = client.get_channel(murphybot_request.channel_id)
+                mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
+                await client.send_message(channel, "{0} ¯\_(ツ)_/¯".format(mention))
+                murphybot_request.mark_processed()
+                murphybot_request = None
+                murphybot_media = None
+
         await asyncio.sleep(1)
 
 
 def murphybot_handler(update_object):
     global murphybot_media, murphybot_request
-    if isinstance(update_object, UpdateShortMessage) and not update_object.out:
+    if not murphybot_active:
+        return
+
+    elif isinstance(update_object, UpdateShortMessage) and not update_object.out:
         print(datetime.datetime.now(), 'received murphybot message: {0}',
               textwrap.shorten(update_object.message, width=30))
         if not update_object.message.startswith("You asked:"):
             if murphybot_request is not None:
                 murphybot_media = False
+        return
 
-    if murphybot_request is None or not hasattr(update_object, 'updates') or len(update_object.updates) == 0 or \
+    elif murphybot_request is None or not hasattr(update_object, 'updates') or len(update_object.updates) == 0 or \
             not hasattr(update_object.updates[0], 'message') or not hasattr(update_object.updates[0].message, 'media'):
         return
 
     print(datetime.datetime.now(), 'received murphybot media')
     murphybot_media = update_object.updates[0].message.media
 
-
-murphybot_active = False
 
 # noinspection PyBroadException
 try:
