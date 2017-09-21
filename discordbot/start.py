@@ -351,14 +351,15 @@ async def process_murphy():
             await client.send_typing(client.get_channel(murphybot_request.channel_id))
             print(datetime.datetime.now(), 'sending murphybot response')
             channel = client.get_channel(murphybot_request.channel_id)
+            mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
 
             if not murphybot_media:
-                await client.send_message(channel, ":thinking:")
+                await client.send_message(channel, "{0} :thinking:".format(mention))
 
             else:
                 tmpdir = mkdtemp()
                 output = telegram_client.download_media(murphybot_media, file=tmpdir)
-                await client.send_file(channel, output, content="<@{0}>".format(murphybot_request.server_user.user.user_id))
+                await client.send_file(channel, output, content=mention)
                 shutil.rmtree(tmpdir)
 
             murphybot_request.mark_processed()
