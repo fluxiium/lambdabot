@@ -350,14 +350,21 @@ async def process_murphy():
         elif murphybot_media is not None:
             await client.send_typing(client.get_channel(murphybot_request.channel_id))
             print(datetime.datetime.now(), 'sending murphybot response')
-            tmpdir = mkdtemp()
-            output = telegram_client.download_media(murphybot_media, file=tmpdir)
-            await client.send_file(client.get_channel(murphybot_request.channel_id), output,
-                                   content="<@{0}>".format(murphybot_request.server_user.user.user_id))
-            shutil.rmtree(tmpdir)
+            channel = client.get_channel(murphybot_request.channel_id)
+
+            if not murphybot_media:
+                await client.send_message(channel, ":thinking:")
+
+            else:
+                tmpdir = mkdtemp()
+                output = telegram_client.download_media(murphybot_media, file=tmpdir)
+                await client.send_file(channel, output, content="<@{0}>".format(murphybot_request.server_user.user.user_id))
+                shutil.rmtree(tmpdir)
+
             murphybot_request.mark_processed()
             murphybot_request = None
             murphybot_media = None
+
         await asyncio.sleep(1)
 
 
@@ -367,8 +374,8 @@ def murphybot_handler(update_object):
         print(datetime.datetime.now(), 'received murphybot message: {0}',
               textwrap.shorten(update_object.message, width=30))
         if not update_object.message.startswith("You asked:"):
-            murphybot_request = None
-            murphybot_media = None
+            if murphybot_request is not None:
+                murphybot_media = False
 
     if murphybot_request is None or not hasattr(update_object, 'updates') or len(update_object.updates) == 0 or \
             not hasattr(update_object.updates[0], 'message') or not hasattr(update_object.updates[0].message, 'media'):
