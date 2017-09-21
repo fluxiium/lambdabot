@@ -194,7 +194,7 @@ class MurphyRequest(models.Model):
         return requests.order_by('ask_date').first()
 
     def start_process(self):
-        self.processed = timezone.now()
+        self.process_date = timezone.now()
         self.save()
 
     def mark_processed(self):
