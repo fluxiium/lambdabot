@@ -236,9 +236,9 @@ async def cmd_murphybot(message, **_):
     murphybot_request = None
     murphybot_media = None
     if murphybot_active:
-        client.send_message(message.channel, "MurphyBot activated")
+        await client.send_message(message.channel, "MurphyBot activated")
     else:
-        client.send_message(message.channel, "MurphyBot deactivated")
+        await client.send_message(message.channel, "MurphyBot deactivated")
 
 CMD_FUN['murphybot'] = cmd_murphybot
 
