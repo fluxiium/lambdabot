@@ -105,3 +105,4 @@ desktop.ini
 /lamdabotweb/settings_secret.py
 /db.sqlite3
 /static
+*.session

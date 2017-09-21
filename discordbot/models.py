@@ -1,4 +1,7 @@
+import textwrap
+
 from django.db import models
+from django.utils import timezone
 
 from memeviewer.models import MemeContext, Meem
 
@@ -163,3 +166,27 @@ class DiscordMeem(models.Model):
 
     def __str__(self):
         return "{0} ({1})".format(self.meme.meme_id, self.server_user)
+
+
+class MurphyRequest(models.Model):
+
+    class Meta:
+        verbose_name = "Murphy bot request"
+
+    request = models.CharField(max_length=256, verbose_name="Request")
+    server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
+    channel_id = models.CharField(max_length=32)
+    processed = models.BooleanField(default=False)
+
+    @classmethod
+    def ask(cls, question, server_user, channel_id):
+        request = cls(request=question, server_user=server_user, channel_id=channel_id)
+        request.save()
+
+    def mark_processed(self):
+        self.processed = True
+        self.save()
+
+    def __str__(self):
+        return "{0} ({1})".format(textwrap.shorten(self.request, width=50), self.server_user)

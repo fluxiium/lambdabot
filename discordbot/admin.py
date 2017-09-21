@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, \
-    DiscordServerUserPermission, DiscordServerPermission
+    DiscordServerUserPermission, DiscordServerPermission, MurphyRequest
 
 
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
@@ -70,3 +70,11 @@ class DiscordServerUserAdmin(admin.ModelAdmin):
     inlines = [DiscordServerUserPermissionInline]
 
 admin.site.register(DiscordServerUser, DiscordServerUserAdmin)
+
+
+class MurphyRequestAdmin(admin.ModelAdmin):
+    list_display = ('request', 'server_user', 'ask_date', 'processed')
+    search_fields = ('request', 'server_user__user_id', 'server_user__name', 'server_user__server__name')
+    ordering = ('-ask_date',)
+
+admin.site.register(MurphyRequest, MurphyRequestAdmin)
