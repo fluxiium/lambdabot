@@ -343,9 +343,12 @@ async def process_murphy():
             ).order_by('ask_date').first()
             if request is not None:
                 murphybot_request = request
+                await client.send_typing(client.get_channel(murphybot_request.channel_id))
                 print(datetime.datetime.now(), 'sending murphybot request {0}', murphybot_request)
                 telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
+
         elif murphybot_media is not None:
+            await client.send_typing(client.get_channel(murphybot_request.channel_id))
             print(datetime.datetime.now(), 'sending murphybot response')
             tmpdir = mkdtemp()
             output = telegram_client.download_media(murphybot_media, file=tmpdir)
