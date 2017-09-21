@@ -19,7 +19,7 @@ from telethon.tl.types import UpdateShortMessage
 
 
 def log(*args):
-    print(timezone.now(), args)
+    print(timezone.now(), *args)
 
 
 class DelayedTask:
