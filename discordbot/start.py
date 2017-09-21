@@ -347,6 +347,7 @@ try:
     murphybot_active = True
 
 except Exception as e:
+    print(e)
     murphybot_active = False
 
 if murphybot_active:
