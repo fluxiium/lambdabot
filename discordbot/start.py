@@ -403,7 +403,7 @@ async def process_murphy():
 
             log('answered', tag="murphy")
 
-        elif timezone.now() - datetime.timedelta(seconds=10) > murphybot_request.process_date and \
+        elif timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and \
                 not murphybot_request.accepted:
 
             # request being processed, not accepted after 10 seconds, it's time to stop
