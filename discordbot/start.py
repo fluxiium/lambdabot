@@ -226,9 +226,12 @@ CMD_FUN['cptalk'] = cmd_cptalk
 murphybot_active = False
 murphybot_request = None
 murphybot_media = None
+murphybot_error = False
 
 async def cmd_murphybot(message, **_):
     global murphybot_active, murphybot_request, murphybot_media
+    if murphybot_error:
+        return
     murphybot_active = not murphybot_active
     murphybot_request = None
     murphybot_media = None
@@ -428,10 +431,14 @@ try:
     telegram_client.connect()
     if telegram_client.is_user_authorized():
         murphybot_active = True
+    else:
+        print("no telegram session file")
+        murphybot_error = True
 
 except Exception as ex:
     print(ex)
     print(traceback.format_exc())
+    murphybot_error = True
 
 if murphybot_active:
     print(datetime.datetime.now(), 'murphybot active')
