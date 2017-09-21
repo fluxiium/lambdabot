@@ -180,6 +180,7 @@ class MurphyRequest(models.Model):
     process_date = models.DateTimeField(default=None, null=True, verbose_name='Process start')
     answer_date = models.DateTimeField(default=None, null=True, verbose_name='Date answered')
     channel_id = models.CharField(max_length=32)
+    accepted = models.BooleanField(default=False)
 
     @classmethod
     def ask(cls, question, server_user, channel_id):
@@ -195,6 +196,10 @@ class MurphyRequest(models.Model):
 
     def start_process(self):
         self.process_date = timezone.now()
+        self.save()
+
+    def accept(self):
+        self.accepted = True
         self.save()
 
     def mark_processed(self):

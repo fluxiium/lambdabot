@@ -354,10 +354,10 @@ telegram_client = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOK
 async def process_murphy():
     global murphybot_media, murphybot_request, murphybot_active
     await client.wait_until_ready()
+
     while not client.is_closed:
         if not murphybot_active:
-            await asyncio.sleep(5)
-            continue
+            await asyncio.sleep(4)
 
         elif murphybot_request is None:
             request = MurphyRequest.get_next(minutes=5)
@@ -395,37 +395,48 @@ async def process_murphy():
 
             print(datetime.datetime.now(), 'murphybot request answered')
 
-        else:
-            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date:
-                channel = client.get_channel(murphybot_request.channel_id)
-                mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
-                await client.send_message(channel, "{0} ¯\_(ツ)_/¯".format(mention))
-                murphybot_request.mark_processed()
-                murphybot_request = None
-                murphybot_media = None
+        elif timezone.now() - datetime.timedelta(seconds=10) > murphybot_request.process_date and \
+                not murphybot_request.accepted:
+
+            # request being processed, not accepted after 10 seconds, it's time to stop
+
+            channel = client.get_channel(murphybot_request.channel_id)
+            mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
+            await client.send_message(channel, "{0} ¯\_(ツ)_/¯".format(mention))
+            murphybot_request.mark_processed()
+            murphybot_request = None
+            murphybot_media = None
 
         await asyncio.sleep(1)
 
 
 def murphybot_handler(update_object):
     global murphybot_media, murphybot_request
+
     if not murphybot_active:
         return
 
     elif isinstance(update_object, UpdateShortMessage) and not update_object.out:
+
+        # received text message
+
         print(datetime.datetime.now(), 'received murphybot message: {0}',
               textwrap.shorten(update_object.message, width=30))
-        if not update_object.message.startswith("You asked:"):
-            if murphybot_request is not None:
+
+        if murphybot_request is not None:
+            if update_object.message.startswith("You asked:"):
+                murphybot_request.accept()
+            elif not update_object.message.startswith("Wait, I'm still learning"):
                 murphybot_media = False
         return
 
-    elif murphybot_request is None or not hasattr(update_object, 'updates') or len(update_object.updates) == 0 or \
-            not hasattr(update_object.updates[0], 'message') or not hasattr(update_object.updates[0].message, 'media'):
-        return
+    elif murphybot_request is not None and hasattr(update_object, 'updates') and len(update_object.updates) > 0 and\
+            hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media'):
 
-    print(datetime.datetime.now(), 'received murphybot media')
-    murphybot_media = update_object.updates[0].message.media
+        # received media
+
+        print(datetime.datetime.now(), 'received murphybot media')
+        murphybot_media = update_object.updates[0].message.media
 
 
 # noinspection PyBroadException
