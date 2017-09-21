@@ -11,6 +11,7 @@ import datetime
 import shutil
 from cleverwrap import CleverWrap
 from discord import Member, Status, Server, Game, Channel
+from discord.state import ConnectionState
 from django.utils import timezone
 from telethon import TelegramClient
 from telethon.tl.types import UpdateShortMessage
@@ -62,8 +63,47 @@ def _sync_patched(self, data):
             self._add_channel(channel)
 
 
+# noinspection PyBroadException,PyProtectedMember,PyArgumentList
+def parse_presence_update_patched(self, data):
+    server = self._get_server(data.get('guild_id'))
+    if server is None:
+        return
+
+    status = data.get('status')
+    user = data['user']
+    member_id = user['id']
+    member = server.get_member(member_id)
+    if member is None:
+        if 'username' not in user:
+            # sometimes we receive 'incomplete' member data post-removal.
+            # skip these useless cases.
+            return
+
+        member = self._make_member(server, data)
+        server._add_member(member)
+
+    old_member = member._copy()
+    member.status = data.get('status')
+    try:
+        member.status = Status(member.status)
+    except:
+        pass
+
+    game = data.get('game', {})
+    try:
+        member.game = Game(**game) if game else None
+    except:
+        member.game = None
+    member.name = user.get('username', member.name)
+    member.avatar = user.get('avatar', member.avatar)
+    member.discriminator = user.get('discriminator', member.discriminator)
+
+    self.dispatch('member_update', old_member, member)
+
+
 # noinspection PyUnresolvedReferences
 Server._sync = _sync_patched
+ConnectionState.parse_presence_update = parse_presence_update_patched
 
 
 # ============================================================================================
@@ -335,20 +375,16 @@ def murphybot_handler(update_object):
     murphybot_media = update_object.updates[0].message.media
 
 
+murphybot_active = False
+
 # noinspection PyBroadException
-try:
-    telegram_client.connect()
-
-    if not telegram_client.is_user_authorized():
-        telegram_client.sign_in(phone=TELEGRAM_TOKENS[2])
-        code = int(input("Enter telegram code: "))
-        telegram_client.sign_in(code=code)
-
+# try:
+telegram_client.connect()
+if telegram_client.is_user_authorized():
     murphybot_active = True
 
-except Exception as e:
-    print(e)
-    murphybot_active = False
+# except Exception as e:
+#     print(e)
 
 if murphybot_active:
     print(datetime.datetime.now(), 'murphybot active')
