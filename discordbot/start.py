@@ -383,7 +383,12 @@ async def process_murphy():
             mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
 
             if not murphybot_media:
-                await client.send_message(channel, "{0} :thinking:".format(mention))
+                await client.send_message(
+                    channel,
+                    "{0}\n"
+                    "```{1}```\n"
+                    ":thinking:".format(mention, murphybot_request.request)
+                )
 
             else:
                 tmpdir = mkdtemp()
@@ -394,7 +399,12 @@ async def process_murphy():
                 except Exception as ex:
                     print(ex)
                     print(traceback.format_exc())
-                    await client.send_message(channel, "{0} error ;_;".format(mention))
+                    await client.send_message(
+                        channel,
+                        "{0}\n"
+                        "```{1}```\n"
+                        "error ;_;".format(mention, murphybot_request.request)
+                    )
                 shutil.rmtree(tmpdir)
 
             murphybot_request.mark_processed()
@@ -410,7 +420,12 @@ async def process_murphy():
 
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
-            await client.send_message(channel, "{0} ¯\_(ツ)_/¯".format(mention))
+            await client.send_message(
+                channel,
+                "{0}\n"
+                "```{1}```\n"
+                "idk ¯\_(ツ)_/¯".format(mention, murphybot_request.request)
+            )
             murphybot_request.mark_processed()
             murphybot_request = None
             murphybot_media = None
@@ -430,7 +445,7 @@ def murphybot_handler(update_object):
 
         # received text message
 
-        log('received message: {0}', textwrap.shorten(update_object.message, width=30), tag="murphy")
+        log('received message: {0}', textwrap.shorten(update_object.message, width=70), tag="murphy")
 
         if murphybot_request is not None:
             if update_object.message.startswith("You asked:"):
