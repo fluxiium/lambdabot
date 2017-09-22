@@ -164,7 +164,7 @@ class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE, verbose_name='Meme link')
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     channel_id = models.CharField(max_length=32)
-    sent_date = models.DateTimeField(null=True, blank=True, default=timezone.now, verbose_name='Date sent')
+    sent_date = models.DateTimeField(null=True, blank=True, default=None, verbose_name='Date sent')
 
     def mark_sent(self):
         self.sent_date = timezone.now()
