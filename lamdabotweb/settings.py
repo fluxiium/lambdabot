@@ -124,8 +124,3 @@ SOURCEIMG_DIR = os.path.join(RESOURCE_DIR, 'sourceimg')
 TEMPLATE_DIR = os.path.join(RESOURCE_DIR, 'templates')
 
 ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'
-
-TEMPLATE_QUEUE_LENGTH = 77
-SOURCEIMG_QUEUE_LENGTH = 133
-
-SOURCEIMG_BLACKLIST = []

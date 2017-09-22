@@ -3,8 +3,16 @@ from django.contrib import admin
 from discordbot.models import DiscordMeem
 from facebookbot.models import FacebookMeem
 from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext, AccessToken
+    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImageOverride, Setting
 from twitterbot.models import TwitterMeem
+
+
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ('key', 'value')
+    ordering = ('key',)
+    search_fields = ('key', 'value')
+
+admin.site.register(Setting, SettingAdmin)
 
 
 class FacebookInline(admin.TabularInline):
@@ -44,8 +52,15 @@ class ImageInContextAdmin(admin.ModelAdmin):
     list_display_links = ('image_name',)
     search_fields = ('image_name', 'image_type', 'context_link__name', 'context_link__short_name')
 
-
 admin.site.register(ImageInContext, ImageInContextAdmin)
+
+
+class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
+    list_display = ('name', 'add_date', 'disabled')
+    ordering = ('name', '-add_date')
+    search_fields = ('name',)
+
+admin.site.register(MemeSourceImageOverride, MemeSourceImageOverrideAdmin)
 
 
 class MemeTemplateSlotInline(admin.TabularInline):
@@ -64,7 +79,6 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 
     preview_url.allow_tags = True
     preview_url.short_description = 'Preview'
-
 
 admin.site.register(MemeTemplate, MemeTemplateAdmin)
 

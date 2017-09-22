@@ -11,6 +11,13 @@ from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
 from memeviewer.preview import preview_meme
 
 
+def generate_meme_view(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    meme = Meem.generate(context=MemeContext.by_id('template_preview'))
+    return redirect(meme.get_info_url())
+
+
 def template_preview_view(request, template_name):
     if not request.user.is_superuser:
         return HttpResponseForbidden()

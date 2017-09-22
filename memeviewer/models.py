@@ -9,8 +9,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, SOURCEIMG_BLACKLIST, \
-    SOURCEIMG_QUEUE_LENGTH, ALLOWED_EXTENSIONS, TEMPLATE_QUEUE_LENGTH, TEMPLATE_DIR
+from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, ALLOWED_EXTENSIONS, TEMPLATE_DIR
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -32,8 +31,9 @@ def next_template(context):
     # if empty, make new queue
     if result.count() == 0:
 
-        template_queue = MemeTemplate.objects\
-                             .order_by('?')[0:(min(TEMPLATE_QUEUE_LENGTH, MemeTemplate.objects.count()))]
+        queue_length = Setting.objects.filter(key='template queue length').first()
+        queue_length = 77 if queue_length is None else int(queue_length.value)
+        template_queue = MemeTemplate.objects.order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
 
         # save queue to db
         for t in template_queue:
@@ -94,12 +94,28 @@ def next_sourceimg(context):
                  for file in os.listdir(os.path.join(SOURCEIMG_DIR, context.short_name))
                  if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE))
 
+        available_sourceimgs2 = []
+
+        for sourceimg_file in available_sourceimgs:
+            override = MemeSourceImageOverride.objects.filter(name=sourceimg_file).first()
+            if override is not None:
+                if not override.is_in_context(context):
+                    continue
+                if override.disabled:
+                    continue
+            available_sourceimgs2.append(sourceimg_file)
+
+        available_sourceimgs = available_sourceimgs2
+
         if len(available_sourceimgs) == 0:
             raise FileNotFoundError
 
         # create queue
         SYS_RANDOM.shuffle(available_sourceimgs)
-        sourceimg_queue = available_sourceimgs[0:(min(SOURCEIMG_QUEUE_LENGTH, len(available_sourceimgs)))]
+
+        queue_length = Setting.objects.filter(key='sourceimg queue length').first()
+        queue_length = 133 if queue_length is None else int(queue_length.value)
+        sourceimg_queue = available_sourceimgs[0:(min(queue_length, len(available_sourceimgs)))]
 
         # get one source image and remvoe it from queue
         sourceimg = sourceimg_queue.pop()
@@ -116,13 +132,21 @@ def next_sourceimg(context):
         sourceimg = sourceimg_in_context.image_name
         sourceimg_in_context.delete()
 
-    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)) or sourceimg in SOURCEIMG_BLACKLIST:
+    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
         return next_sourceimg(context)
     else:
         return sourceimg
 
 
 # MODELS --------------------------------------------------------------------------------------------------------
+
+class Setting(models.Model):
+
+    class Meta:
+        verbose_name = "Setting"
+
+    key = models.CharField(max_length=64, verbose_name='Key')
+    value = models.CharField(max_length=64, verbose_name='Value')
 
 
 class MemeContext(models.Model):
@@ -139,6 +163,23 @@ class MemeContext(models.Model):
 
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
+
+    def __str__(self):
+        return self.name
+
+
+class MemeSourceImageOverride(models.Model):
+
+    class Meta:
+        verbose_name = "Source image override"
+
+    name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
+    contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
+    disabled = models.BooleanField(default=False, verbose_name='Disabled')
+    add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
+
+    def is_in_context(self, context):
+        return self.contexts.count() == 0 or self.contexts.filter(short_name=context.short_name).first() is not None
 
     def __str__(self):
         return self.name
