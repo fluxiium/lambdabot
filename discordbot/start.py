@@ -478,7 +478,8 @@ def murphybot_handler(update_object):
                 elif not update_object.message.startswith("Attachment received"):
                     murphybot_media = False
             else:
-                if update_object.message.startswith("You asked:") or update_object.message.startswith("Here's an idea"):
+                if update_object.message.startswith("You asked:") or update_object.message.startswith("Here's an idea") or\
+                        update_object.message.startswith("Trying another photo"):
                     murphybot_request.accept()
                 elif not update_object.message.startswith("Wait, I'm still learning"):
                     murphybot_media = False
