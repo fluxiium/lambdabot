@@ -166,6 +166,10 @@ class DiscordMeem(models.Model):
     channel_id = models.CharField(max_length=32)
     sent_date = models.DateTimeField(null=True, blank=True, default=None, verbose_name='Date sent')
 
+    @classmethod
+    def get_next_unsent(cls):
+        return cls.objects.filter(sent_date__isnull=True).order_by('meme__gen_date').first()
+
     def mark_sent(self):
         self.sent_date = timezone.now()
         self.save()
@@ -194,7 +198,7 @@ class MurphyRequest(models.Model):
 
     @classmethod
     def get_next(cls, minutes=None):
-        requests = MurphyRequest.objects.filter(process_date__isnull=True)
+        requests = cls.objects.filter(process_date__isnull=True)
         if minutes is not None:
             requests = requests.filter(ask_date__gte=(timezone.now() - datetime.timedelta(minutes=minutes)))
         return requests.order_by('ask_date').first()

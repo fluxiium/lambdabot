@@ -148,10 +148,10 @@ CMD_FUN['help'] = cmd_help
 
 # ------------------------------------------------
 
+from memeviewer.preview import preview_meme
+from discordbot.models import DiscordMeem
+
 async def cmd_meem(server, member, message, **_):
-    from memeviewer.models import Meem
-    from memeviewer.preview import preview_meme
-    from discordbot.models import DiscordMeem
 
     await client.send_typing(message.channel)
 
@@ -399,13 +399,12 @@ async def process_murphy():
             await asyncio.sleep(4)
 
         elif murphybot_request is None:
-            request = MurphyRequest.get_next(minutes=5)
-            if request is not None:
-                murphybot_request = request
+            murphybot_request = MurphyRequest.get_next(minutes=5)
+            if murphybot_request is not None:
                 murphybot_request.start_process()
                 log('sending request: ', murphybot_request, tag="murphy")
                 await client.send_typing(client.get_channel(murphybot_request.channel_id))
-                if request.is_i_pic_request():
+                if murphybot_request.is_i_pic_request():
                     telegram_client.send_file("@ProjectMurphy_bot", murphybot_request.request[5:])
                 else:
                     telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
