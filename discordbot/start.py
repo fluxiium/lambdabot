@@ -3,13 +3,13 @@ import asyncio
 import random
 import textwrap
 import traceback
-from tempfile import mkdtemp
-
+import uuid
 import django
 import discord
 import datetime
+import requests
 
-import shutil
+from tempfile import mkdtemp
 from cleverwrap import CleverWrap
 from discord import Member, Status, Server, Game, Channel
 from discord.state import ConnectionState
@@ -236,6 +236,7 @@ murphybot_request = None
 murphybot_media = None
 murphybot_error = False
 
+
 async def cmd_murphybot(message, **_):
     global murphybot_active, murphybot_request, murphybot_media
     if murphybot_error:
@@ -258,6 +259,8 @@ CMD_FUN['murphybot'] = cmd_murphybot
 from memeviewer.models import Meem, MemeTemplate, AccessToken, sourceimg_count
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, MurphyRequest
 
+tmpdir = mkdtemp(prefix="lambdabot_")
+
 
 @client.event
 async def process_message(message):
@@ -276,7 +279,7 @@ async def process_message(message):
 
     msg = message.content
 
-    if msg == client.user.mention:
+    if msg == client.user.mention and len(message.attachments) == 0:
         await client.send_typing(message.channel)
         await client.send_message(
             message.channel,
@@ -300,15 +303,35 @@ async def process_message(message):
     elif client.user in message.mentions and msg.startswith(client.user.mention):
 
         msg = msg.replace(client.user.mention, "", 1).strip()
+        log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
 
         if cptalk is not None and message.author.id == "289816859002273792":
             response = cptalk.say(msg)
             await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(msg), 4))
             return
 
-        elif msg.lower().startswith("what if ") and member.check_permission("murphybot") and murphybot_active:
+        if len(message.attachments) > 0:
+            att = message.attachments[0]
+            attachment_filename = os.path.join(tmpdir, "{0}{1}".format(str(uuid.uuid4()), att['filename']))
+            log('received attachment: {0} {1}'.format(att['url'], attachment_filename))
+            downloaded = False
+
+            # noinspection PyShadowingNames
+            try:
+                headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
+                attachment = requests.get(att['proxy_url'], headers=headers)
+                with open(attachment_filename, 'wb') as attachment_file:
+                    attachment_file.write(attachment.content)
+                downloaded = True
+            except Exception as exc:
+                print(exc)
+                print(traceback.format_exc())
+
+            if murphybot_active and downloaded:
+                MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member, channel_id=message.channel.id)
+
+        if msg.lower().startswith("what if ") and member.check_permission("murphybot") and murphybot_active:
             MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
-            log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
             return
 
         return
@@ -372,9 +395,12 @@ async def process_murphy():
             if request is not None:
                 murphybot_request = request
                 murphybot_request.start_process()
+                log('sending request: ', murphybot_request, tag="murphy")
                 await client.send_typing(client.get_channel(murphybot_request.channel_id))
-                log('sending request {0}', murphybot_request, tag="murphy")
-                telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
+                if request.is_i_pic_request():
+                    telegram_client.send_file("@ProjectMurphy_bot", murphybot_request.request[5:])
+                else:
+                    telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
 
         elif murphybot_media is not None:
             await client.send_typing(client.get_channel(murphybot_request.channel_id))
@@ -382,39 +408,34 @@ async def process_murphy():
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
 
-            if not murphybot_media:
-                await client.send_message(
-                    channel,
-                    "{0}\n"
-                    "```{1}```\n"
-                    ":thinking:".format(mention, murphybot_request.request)
-                )
-
+            if murphybot_request.is_i_pic_request():
+                if not murphybot_media:
+                    await client.send_message(channel, "{0} no face detected :cry:".format(mention))
+                    log('no face detected in i pic', tag="murphy")
+                else:
+                    await client.send_message(channel, "{0} face accepted :thumbsup:".format(mention))
+                    log('i pic accepted', tag="murphy")
             else:
-                tmpdir = mkdtemp()
-                output = telegram_client.download_media(murphybot_media, file=tmpdir)
-                # noinspection PyBroadException
-                try:
-                    await client.send_file(channel, output, content=mention)
-                except Exception as ex:
-                    print(ex)
-                    print(traceback.format_exc())
+                if not murphybot_media:
                     await client.send_message(
                         channel,
                         "{0}\n"
                         "```{1}```\n"
-                        "error ;_;".format(mention, murphybot_request.request)
+                        ":thinking:".format(mention, murphybot_request.request)
                     )
-                shutil.rmtree(tmpdir)
+                    log('2edgy4me', tag="murphy")
+
+                else:
+                    output = telegram_client.download_media(murphybot_media, file=tmpdir)
+                    await client.send_file(channel, output, content=mention)
+                    log('answered', tag="murphy")
 
             murphybot_request.mark_processed()
             murphybot_request = None
             murphybot_media = None
 
-            log('answered', tag="murphy")
-
-        elif (timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and not murphybot_request.accepted) or \
-                (timezone.now() - datetime.timedelta(seconds=40) > murphybot_request.process_date and murphybot_request.accepted):
+        elif (timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and murphybot_request.accept_date is None) or \
+                (timezone.now() - datetime.timedelta(seconds=40) > murphybot_request.process_date and murphybot_request.accept_date is not None):
 
             # it's time to stop
 
@@ -445,22 +466,33 @@ def murphybot_handler(update_object):
 
         # received text message
 
-        log('received message: {0}', textwrap.shorten(update_object.message, width=70), tag="murphy")
+        log('received message: ', textwrap.shorten(update_object.message, width=70), tag="murphy")
 
         if murphybot_request is not None:
-            if update_object.message.startswith("You asked:"):
-                murphybot_request.accept()
-            elif not update_object.message.startswith("Wait, I'm still learning"):
-                murphybot_media = False
+            if murphybot_request.is_i_pic_request():
+                if update_object.message.startswith("Thanks, I will keep this photo"):
+                    murphybot_media = True
+                    murphybot_request.accept()
+                elif update_object.message.startswith("Here's an idea"):
+                    murphybot_request.accept()
+                elif not update_object.message.startswith("Attachment received"):
+                    murphybot_media = False
+            else:
+                if update_object.message.startswith("You asked:") or update_object.message.startswith("Here's an idea"):
+                    murphybot_request.accept()
+                elif not update_object.message.startswith("Wait, I'm still learning"):
+                    murphybot_media = False
         return
 
     elif murphybot_request is not None and hasattr(update_object, 'updates') and len(update_object.updates) > 0 and\
             hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media'):
 
         # received media
-
         log('received media', tag="murphy")
-        murphybot_media = update_object.updates[0].message.media
+        if murphybot_request.is_i_pic_request():
+            murphybot_media = True
+        else:
+            murphybot_media = update_object.updates[0].message.media
 
 
 # noinspection PyBroadException
@@ -472,8 +504,8 @@ try:
         log("no telegram session file", tag="murphy")
         murphybot_error = True
 
-except Exception as ex:
-    print(ex)
+except Exception as exc:
+    print(exc)
     print(traceback.format_exc())
     murphybot_error = True
 

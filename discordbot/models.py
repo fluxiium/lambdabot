@@ -1,6 +1,5 @@
-import textwrap
-
 import datetime
+
 from django.db import models
 from django.utils import timezone
 
@@ -177,10 +176,10 @@ class MurphyRequest(models.Model):
     request = models.CharField(max_length=256, verbose_name="Request")
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
-    process_date = models.DateTimeField(default=None, null=True, verbose_name='Process start')
-    answer_date = models.DateTimeField(default=None, null=True, verbose_name='Date answered')
+    process_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Process start')
+    answer_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date answered')
     channel_id = models.CharField(max_length=32)
-    accepted = models.BooleanField(default=False)
+    accept_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date accepted')
 
     @classmethod
     def ask(cls, question, server_user, channel_id):
@@ -199,12 +198,15 @@ class MurphyRequest(models.Model):
         self.save()
 
     def accept(self):
-        self.accepted = True
+        self.accept_date = timezone.now()
         self.save()
 
     def mark_processed(self):
         self.answer_date = timezone.now()
         self.save()
 
+    def is_i_pic_request(self):
+        return self.request.startswith("ipic:")
+
     def __str__(self):
-        return "{0} ({1})".format(textwrap.shorten(self.request, width=50), self.server_user)
+        return "{0} ({1})".format(self.request.split('\n', 1)[0], self.server_user)
