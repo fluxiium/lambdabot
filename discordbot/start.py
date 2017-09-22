@@ -180,13 +180,15 @@ async def cmd_meem(server, member, message, **_):
     meme = Meem.generate(context=server.context)
     preview_meme(meme)
 
-    discord_meme = DiscordMeem(meme=meme, server_user=member)
+    discord_meme = DiscordMeem(meme=meme, server_user=member, channel_id=message.channel.id)
     discord_meme.save()
 
     await client.send_message(
         message.channel,
         content="{0} here's a meme:\n{1}".format(message.author.mention, meme.get_info_url())
     )
+
+    discord_meme.mark_sent()
 
     log('meme generated:', meme)
 
