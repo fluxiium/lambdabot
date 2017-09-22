@@ -413,10 +413,10 @@ async def process_murphy():
 
             log('answered', tag="murphy")
 
-        elif timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and \
-                not murphybot_request.accepted:
+        elif (timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and not murphybot_request.accepted) or \
+                (timezone.now() - datetime.timedelta(seconds=40) > murphybot_request.process_date and murphybot_request.accepted):
 
-            # request being processed, not accepted after 10 seconds, it's time to stop
+            # it's time to stop
 
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
