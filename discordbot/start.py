@@ -25,12 +25,6 @@ def log(*args, tag=None):
         tag = ""
     print(timezone.now(), tag, *args)
 
-log("")
-log("##############################")
-log("#  LambdaBot 3883 - Discord  #")
-log("##############################")
-log("")
-
 
 class DelayedTask:
     def __init__(self, delay, callback, data):
@@ -125,6 +119,12 @@ ConnectionState.parse_presence_update = parse_presence_update_patched
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
+
+log("")
+log("##############################")
+log("#  LambdaBot 3883 - Discord  #")
+log("##############################")
+log("")
 
 client = discord.Client()
 
