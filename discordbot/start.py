@@ -325,6 +325,8 @@ async def process_message(message):
             await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(msg), 4))
             return
 
+        i_pic_request = None
+
         if len(message.attachments) > 0:
             att = message.attachments[0]
             attachment_filename = os.path.join(tmpdir, "{0}{1}".format(str(uuid.uuid4()), att['filename']))
@@ -342,10 +344,12 @@ async def process_message(message):
                 log_exc(exc)
 
             if murphybot_active and downloaded:
-                MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member, channel_id=message.channel.id)
+                i_pic_request = MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member,
+                                                  channel_id=message.channel.id)
 
         if msg.lower().startswith("what if ") and member.check_permission("murphybot") and murphybot_active:
-            MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
+            MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id,
+                              related_request=i_pic_request)
             return
 
         return
@@ -415,13 +419,16 @@ async def process_murphy():
         elif murphybot_request is None:
             murphybot_request = MurphyRequest.get_next(minutes=5)
             if murphybot_request is not None:
-                murphybot_request.start_process()
-                log('sending request: ', murphybot_request, tag="murphy")
-                await client.send_typing(client.get_channel(murphybot_request.channel_id))
-                if murphybot_request.is_i_pic_request():
-                    telegram_client.send_file("@ProjectMurphy_bot", murphybot_request.request[5:])
+                if murphybot_request.related_request is not None and murphybot_request.accept_date is None:
+                    murphy_request_processed()
                 else:
-                    telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
+                    murphybot_request.start_process()
+                    log('sending request: ', murphybot_request, tag="murphy")
+                    await client.send_typing(client.get_channel(murphybot_request.channel_id))
+                    if murphybot_request.is_i_pic_request():
+                        telegram_client.send_file("@ProjectMurphy_bot", murphybot_request.request[5:])
+                    else:
+                        telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
 
         elif murphybot_media is not None:
             await client.send_typing(client.get_channel(murphybot_request.channel_id))

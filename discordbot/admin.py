@@ -74,7 +74,7 @@ admin.site.register(DiscordServerUser, DiscordServerUserAdmin)
 
 class MurphyRequestAdmin(admin.ModelAdmin):
     list_display = ('request', 'server_user', 'ask_date', 'process_date', 'accept_date', 'answer_date')
-    search_fields = ('request', 'server_user__user_id', 'server_user__name', 'server_user__server__name')
+    search_fields = ('request', 'server_user__user_id', 'server_user__nickname', 'server_user__server__name')
     ordering = ('-ask_date',)
 
 admin.site.register(MurphyRequest, MurphyRequestAdmin)

@@ -190,11 +190,13 @@ class MurphyRequest(models.Model):
     answer_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date answered')
     channel_id = models.CharField(max_length=32)
     accept_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date accepted')
+    related_request = models.ForeignKey('self', on_delete=models.SET_NULL, default=None, null=True, blank=True, verbose_name='Related request')
 
     @classmethod
-    def ask(cls, question, server_user, channel_id):
-        request = cls(request=question, server_user=server_user, channel_id=channel_id)
+    def ask(cls, question, server_user, channel_id, related_request=None):
+        request = cls(request=question, server_user=server_user, channel_id=channel_id, related_request=related_request)
         request.save()
+        return request
 
     @classmethod
     def get_next(cls, minutes=None):
