@@ -26,6 +26,13 @@ def log(*args, tag=None):
     print(timezone.now(), tag, *args)
 
 
+# noinspection PyShadowingNames
+def log_exc(exc):
+    log("--- ERROR ---")
+    print(exc)
+    print(traceback.format_exc())
+
+
 class DelayedTask:
     def __init__(self, delay, callback, data):
         self._delay = delay
@@ -332,8 +339,7 @@ async def process_message(message):
                     attachment_file.write(attachment.content)
                 downloaded = True
             except Exception as exc:
-                print(exc)
-                print(traceback.format_exc())
+                log_exc(exc)
 
             if murphybot_active and downloaded:
                 MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member, channel_id=message.channel.id)
@@ -390,6 +396,14 @@ async def on_ready():
 TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
 telegram_client = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
 
+
+def murphy_request_processed():
+    global murphybot_media, murphybot_request, murphybot_active
+    murphybot_request.mark_processed()
+    murphybot_request = None
+    murphybot_media = None
+
+
 async def process_murphy():
     global murphybot_media, murphybot_request, murphybot_active
     await client.wait_until_ready()
@@ -437,9 +451,7 @@ async def process_murphy():
                     await client.send_file(channel, output, content=mention)
                     log('answered', tag="murphy")
 
-            murphybot_request.mark_processed()
-            murphybot_request = None
-            murphybot_media = None
+            murphy_request_processed()
 
         elif (timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and murphybot_request.accept_date is None) or \
                 (timezone.now() - datetime.timedelta(seconds=40) > murphybot_request.process_date and murphybot_request.accept_date is not None):
@@ -454,9 +466,8 @@ async def process_murphy():
                 "```{1}```\n"
                 "idk ¯\_(ツ)_/¯".format(mention, murphybot_request.request)
             )
-            murphybot_request.mark_processed()
-            murphybot_request = None
-            murphybot_media = None
+
+            murphy_request_processed()
 
             log('idk', tag="murphy")
 
@@ -513,8 +524,7 @@ try:
         murphybot_error = True
 
 except Exception as exc:
-    print(exc)
-    print(traceback.format_exc())
+    log_exc(exc)
     murphybot_error = True
 
 if murphybot_active:
