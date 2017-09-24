@@ -222,3 +222,20 @@ class MurphyRequest(models.Model):
 
     def __str__(self):
         return "{0} ({1})".format(self.request.split('\n', 1)[0], self.server_user)
+
+
+class ProcessedMessage(models.Model):
+
+    class Meta:
+        verbose_name = "Processed message"
+
+    msg_id = models.CharField(max_length=32, verbose_name="Message ID")
+    process_date = models.DateTimeField(default=timezone.now, verbose_name='Date processed')
+
+    @classmethod
+    def was_id_processed(cls, msg_id):
+        return cls.objects.filter(msg_id=msg_id).first() is not None
+
+    @classmethod
+    def process_id(cls, msg_id):
+        cls(msg_id=msg_id).save()

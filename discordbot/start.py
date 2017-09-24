@@ -156,7 +156,8 @@ CMD_FUN['help'] = cmd_help
 # ------------------------------------------------
 
 from memeviewer.preview import preview_meme
-from discordbot.models import DiscordMeem
+from discordbot.models import DiscordMeem, ProcessedMessage
+
 
 async def cmd_meem(server, member, message, **_):
 
@@ -278,12 +279,12 @@ tmpdir = mkdtemp(prefix="lambdabot_")
 
 
 @client.event
-async def process_message(message):
+async def process_message(message, old_message=None):
 
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)
 
-    if server is None:
+    if server is None or ProcessedMessage.was_id_processed(message.id):
         return
 
     server.update(name=message.server.name)
@@ -295,6 +296,9 @@ async def process_message(message):
     msg = message.content
 
     if msg == client.user.mention and len(message.attachments) == 0:
+
+        ProcessedMessage.process_id(message.id)
+
         await client.send_typing(message.channel)
         await client.send_message(
             message.channel,
@@ -317,12 +321,17 @@ async def process_message(message):
 
     elif client.user in message.mentions and msg.startswith(client.user.mention):
 
+        ProcessedMessage.process_id(message.id)
+
         msg = msg.replace(client.user.mention, "", 1).strip()
         log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
 
         if cptalk is not None and message.author.id == "289816859002273792":
             response = cptalk.say(msg)
             await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(msg), 4))
+            return
+
+        if not member.check_permission("murphybot") or not murphybot_active:
             return
 
         i_pic_request = None
@@ -347,7 +356,7 @@ async def process_message(message):
                 i_pic_request = MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member,
                                                   channel_id=message.channel.id)
 
-        if msg.lower().startswith("what if ") and member.check_permission("murphybot") and murphybot_active:
+        if msg.lower().startswith("what if "):
             MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id,
                               related_request=i_pic_request)
             return
@@ -362,6 +371,9 @@ async def process_message(message):
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
     if cmd is not None and cmd.check_permission(member):
+
+        ProcessedMessage.process_id(message.id)
+
         log("{0}, {1}: {2}{3}".format(
             server.context, message.author.name, server.prefix, cmd.cmd
         ))
@@ -385,8 +397,8 @@ async def on_message(message):
 
 
 @client.event
-async def on_message_edit(_, message):
-    await process_message(message)
+async def on_message_edit(old_message, message):
+    await process_message(message, old_message)
 
 
 @client.event
@@ -419,7 +431,7 @@ async def process_murphy():
         elif murphybot_request is None:
             murphybot_request = MurphyRequest.get_next(minutes=5)
             if murphybot_request is not None:
-                if murphybot_request.related_request is not None and murphybot_request.accept_date is None:
+                if murphybot_request.related_request is not None and murphybot_request.related_request.accept_date is None:
                     murphy_request_processed()
                 else:
                     murphybot_request.start_process()
