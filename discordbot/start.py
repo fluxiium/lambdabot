@@ -7,6 +7,8 @@ import uuid
 import django
 import discord
 import datetime
+
+import re
 import requests
 
 from tempfile import mkdtemp
@@ -230,19 +232,33 @@ cb_conversations = {}
 
 
 async def cptalk_say(channel, sender_id, message, delay):
-    DelayedTask(delay, delay_typing, channel).run()
-    DelayedTask(delay + min(0.17 * len(message), 4), delay_message, (channel, "<@{0}> {1}".format(sender_id, message))).run()
+    if delay > 0:
+        DelayedTask(delay, delay_typing, channel).run()
+        delay += min(0.17 * len(message), 4)
+    DelayedTask(delay, delay_message, (channel, "<@{0}> {1}".format(sender_id, message))).run()
 
 
 async def cmd_cptalk(message, **_):
     global cb_conversations
     if cb_conversations.get(CP_ID) is None:
         cb_conversations[CP_ID] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-        await cptalk_say(message.channel, CP_ID, random.choice(CP_HELLOS), 0)
+        await cptalk_say(message.channel, CP_ID, random.choice(CP_HELLOS), 0.1)
     else:
         cb_conversations[CP_ID] = None
 
 CMD_FUN['cptalk'] = cmd_cptalk
+
+
+async def cb_talk(channel, user, message, nodelay=False):
+    if cb_conversations.get(user.user.user_id) is None:
+        if user.user.user_id == CP_ID:
+            return
+        log("creating session for {}".format(user), tag="cleverbot")
+        cb_conversations[user.user.user_id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
+
+    response = cb_conversations[user.user.user_id].say(message)
+    log("response: {}".format(response), tag="cleverbot")
+    await cptalk_say(channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
 
 
 # ============================================================================================
@@ -269,40 +285,26 @@ async def process_message(message, old_message=None):
     member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
     member.user.update(name=message.author.name)
 
-    msg = message.content
+    msg = message.content.strip()
 
-    if msg == client.user.mention and len(message.attachments) == 0:
+    if client.user in message.mentions:
 
-        ProcessedMessage.process_id(message.id)
+        if msg.startswith(client.user.mention):
+            msg = msg.replace(client.user.mention, "", 1).strip()
+        elif msg.endswith(client.user.mention):
+            msg = msg.rsplit(client.user.mention, 1)[0].strip()
+        else:
+            return
 
-        await client.send_typing(message.channel)
-        await client.send_message(
-            message.channel,
-            "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
-            "random meme template and combining it with one or more randomly picked source images related to "
-            "Half-Life. Currently there are **{1:,}** available templates and **{2:,}** available source images, for a "
-            "total of **{3:,}** possible combinations.\n"
-            "\n"
-            "Type **!help** to see a list of available commands.\n"
-            "\n"
-            "*Homepage: https://lambdabot.morchkovalski.com\n"
-            "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
-                message.author.mention,
-                MemeTemplate.count(server.context),
-                sourceimg_count(server.context),
-                Meem.possible_combinations(server.context)
-            )
-        )
-        return
-
-    elif client.user in message.mentions and msg.startswith(client.user.mention):
-
-        ProcessedMessage.process_id(message.id)
-
-        msg = msg.replace(client.user.mention, "", 1).strip()
         log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
-
+        ProcessedMessage.process_id(message.id)
         downloaded_attachment = None
+        dl_embed_url = None
+
+        if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
+            await asyncio.sleep(2)
+
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
 
         if len(message.attachments) > 0:
             att = message.attachments[0]
@@ -311,8 +313,6 @@ async def process_message(message, old_message=None):
 
             # noinspection PyShadowingNames
             try:
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
                 attachment = requests.get(att['proxy_url'], headers=headers)
                 with open(attachment_filename, 'wb') as attachment_file:
                     attachment_file.write(attachment.content)
@@ -320,12 +320,56 @@ async def process_message(message, old_message=None):
             except Exception as exc:
                 log_exc(exc)
 
+        elif len(message.embeds) > 0:
+            emb = message.embeds[0]
+            att = emb.get('image')
+            if att is None:
+                att = emb.get('thumbnail')
+
+            if att is not None:
+                attachment_filename = os.path.join(tmpdir, str(uuid.uuid4()))
+                log('received embed: {0} {1}'.format(att['url'], attachment_filename))
+
+                # noinspection PyShadowingNames
+                try:
+                    attachment = requests.get(att['proxy_url'], headers=headers)
+                    with open(attachment_filename, 'wb') as attachment_file:
+                        attachment_file.write(attachment.content)
+                    downloaded_attachment = attachment_filename
+                    dl_embed_url = emb['url']
+                except Exception as exc:
+                    log_exc(exc)
+
+        elif msg == "":
+            await client.send_typing(message.channel)
+            await client.send_message(
+                message.channel,
+                "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
+                "random meme template and combining it with one or more randomly picked source images related to "
+                "Half-Life. Currently there are **{1:,}** available templates and **{2:,}** available source images,"
+                "for a total of **{3:,}** possible combinations.\n"
+                "\n"
+                "Type **!help** to see a list of available commands.\n"
+                "\n"
+                "*Homepage: https://lambdabot.morchkovalski.com\n"
+                "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
+                    message.author.mention,
+                    MemeTemplate.count(server.context),
+                    sourceimg_count(server.context),
+                    Meem.possible_combinations(server.context)
+                )
+            )
+            return
+
         answered = False
 
         if member.check_permission("murphybot"):
             answered = True
 
-            if msg.lower().startswith("what if i ") or (msg == "" and len(message.attachments) > 0):
+            if dl_embed_url is not None:
+                msg = msg.replace(dl_embed_url, "", 1).strip()
+
+            if msg.lower().startswith("what if i ") or (msg == "" and downloaded_attachment is not None):
                 if msg == "" and downloaded_attachment is not None:
                     MurphyRequest.ask(question=None, server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
                 elif msg != "":
@@ -338,15 +382,7 @@ async def process_message(message, old_message=None):
                 answered = False
 
         if not answered and member.check_permission("cleverbot"):
-            if cb_conversations.get(message.author.id) is None:
-                if message.author.id == CP_ID:
-                    return
-                log("creating session for {}".format(member), tag="cleverbot")
-                cb_conversations[message.author.id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-
-            response = cb_conversations[message.author.id].say(msg)
-            log("response: {}".format(response), tag="cleverbot")
-            await cptalk_say(message.channel, message.author.id, response, 0.2 + min(0.04 * len(msg), 4))
+            await cb_talk(message.channel, member, msg)
 
         return
 
@@ -553,7 +589,10 @@ async def process_murphy():
 
         elif murphybot_state == "idk":
             log_murphy("idk")
-            await client.send_message(channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+            if murphybot_request.server_user.check_permission("cleverbot"):
+                await cb_talk(channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
+            else:
+                await client.send_message(channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
 
         elif murphybot_state == "error":
             log_murphy("error")
