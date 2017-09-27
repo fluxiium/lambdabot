@@ -47,6 +47,7 @@ class DiscordCommand(models.Model):
 
     def check_permission(self, member):
         allow = member.check_permission("cmd_{0}".format(self.cmd))
+        print(allow)
         return allow if allow is not None else not self.restricted
 
     @classmethod
@@ -57,14 +58,28 @@ class DiscordCommand(models.Model):
         return self.cmd
 
 
+class DiscordPermission(models.Model):
+
+    class Meta:
+        verbose_name = "Permission"
+
+    name = models.CharField(max_length=64, verbose_name="Permission", primary_key=True)
+
+    def __str__(self):
+        return str(self.name)
+
+
 class DiscordServerPermission(models.Model):
 
     class Meta:
         verbose_name = "Server permission"
 
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    permission = models.CharField(max_length=64, verbose_name="Permission")
+    permission = models.ForeignKey(DiscordPermission, on_delete=models.CASCADE, verbose_name="Permission")
     allow = models.BooleanField(default=True, verbose_name="Allow")
+
+    def __str__(self):
+        return "{0} - {1}".format(self.server, self.permission)
 
 
 class DiscordUser(models.Model):
@@ -128,6 +143,10 @@ class DiscordServerUser(models.Model):
         return result
 
     def check_permission(self, permission):
+        permission = DiscordPermission.objects.filter(name=permission).first()
+        print(permission)
+        if permission is None:
+            return None
         perm_data = DiscordServerUserPermission.objects.filter(server_user=self, permission=permission).first()
         if perm_data:
             return perm_data.allow
@@ -152,8 +171,11 @@ class DiscordServerUserPermission(models.Model):
         unique_together = ('server_user', 'permission')
 
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, verbose_name="Server user")
-    permission = models.CharField(max_length=64, verbose_name="Permission")
+    permission = models.ForeignKey(DiscordPermission, on_delete=models.CASCADE, verbose_name="Permission")
     allow = models.BooleanField(default=True, verbose_name="Allow")
+
+    def __str__(self):
+        return "{0} - {1}".format(self.server_user, self.permission)
 
 
 class DiscordMeem(models.Model):
