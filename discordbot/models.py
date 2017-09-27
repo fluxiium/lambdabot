@@ -47,7 +47,6 @@ class DiscordCommand(models.Model):
 
     def check_permission(self, member):
         allow = member.check_permission("cmd_{0}".format(self.cmd))
-        print(allow)
         return allow if allow is not None else not self.restricted
 
     @classmethod
@@ -144,7 +143,6 @@ class DiscordServerUser(models.Model):
 
     def check_permission(self, permission):
         permission = DiscordPermission.objects.filter(name=permission).first()
-        print(permission)
         if permission is None:
             return None
         perm_data = DiscordServerUserPermission.objects.filter(server_user=self, permission=permission).first()
