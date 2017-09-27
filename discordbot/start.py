@@ -443,8 +443,12 @@ async def process_murphy():
             if murphybot_request.question is None and murphybot_request.face_pic is not None and \
                     os.path.isfile(murphybot_request.face_pic):
                 log_murphy("sending face pic")
-                murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
-                murphybot_state = "1"
+                try:
+                    murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
+                    murphybot_state = "1"
+                except Exception as ex:
+                    log_exc(ex)
+                    murphybot_state = "error"
                 continue
 
             elif murphybot_request.question.startswith("what if i "):
@@ -467,8 +471,12 @@ async def process_murphy():
 
                 elif os.path.isfile(murphybot_request.face_pic):
                     log_murphy("sending face pic from request")
-                    murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
-                    murphybot_state = "3"
+                    try:
+                        murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
+                        murphybot_state = "3"
+                    except Exception as ex:
+                        log_exc(ex)
+                        murphybot_state = "error"
                     continue
 
                 else:
@@ -492,8 +500,12 @@ async def process_murphy():
 
             else:
                 log_murphy("reuploading channel face pic")
-                murphybot.send_file(MURPHYBOT_HANDLE, channel_facepic)
-                murphybot_state = "1" if murphybot_state == "reupload face" else "3"
+                try:
+                    murphybot.send_file(MURPHYBOT_HANDLE, channel_facepic)
+                    murphybot_state = "1" if murphybot_state == "reupload face" else "3"
+                except Exception as ex:
+                    log_exc(ex)
+                    murphybot_state = "error"
                 continue
 
         elif murphybot_state in ["1", "3"]:
@@ -542,6 +554,10 @@ async def process_murphy():
         elif murphybot_state == "idk":
             log_murphy("idk")
             await client.send_message(channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+
+        elif murphybot_state == "error":
+            log_murphy("error")
+            await client.send_message(channel, "{} error :cry:".format(mention))
 
         murphybot_request.mark_processed()
         murphybot_state = "0"
