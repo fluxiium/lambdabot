@@ -183,45 +183,71 @@ class MurphyRequest(models.Model):
     class Meta:
         verbose_name = "Murphy bot request"
 
-    request = models.CharField(max_length=256, verbose_name="Request")
+    question = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Question")
+    face_pic = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Face pic")
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
-    process_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Process start')
-    answer_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date answered')
-    channel_id = models.CharField(max_length=32)
-    accept_date = models.DateTimeField(default=None, null=True, blank=True, verbose_name='Date accepted')
-    related_request = models.ForeignKey('self', on_delete=models.SET_NULL, default=None, null=True, blank=True, verbose_name='Related request')
+    channel_id = models.CharField(max_length=32, verbose_name="Discord channel ID")
+    processed = models.BooleanField(default=False, verbose_name="Processed?")
 
     @classmethod
-    def ask(cls, question, server_user, channel_id, related_request=None):
-        request = cls(request=question, server_user=server_user, channel_id=channel_id, related_request=related_request)
+    def ask(cls, question, server_user, channel_id, face_pic=None):
+        request = cls(question=question, server_user=server_user, channel_id=channel_id, face_pic=face_pic)
         request.save()
         return request
 
     @classmethod
-    def get_next(cls, minutes=None):
-        requests = cls.objects.filter(process_date__isnull=True)
+    def get_next_unprocessed(cls, minutes=None):
+        requests = cls.objects.filter(processed=False)
         if minutes is not None:
             requests = requests.filter(ask_date__gte=(timezone.now() - datetime.timedelta(minutes=minutes)))
         return requests.order_by('ask_date').first()
 
-    def start_process(self):
-        self.process_date = timezone.now()
-        self.save()
-
-    def accept(self):
-        self.accept_date = timezone.now()
-        self.save()
-
     def mark_processed(self):
-        self.answer_date = timezone.now()
+        self.processed = True
         self.save()
-
-    def is_i_pic_request(self):
-        return self.request.startswith("ipic:")
 
     def __str__(self):
-        return "{0} ({1})".format(self.request.split('\n', 1)[0], self.server_user)
+        if self.face_pic is not None and self.question is not None:
+            rstr = "{0} ({1})".format(self.question, self.face_pic)
+        elif self.question is not None:
+            rstr = self.question
+        else:
+            rstr = self.face_pic
+        return "{0} ({1})".format(rstr, self.server_user)
+
+
+class MurphyFacePic(models.Model):
+
+    class Meta:
+        verbose_name = "Murphy bot face pic"
+
+    channel_id = models.CharField(max_length=32, primary_key=True, verbose_name="Discord channel ID")
+    face_pic = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Face pic")
+    last_used = models.DateTimeField(default=timezone.now, verbose_name='Last used')
+
+    @classmethod
+    def set(cls, channel_id, face_pic=None):
+        face_pic_data = cls.objects.filter(channel_id=channel_id).first()
+        if face_pic_data is None:
+            face_pic_data = cls(channel_id=channel_id, face_pic=face_pic)
+        elif face_pic is not None:
+            face_pic_data.face_pic = face_pic
+        face_pic_data.last_used = timezone.now()
+        face_pic_data.save()
+
+    @classmethod
+    def get(cls, channel_id):
+        face_pic_data = cls.objects.filter(channel_id=channel_id).first()
+        return face_pic_data.face_pic if face_pic_data is not None else None
+
+    @classmethod
+    def get_last_used(cls):
+        face_pic_data = cls.objects.order_by('-last_used').first()
+        return face_pic_data.face_pic if face_pic_data is not None else None
+
+    def __str__(self):
+        return self.channel_id
 
 
 class ProcessedMessage(models.Model):

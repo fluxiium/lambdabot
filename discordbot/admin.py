@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, \
-    DiscordServerUserPermission, DiscordServerPermission, MurphyRequest, ProcessedMessage
+    DiscordServerUserPermission, DiscordServerPermission, MurphyRequest, ProcessedMessage, MurphyFacePic
 
 
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
@@ -73,11 +73,20 @@ admin.site.register(DiscordServerUser, DiscordServerUserAdmin)
 
 
 class MurphyRequestAdmin(admin.ModelAdmin):
-    list_display = ('request', 'server_user', 'ask_date', 'process_date', 'accept_date', 'answer_date')
-    search_fields = ('request', 'server_user__user_id', 'server_user__nickname', 'server_user__server__name')
+    list_display = ('question', 'face_pic', 'server_user', 'ask_date', 'channel_id', 'processed')
+    search_fields = ('question', 'face_pic', 'server_user__user_id', 'server_user__nickname',
+                     'server_user__server__name', 'channel_id')
     ordering = ('-ask_date',)
 
 admin.site.register(MurphyRequest, MurphyRequestAdmin)
+
+
+class MurphyFacePicAdmin(admin.ModelAdmin):
+    list_display = ('channel_id', 'face_pic', 'last_used')
+    search_fields = ('channel_id', 'face_pic', 'last_used')
+    ordering = ('-last_used',)
+
+admin.site.register(MurphyFacePic, MurphyFacePicAdmin)
 
 
 class ProcessedMessageAdmin(admin.ModelAdmin):

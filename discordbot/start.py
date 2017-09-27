@@ -156,7 +156,7 @@ CMD_FUN['help'] = cmd_help
 # ------------------------------------------------
 
 from memeviewer.preview import preview_meme
-from discordbot.models import DiscordMeem, ProcessedMessage
+from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic
 
 
 async def cmd_meem(server, member, message, **_):
@@ -222,52 +222,27 @@ CMD_FUN['meme'] = cmd_meme_hl
 
 # ------------------------------------------------
 
-CP_MENTION = "<@289816859002273792>"
+CP_ID = "289816859002273792"
 CP_HELLOS = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
 CP_BYES = ['ok bye', 'cya', 'see ya', 'bye', 'later', 'gtg bye']
 
-cptalk = None
+cb_conversations = {}
 
 
-async def cptalk_say(channel, message, delay):
+async def cptalk_say(channel, sender_id, message, delay):
     DelayedTask(delay, delay_typing, channel).run()
-    DelayedTask(delay + min(0.2 * len(message), 4), delay_message, (channel, "{0} {1}".format(CP_MENTION, message))).run()
+    DelayedTask(delay + min(0.17 * len(message), 4), delay_message, (channel, "<@{0}> {1}".format(sender_id, message))).run()
 
 
 async def cmd_cptalk(message, **_):
-    global cptalk
-    if cptalk is None:
-        cptalk = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-        await cptalk_say(message.channel, random.choice(CP_HELLOS), 0)
+    global cb_conversations
+    if cb_conversations.get(CP_ID) is None:
+        cb_conversations[CP_ID] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
+        await cptalk_say(message.channel, CP_ID, random.choice(CP_HELLOS), 0)
     else:
-        cptalk = None
+        cb_conversations[CP_ID] = None
 
 CMD_FUN['cptalk'] = cmd_cptalk
-
-
-# ------------------------------------------------
-
-murphybot_active = False
-murphybot_request = None
-murphybot_media = None
-murphybot_error = False
-
-
-async def cmd_murphybot(message, **_):
-    global murphybot_active, murphybot_request, murphybot_media
-    if murphybot_error:
-        return
-    murphybot_active = not murphybot_active
-    murphybot_request = None
-    murphybot_media = None
-    if murphybot_active:
-        log("activated", tag="murphy")
-        await client.send_message(message.channel, "MurphyBot activated")
-    else:
-        log("deactivated", tag="murphy")
-        await client.send_message(message.channel, "MurphyBot deactivated")
-
-CMD_FUN['murphybot'] = cmd_murphybot
 
 
 # ============================================================================================
@@ -280,6 +255,7 @@ tmpdir = mkdtemp(prefix="lambdabot_")
 
 @client.event
 async def process_message(message, old_message=None):
+    global cb_conversations
 
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)
@@ -326,45 +302,57 @@ async def process_message(message, old_message=None):
         msg = msg.replace(client.user.mention, "", 1).strip()
         log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
 
-        if cptalk is not None and message.author.id == "289816859002273792":
-            response = cptalk.say(msg)
-            await cptalk_say(message.channel, response, 0.5 + min(0.07 * len(msg), 4))
-            return
-
-        if not member.check_permission("murphybot") or not murphybot_active:
-            return
-
-        i_pic_request = None
+        downloaded_attachment = None
 
         if len(message.attachments) > 0:
             att = message.attachments[0]
             attachment_filename = os.path.join(tmpdir, "{0}{1}".format(str(uuid.uuid4()), att['filename']))
             log('received attachment: {0} {1}'.format(att['url'], attachment_filename))
-            downloaded = False
 
             # noinspection PyShadowingNames
             try:
-                headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
                 attachment = requests.get(att['proxy_url'], headers=headers)
                 with open(attachment_filename, 'wb') as attachment_file:
                     attachment_file.write(attachment.content)
-                downloaded = True
+                downloaded_attachment = attachment_filename
             except Exception as exc:
                 log_exc(exc)
 
-            if murphybot_active and downloaded:
-                i_pic_request = MurphyRequest.ask(question="ipic:{0}".format(attachment_filename), server_user=member,
-                                                  channel_id=message.channel.id)
+        answered = False
 
-        if msg.lower().startswith("what if "):
-            MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id,
-                              related_request=i_pic_request)
-            return
+        if member.check_permission("murphybot"):
+            answered = True
+
+            if msg.lower().startswith("what if i ") or (msg == "" and len(message.attachments) > 0):
+                if msg == "" and downloaded_attachment is not None:
+                    MurphyRequest.ask(question=None, server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
+                elif msg != "":
+                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
+
+            elif msg.lower().startswith("what if "):
+                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
+
+            else:
+                answered = False
+
+        if not answered and member.check_permission("cleverbot"):
+            if cb_conversations.get(message.author.id) is None:
+                if message.author.id == CP_ID:
+                    return
+                log("creating session for {}".format(member), tag="cleverbot")
+                cb_conversations[message.author.id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
+
+            response = cb_conversations[message.author.id].say(msg)
+            log("response: {}".format(response), tag="cleverbot")
+            await cptalk_say(message.channel, message.author.id, response, 0.2 + min(0.04 * len(msg), 4))
 
         return
 
     elif not msg.startswith(server.prefix):
         return
+
     else:
         splitcmd = msg[len(server.prefix):].split(' ')
 
@@ -409,150 +397,231 @@ async def on_ready():
 
 # ============================================================================================
 
+MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
-telegram_client = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
+murphybot = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
+murphybot_state = "0"
+murphybot_prevstate = "0"
+murphybot_request = None
+murphybot_media = None
+channel_facepic = None
+murphybot_last_update = timezone.now()
 
 
-def murphy_request_processed():
-    global murphybot_media, murphybot_request, murphybot_active
-    murphybot_request.mark_processed()
-    murphybot_request = None
-    murphybot_media = None
+def log_murphy(*args):
+    log(*args, tag="murphy")
 
 
 async def process_murphy():
-    global murphybot_media, murphybot_request, murphybot_active
+    global murphybot_state, murphybot_request, murphybot_last_update, murphybot_prevstate,\
+        channel_facepic
     await client.wait_until_ready()
 
     while not client.is_closed:
-        if not murphybot_active:
-            await asyncio.sleep(4)
 
-        elif murphybot_request is None:
-            murphybot_request = MurphyRequest.get_next(minutes=5)
-            if murphybot_request is not None:
-                if murphybot_request.related_request is not None and murphybot_request.related_request.accept_date is None:
-                    murphy_request_processed()
-                else:
-                    murphybot_request.start_process()
-                    log('sending request: ', murphybot_request, tag="murphy")
-                    await client.send_typing(client.get_channel(murphybot_request.channel_id))
-                    if murphybot_request.is_i_pic_request():
-                        telegram_client.send_file("@ProjectMurphy_bot", murphybot_request.request[5:])
+        if murphybot_state != murphybot_prevstate:
+            log_murphy("[ state {0} -> {1} ]".format(murphybot_prevstate, murphybot_state))
+            murphybot_last_update = timezone.now()
+            murphybot_prevstate = murphybot_state
+
+        if murphybot_state != "0":
+            channel = client.get_channel(murphybot_request.channel_id)
+            mention = "<@{}>".format(murphybot_request.server_user.user.user_id)
+            await client.send_typing(channel)
+
+        if murphybot_state == "0":
+            await asyncio.sleep(1)
+            murphybot_request = MurphyRequest.get_next_unprocessed(minutes=5)
+
+            if murphybot_request is None:
+                continue
+
+            log_murphy("processing request: {}".format(murphybot_request))
+
+            channel_facepic = MurphyFacePic.get(murphybot_request.channel_id)
+
+            if murphybot_request.question is None and murphybot_request.face_pic is not None and \
+                    os.path.isfile(murphybot_request.face_pic):
+                log_murphy("sending face pic")
+                murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
+                murphybot_state = "1"
+                continue
+
+            elif murphybot_request.question.startswith("what if i "):
+
+                if murphybot_request.face_pic is None:
+
+                    if channel_facepic is None:
+                        log_murphy("ERROR: channel face pic null")
+
+                    elif MurphyFacePic.get_last_used() == channel_facepic:
+                        log_murphy("channel face pic = current face pic, sending question")
+                        murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
+                        murphybot_state = "2"
+                        continue
+
                     else:
-                        telegram_client.send_message("@ProjectMurphy_bot", murphybot_request.request)
+                        log_murphy("channel face pic =/= current face pic")
+                        murphybot_state = "different channel face"
+                        continue
 
-        elif murphybot_media is not None:
-            await client.send_typing(client.get_channel(murphybot_request.channel_id))
-            log('sending response', tag="murphy")
-            channel = client.get_channel(murphybot_request.channel_id)
-            mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
-
-            if murphybot_request.is_i_pic_request():
-                if not murphybot_media:
-                    await client.send_message(channel, "{0} no face detected :cry:".format(mention))
-                    log('no face detected in i pic', tag="murphy")
-                else:
-                    await client.send_message(channel, "{0} face accepted :thumbsup:".format(mention))
-                    log('i pic accepted', tag="murphy")
-            else:
-                if not murphybot_media:
-                    await client.send_message(
-                        channel,
-                        "{0}\n"
-                        "```{1}```\n"
-                        ":thinking:".format(mention, murphybot_request.request)
-                    )
-                    log('2edgy4me', tag="murphy")
+                elif os.path.isfile(murphybot_request.face_pic):
+                    log_murphy("sending face pic from request")
+                    murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
+                    murphybot_state = "3"
+                    continue
 
                 else:
-                    output = telegram_client.download_media(murphybot_media, file=tmpdir)
-                    await client.send_file(channel, output, content=mention)
-                    log('answered', tag="murphy")
+                    log_murphy("ERROR: request face pic file doesn't exist: {}".format(murphybot_request.face_pic))
 
-            murphy_request_processed()
+                murphybot_state = "upload face"
+                continue
 
-        elif (timezone.now() - datetime.timedelta(seconds=15) > murphybot_request.process_date and murphybot_request.accept_date is None) or \
-                (timezone.now() - datetime.timedelta(seconds=40) > murphybot_request.process_date and murphybot_request.accept_date is not None):
-
-            # it's time to stop
-
-            channel = client.get_channel(murphybot_request.channel_id)
-            mention = "<@{0}>".format(murphybot_request.server_user.user.user_id)
-            await client.send_message(
-                channel,
-                "{0}\n"
-                "```{1}```\n"
-                "idk ¯\_(ツ)_/¯".format(mention, murphybot_request.request)
-            )
-
-            murphy_request_processed()
-
-            log('idk', tag="murphy")
-
-        await asyncio.sleep(1)
-
-
-def murphybot_handler(update_object):
-    global murphybot_media, murphybot_request
-
-    if not murphybot_active:
-        return
-
-    elif isinstance(update_object, UpdateShortMessage) and not update_object.out:
-
-        # received text message
-
-        log('received message: ', textwrap.shorten(update_object.message, width=70), tag="murphy")
-
-        if murphybot_request is not None:
-            if murphybot_request.is_i_pic_request():
-                if update_object.message.startswith("Thanks, I will keep this photo"):
-                    murphybot_media = True
-                    murphybot_request.accept()
-                elif update_object.message.startswith("Here's an idea"):
-                    murphybot_request.accept()
-                elif not update_object.message.startswith("Attachment received"):
-                    murphybot_media = False
             else:
-                if update_object.message.startswith("You asked:") or update_object.message.startswith("Here's an idea") or\
-                        update_object.message.startswith("Trying another photo"):
-                    murphybot_request.accept()
-                elif not update_object.message.startswith("Wait, I'm still learning") and \
-                        not update_object.message.startswith("POST to MorphiBot"):
-                    murphybot_media = False
+                log_murphy("sending question")
+                murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
+                murphybot_state = "2"
+                continue
+
+        elif murphybot_state in ["reupload face", "different channel face"]:
+
+            if channel_facepic is None or not os.path.isfile(channel_facepic):
+                log_murphy("ERROR: can't read channel face pic: {}".format(channel_facepic))
+                murphybot_state = "upload face"
+                continue
+
+            else:
+                log_murphy("reuploading channel face pic")
+                murphybot.send_file(MURPHYBOT_HANDLE, channel_facepic)
+                murphybot_state = "1" if murphybot_state == "reupload face" else "3"
+                continue
+
+        elif murphybot_state in ["1", "3"]:
+            await asyncio.sleep(1)
+            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_last_update:
+                log_murphy("state {} timeout".format(murphybot_state))
+                murphybot_state = "no face"
+            continue
+
+        elif murphybot_state == "2":
+            await asyncio.sleep(1)
+            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_last_update:
+                log_murphy("state 2 timeout")
+                murphybot_state = "idk"
+            continue
+
+        elif murphybot_state == "1.2":
+            log_murphy("face accepted")
+            MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
+            if murphybot_request.question is None:
+                await client.send_message(channel, "{} face accepted :+1:".format(mention))
+            else:
+                murphybot_state = "2.2"
+                continue
+
+        elif murphybot_state == "2.2":
+            log_murphy("sending answer")
+            output = murphybot.download_media(murphybot_media, file=tmpdir)
+            await client.send_file(channel, output, content=mention)
+
+        elif murphybot_state == "3.2":
+            log_murphy("face accepted, sending question")
+            MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
+            murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
+            murphybot_state = "2"
+            continue
+
+        elif murphybot_state == "upload face":
+            log_murphy("no channel face pic")
+            await client.send_message(channel, "{} please upload a face first".format(mention))
+
+        elif murphybot_state == "no face":
+            log_murphy("no face detected")
+            await client.send_message(channel, "{} no face detected :cry:".format(mention))
+
+        elif murphybot_state == "idk":
+            log_murphy("idk")
+            await client.send_message(channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+
+        murphybot_request.mark_processed()
+        murphybot_state = "0"
+
+
+def is_murphy_message(update_object):
+    return isinstance(update_object, UpdateShortMessage) and not update_object.out
+
+
+def is_murphy_media(update_object):
+    return hasattr(update_object, 'updates') and len(update_object.updates) > 0 and \
+           hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media')
+
+MURPHYBOT_IGNORE_MSG = (
+    "You asked:",
+    "Here's an idea",
+    "Trying another photo",
+    "Wait, I'm still learning",
+    "Attachment received",
+    "POST to MorphiBot"
+)
+
+
+def murphybot_handler(msg):
+    global murphybot_state, murphybot_request, murphybot_last_update, murphybot_media
+
+    if is_murphy_message(msg) or is_murphy_media(msg):
+        murphybot_last_update = timezone.now()
+    else:
         return
 
-    elif murphybot_request is not None and hasattr(update_object, 'updates') and len(update_object.updates) > 0 and\
-            hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media'):
+    if is_murphy_message(msg):
+        log_murphy("received message: {}".format(textwrap.shorten(msg.message, width=128)))
 
-        # received media
-        log('received media', tag="murphy")
-        if murphybot_request.is_i_pic_request():
-            murphybot_media = True
-        else:
-            murphybot_media = update_object.updates[0].message.media
+        if msg.message.startswith(MURPHYBOT_IGNORE_MSG):
+            return
+
+        if murphybot_state in ["1", "3"]:
+            if msg.message.startswith("Thanks, I will keep this photo"):
+                murphybot_state = "{}.2".format(murphybot_state)
+            else:
+                murphybot_state = "no face"
+
+        elif murphybot_state == "2":
+            if msg.message.startswith("Please upload a photo"):
+                murphybot_state = "reupload face"
+            else:
+                murphybot_state = "idk"
+
+    else:
+        log_murphy("received media")
+
+        if murphybot_state == "1":
+            murphybot_media = msg.updates[0].message.media
+            murphybot_state = "1.2"
+
+        elif murphybot_state == "2":
+            murphybot_media = msg.updates[0].message.media
+            murphybot_state = "2.2"
+
+        elif murphybot_state == "3":
+            murphybot_state = "3.2"
 
 
+murphybot_error = False
 # noinspection PyBroadException
 try:
-    telegram_client.connect()
-    if telegram_client.is_user_authorized():
-        murphybot_active = True
-    else:
-        log("no telegram session file", tag="murphy")
+    murphybot.connect()
+    if not murphybot.is_user_authorized():
+        log_murphy("no telegram session file")
         murphybot_error = True
 
 except Exception as exc:
     log_exc(exc)
     murphybot_error = True
 
-if murphybot_active:
-    log('active', tag="murphy")
-    telegram_client.add_update_handler(murphybot_handler)
+if not murphybot_error:
+    log_murphy('active')
+    murphybot.add_update_handler(murphybot_handler)
     client.loop.create_task(process_murphy())
-else:
-    log('not active', tag="murphy")
 
 # ============================================================================================
 
