@@ -205,6 +205,13 @@ class MemeTemplate(models.Model):
     def by_context(cls, context):
         return cls.objects.filter(Q(contexts=context) | Q(contexts=None))
 
+    @classmethod
+    def find(cls, name):
+        found = cls.objects.filter(name=name).first()
+        if found is None:
+            found = cls.objects.filter(name__contains=name).first()
+        return found
+
     def possible_combinations(self, context):
         possible = 1
         slots = MemeTemplateSlot.objects.filter(template=self)
@@ -265,7 +272,8 @@ class Meem(models.Model):
 
     @classmethod
     def generate(cls, context, template=None):
-        template = template or next_template(context)
+        if template is None:
+            template = next_template(context)
         source_files = []
         prev_slot_id = None
         for slot in template.memetemplateslot_set.order_by('slot_order').all():

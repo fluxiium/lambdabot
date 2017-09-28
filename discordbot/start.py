@@ -1,6 +1,7 @@
 import os
 import asyncio
 import random
+import shlex
 import textwrap
 import traceback
 import uuid
@@ -147,9 +148,17 @@ async def cmd_help(server, member, message, **_):
     for cmd_data in member.get_commands():
         if cmd_data.hidden:
             continue
-        helpstr += "\n**{0}{1}**".format(server.prefix, cmd_data.cmd)
+
+        helpstr += "\n`{0}{1}".format(server.prefix, cmd_data.cmd)
+
+        if cmd_data.help_params:
+            helpstr += " {}`".format(cmd_data.help_params)
+        else:
+            helpstr += "`"
+
         if cmd_data.help:
             helpstr += " - {0}".format(cmd_data.help)
+
     await client.send_message(message.channel, helpstr)
 
 CMD_FUN['help'] = cmd_help
@@ -161,9 +170,21 @@ from memeviewer.preview import preview_meme
 from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic
 
 
-async def cmd_meem(server, member, message, **_):
+async def cmd_meem(server, member, message, args, **_):
 
     await client.send_typing(message.channel)
+
+    if len(args) > 1:
+        template_name = ' '.join(args[1:])
+        template = MemeTemplate.find(template_name)
+        if template is None:
+            await client.send_message(
+                message.channel,
+                content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
+            )
+            return
+    else:
+        template = None
 
     meme_limit_count, meme_limit_time = member.get_meme_limit()
     last_user_memes = member.get_memes(limit=meme_limit_count)
@@ -187,7 +208,7 @@ async def cmd_meem(server, member, message, **_):
             )
             return
 
-    meme = Meem.generate(context=server.context)
+    meme = Meem.generate(context=server.context, template=template)
     preview_meme(meme)
 
     discord_meme = DiscordMeem(meme=meme, server_user=member, channel_id=message.channel.id)
@@ -195,7 +216,7 @@ async def cmd_meem(server, member, message, **_):
 
     await client.send_message(
         message.channel,
-        content="{0} here's a meme:\n{1}".format(message.author.mention, meme.get_info_url())
+        content="{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link.name)
     )
 
     discord_meme.mark_sent()
@@ -390,7 +411,7 @@ async def process_message(message, old_message=None):
         return
 
     else:
-        splitcmd = msg[len(server.prefix):].split(' ')
+        splitcmd = shlex.split(msg[len(server.prefix):])
 
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
@@ -412,6 +433,7 @@ async def process_message(message, old_message=None):
                 server=server,
                 member=member,
                 message=message,
+                args=splitcmd,
             )
 
 

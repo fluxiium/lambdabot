@@ -40,8 +40,9 @@ class DiscordCommand(models.Model):
         verbose_name = "Command"
 
     cmd = models.CharField(max_length=32, primary_key=True, verbose_name='Command')
-    help = models.TextField(null=True, blank=True, verbose_name='Help string')
-    message = models.TextField(null=True, blank=True, verbose_name='Text message')
+    help = models.TextField(null=True, blank=True, default=None, verbose_name='Help string')
+    help_params = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name='Parameters')
+    message = models.TextField(null=True, blank=True, default=None, verbose_name='Text message')
     hidden = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
 
