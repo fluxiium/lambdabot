@@ -40,7 +40,7 @@ class MeemAdmin(admin.ModelAdmin):
                      'sourceimgs')
 
     readonly_fields = ['image', 'meme_url']
-    fields = tuple([f.name for f in Meem._meta.fields] + readonly_fields)
+    fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
     def meme_url(self, obj):
@@ -70,7 +70,7 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
     readonly_fields = ['image']
-    fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields] + readonly_fields)
+    fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields + MemeSourceImageOverride._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
     def image(self, obj):
@@ -89,11 +89,11 @@ class MemeTemplateSlotInline(admin.TabularInline):
 class MemeTemplateAdmin(admin.ModelAdmin):
     list_display = ('name', 'add_date', 'disabled', 'preview_url')
     ordering = ('-add_date', 'name')
-    search_fields = ('name',)
+    search_fields = ('name',)  # TODO: search by context
     inlines = [MemeTemplateSlotInline]
 
     readonly_fields = ['image', 'preview_url']
-    fields = tuple([f.name for f in MemeTemplate._meta.fields] + readonly_fields)
+    fields = tuple([f.name for f in MemeTemplate._meta.fields + MemeTemplate._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
     def preview_url(self, obj):

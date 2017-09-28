@@ -224,7 +224,7 @@ class MemeTemplate(models.Model):
         found = cls.objects.filter(name__contains=name).first()
         if found is not None:
             return found
-        name = name.split(' ')
+        name = re.split(' |\.', name)
         found = cls.objects.filter(reduce(operator.and_, (Q(name__contains=x) for x in name))).first()
         if found is not None:
             return found
