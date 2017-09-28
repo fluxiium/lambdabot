@@ -1,9 +1,11 @@
 import json
+import operator
 import os
 import random
 import re
 import uuid
 
+from functools import reduce
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -181,6 +183,9 @@ class MemeSourceImageOverride(models.Model):
     def is_in_context(self, context):
         return self.contexts.count() == 0 or self.contexts.filter(short_name=context.short_name).first() is not None
 
+    def get_image_url(self):
+        return STATIC_URL + 'lambdabot/resources/sourceimg/' + self.name
+
     def __str__(self):
         return self.name
 
@@ -207,9 +212,29 @@ class MemeTemplate(models.Model):
 
     @classmethod
     def find(cls, name):
+        if isinstance(name, MemeContext):
+            found = Meem.objects.filter(context_link=name).order_by('-gen_date').first()
+            return found.template_link if found is not None else None
         found = cls.objects.filter(name=name).first()
-        if found is None:
-            found = cls.objects.filter(name__contains=name).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(name__startswith=name).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(name__contains=name).first()
+        if found is not None:
+            return found
+        name = name.split(' ')
+        found = cls.objects.filter(reduce(operator.and_, (Q(name__contains=x) for x in name))).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name=word) for word in name])).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name__startswith=word) for word in name])).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name__contains=word) for word in name])).first()
         return found
 
     def possible_combinations(self, context):
@@ -226,6 +251,9 @@ class MemeTemplate(models.Model):
 
     def get_preview_url(self):
         return reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name})
+
+    def get_image_url(self):
+        return STATIC_URL + 'lambdabot/resources/templates/' + self.name
 
     def __str__(self):
         return self.name

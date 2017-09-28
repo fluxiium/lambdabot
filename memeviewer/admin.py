@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 
 from discordbot.models import DiscordMeem
 from facebookbot.models import FacebookMeem
@@ -38,11 +39,19 @@ class MeemAdmin(admin.ModelAdmin):
     search_fields = ('number', 'meme_id', 'context_link__name', 'context_link__short_name', 'template_link__name',
                      'sourceimgs')
 
-    def meme_url(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Meme page")
+    readonly_fields = ['image', 'meme_url']
+    fields = tuple([f.name for f in Meem._meta.fields] + readonly_fields)
+    readonly_fields = tuple(readonly_fields)
 
-    meme_url.allow_tags = True
+    def meme_url(self, obj):
+        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Meme page"))
+
     meme_url.short_description = 'Page'
+
+    def image(self, obj):
+        return mark_safe('<img src="{}" width="350">'.format(obj.get_url()))
+
+    image.short_description = 'Image'
 
 admin.site.register(Meem, MeemAdmin)
 
@@ -60,6 +69,15 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     ordering = ('name', '-add_date')
     search_fields = ('name',)
 
+    readonly_fields = ['image']
+    fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields] + readonly_fields)
+    readonly_fields = tuple(readonly_fields)
+
+    def image(self, obj):
+        return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
+
+    image.short_description = 'Image'
+
 admin.site.register(MemeSourceImageOverride, MemeSourceImageOverrideAdmin)
 
 
@@ -74,11 +92,19 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
 
-    def preview_url(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_preview_url(), "Preview")
+    readonly_fields = ['image', 'preview_url']
+    fields = tuple([f.name for f in MemeTemplate._meta.fields] + readonly_fields)
+    readonly_fields = tuple(readonly_fields)
 
-    preview_url.allow_tags = True
+    def preview_url(self, obj):
+        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_preview_url(), "Preview"))
+
     preview_url.short_description = 'Preview'
+
+    def image(self, obj):
+        return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
+
+    image.short_description = 'Image'
 
 admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
@@ -89,9 +115,8 @@ class MemeContextAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
     def reset_url(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset")
+        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset"))
 
-    reset_url.allow_tags = True
     reset_url.short_description = 'Reset queue'
 
 admin.site.register(MemeContext, MemeContextAdmin)

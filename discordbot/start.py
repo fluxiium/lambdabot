@@ -174,17 +174,19 @@ async def cmd_meem(server, member, message, args, **_):
 
     await client.send_typing(message.channel)
 
+    template = None
     if len(args) > 1:
-        template_name = ' '.join(args[1:])
-        template = MemeTemplate.find(template_name)
-        if template is None:
-            await client.send_message(
-                message.channel,
-                content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
-            )
-            return
-    else:
-        template = None
+        template_name = ' '.join(args[1:]).strip()
+        if template_name == '^':
+            template = MemeTemplate.find(server.context)
+        else:
+            template = MemeTemplate.find(template_name)
+            if template is None:
+                await client.send_message(
+                    message.channel,
+                    content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
+                )
+                return
 
     meme_limit_count, meme_limit_time = member.get_meme_limit()
     last_user_memes = member.get_memes(limit=meme_limit_count)
