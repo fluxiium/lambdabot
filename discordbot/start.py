@@ -419,8 +419,8 @@ async def process_message(message, old_message=None):
 
         ProcessedMessage.process_id(message.id)
 
-        log("{0}, {1}: {2}{3}".format(
-            server.context, message.author.name, server.prefix, cmd.cmd
+        log("{0}, {1}: {2}".format(
+            server.context, message.author.name, msg
         ))
 
         if cmd.message is not None and len(cmd.message) > 0:
