@@ -66,6 +66,7 @@ admin.site.register(ImageInContext, ImageInContextAdmin)
 class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     list_display = ('name', 'add_date', 'disabled')
     ordering = ('name', '-add_date')
+    search_fields = ('name',)
 
     readonly_fields = ['image']
     fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields + MemeSourceImageOverride._meta.many_to_many] + readonly_fields)
@@ -92,6 +93,7 @@ class MemeTemplateSlotInline(admin.TabularInline):
 class MemeTemplateAdmin(admin.ModelAdmin):
     list_display = ('name', 'add_date', 'contexts_string', 'disabled', 'preview_url')
     ordering = ('-add_date', 'name')
+    search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
 
     readonly_fields = ['image', 'preview_url']
