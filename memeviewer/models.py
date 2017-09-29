@@ -189,6 +189,10 @@ class MemeSourceImageOverride(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def search(cls, term):
+        return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
+
 
 class MemeTemplate(models.Model):
 
@@ -224,7 +228,7 @@ class MemeTemplate(models.Model):
         found = cls.objects.filter(name__contains=name).first()
         if found is not None:
             return found
-        name = re.split(' |\.', name)
+        name = re.split(' |\.|/', name)
         found = cls.objects.filter(reduce(operator.and_, (Q(name__contains=x) for x in name))).first()
         if found is not None:
             return found
@@ -236,6 +240,10 @@ class MemeTemplate(models.Model):
             return found
         found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name__contains=word) for word in name])).first()
         return found
+
+    @classmethod
+    def search(cls, term):
+        return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
 
     def possible_combinations(self, context):
         possible = 1
@@ -254,6 +262,15 @@ class MemeTemplate(models.Model):
 
     def get_image_url(self):
         return STATIC_URL + 'lambdabot/resources/templates/' + self.name
+
+    def contexts_string(self):
+        contexts = self.contexts.all()
+        if contexts.count() == 0:
+            return "*"
+        result = ""
+        for context in contexts:
+            result += "{} ".format(context.short_name)
+        return result.strip()
 
     def __str__(self):
         return self.name

@@ -7,7 +7,7 @@ from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, 
 
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
     list_display = ('server', 'permission', 'allow')
-    search_fields = ('permission', 'server__server_id', 'server__name', 'server__context__short_name')
+    search_fields = ('permission__name', 'server__server_id', 'server__name', 'server__context__short_name')
     ordering = ('server', 'permission')
 
 admin.site.register(DiscordServerPermission, DiscordServerPermissionAdmin)
@@ -52,8 +52,9 @@ admin.site.register(DiscordUser, DiscordUserAdmin)
 
 class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
     list_display = ('server_user', 'permission', 'allow')
-    search_fields = ('permission', 'server_user__nickname', 'server_user__user__user_id', 'server_user__user__name',
-                     'server_user__server__name')
+    search_fields = ('permission__name', 'server_user__nickname', 'server_user__user__user_id',
+                     'server_user__user__name', 'server_user__server__name', 'server_user__server__server_id',
+                     'server_user__server__context__short_name')
     ordering = ('server_user', 'permission')
 
 admin.site.register(DiscordServerUserPermission, DiscordServerUserPermissionAdmin)
@@ -66,7 +67,8 @@ class DiscordServerUserPermissionInline(admin.TabularInline):
 
 class DiscordServerUserAdmin(admin.ModelAdmin):
     list_display = ('nickname', 'user', 'server')
-    search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name')
+    search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name', 'server__server_id',
+                     'server__context__short_name')
     ordering = ('server', 'nickname')
     inlines = [DiscordServerUserPermissionInline]
 
@@ -84,8 +86,9 @@ admin.site.register(DiscordPermission, DiscordPermissionAdmin)
 
 class MurphyRequestAdmin(admin.ModelAdmin):
     list_display = ('question', 'face_pic', 'server_user', 'ask_date', 'channel_id', 'processed')
-    search_fields = ('question', 'face_pic', 'server_user__user_id', 'server_user__nickname',
-                     'server_user__server__name', 'channel_id')
+    search_fields = ('question', 'face_pic', 'server_user__nickname', 'server_user__user__user_id',
+                     'server_user__user__name', 'server_user__server__name', 'server_user__server__server_id',
+                     'server_user__server__context__short_name')
     ordering = ('-ask_date',)
 
 admin.site.register(MurphyRequest, MurphyRequestAdmin)
@@ -93,7 +96,7 @@ admin.site.register(MurphyRequest, MurphyRequestAdmin)
 
 class MurphyFacePicAdmin(admin.ModelAdmin):
     list_display = ('channel_id', 'face_pic', 'last_used')
-    search_fields = ('channel_id', 'face_pic', 'last_used')
+    search_fields = ('channel_id', 'face_pic')
     ordering = ('-last_used',)
 
 admin.site.register(MurphyFacePic, MurphyFacePicAdmin)

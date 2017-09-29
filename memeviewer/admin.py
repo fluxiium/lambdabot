@@ -36,8 +36,7 @@ class MeemAdmin(admin.ModelAdmin):
     ordering = ('-number', 'meme_id')
     list_display_links = ('meme_id',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
-    search_fields = ('number', 'meme_id', 'context_link__name', 'context_link__short_name', 'template_link__name',
-                     'sourceimgs')
+    search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name', 'sourceimgs')
 
     readonly_fields = ['image', 'meme_url']
     fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
@@ -59,7 +58,7 @@ admin.site.register(Meem, MeemAdmin)
 class ImageInContextAdmin(admin.ModelAdmin):
     list_display = ('image_name', 'image_type', 'context_link')
     list_display_links = ('image_name',)
-    search_fields = ('image_name', 'image_type', 'context_link__name', 'context_link__short_name')
+    search_fields = ('image_name', 'image_type', 'context_link__short_name')
 
 admin.site.register(ImageInContext, ImageInContextAdmin)
 
@@ -67,7 +66,6 @@ admin.site.register(ImageInContext, ImageInContextAdmin)
 class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     list_display = ('name', 'add_date', 'disabled')
     ordering = ('name', '-add_date')
-    search_fields = ('name',)
 
     readonly_fields = ['image']
     fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields + MemeSourceImageOverride._meta.many_to_many] + readonly_fields)
@@ -78,6 +76,11 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
 
     image.short_description = 'Image'
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super(MemeSourceImageOverrideAdmin, self).get_search_results(request, queryset, search_term)
+        queryset |= MemeSourceImageOverride.search(search_term)
+        return queryset, use_distinct
+
 admin.site.register(MemeSourceImageOverride, MemeSourceImageOverrideAdmin)
 
 
@@ -87,9 +90,8 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'add_date', 'disabled', 'preview_url')
+    list_display = ('name', 'add_date', 'contexts_string', 'disabled', 'preview_url')
     ordering = ('-add_date', 'name')
-    search_fields = ('name',)  # TODO: search by context
     inlines = [MemeTemplateSlotInline]
 
     readonly_fields = ['image', 'preview_url']
@@ -105,6 +107,11 @@ class MemeTemplateAdmin(admin.ModelAdmin):
         return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
 
     image.short_description = 'Image'
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super(MemeTemplateAdmin, self).get_search_results(request, queryset, search_term)
+        queryset |= MemeTemplate.search(search_term)
+        return queryset, use_distinct
 
 admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
