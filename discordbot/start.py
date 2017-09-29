@@ -511,7 +511,7 @@ async def process_murphy():
                     murphybot_state = "error"
                 continue
 
-            elif murphybot_request.question.startswith("what if i "):
+            elif murphybot_request.question.lower().startswith("what if i "):
 
                 if murphybot_request.face_pic is None:
 
