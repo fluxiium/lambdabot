@@ -18,8 +18,8 @@ else:
 for file in os.listdir(imgdir):
     if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
         print(file)
-        img = MemeSourceImageOverride(name=file, friendly_name=file)
-        img.save()
+        img = MemeSourceImageOverride.submit(os.path.join(imgdir, file))
+        img.friendly_name = file
         if context is not None:
             img.contexts.add(context)
-        os.rename(os.path.join(imgdir, file), os.path.join(SOURCEIMG_DIR, file))
+        img.save()
