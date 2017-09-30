@@ -243,7 +243,7 @@ class MurphyRequest(models.Model):
     processed = models.BooleanField(default=False, verbose_name="Processed?")
 
     @classmethod
-    def ask(cls, question, server_user, channel_id, face_pic=None):
+    def ask(cls, server_user, channel_id, question='', face_pic=''):
         request = cls(question=question, server_user=server_user, channel_id=channel_id, face_pic=face_pic)
         request.save()
         return request
