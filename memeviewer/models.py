@@ -154,7 +154,7 @@ class MemeSourceImageOverride(models.Model):
         verbose_name = "Source image override"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
-    friendly_name = models.CharField(max_length=64, default='', verbose_name='Friendly name')
+    friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
