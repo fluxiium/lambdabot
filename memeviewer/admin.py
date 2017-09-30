@@ -67,7 +67,7 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
 
 
 class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
-    list_display = ('image', 'name', 'friendly_name', 'add_date', 'accepted')
+    list_display = ('image', 'name', 'friendly_name', 'contexts_string', 'add_date', 'accepted')
     list_display_links = ('image', 'name')
     ordering = ('-add_date', 'name',)
     search_fields = ('friendly_name', 'name',)
@@ -100,7 +100,7 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'add_date', 'contexts_string', 'disabled', 'preview_url')
+    list_display = ('name', 'contexts_string', 'add_date', 'disabled', 'preview_url')
     ordering = ('-add_date', 'name')
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]

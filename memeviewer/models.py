@@ -171,6 +171,15 @@ class MemeSourceImageOverride(models.Model):
     def __str__(self):
         return self.friendly_name if self.friendly_name != '' else self.name
 
+    def contexts_string(self):
+        contexts = self.contexts.all()
+        if contexts.count() == 0:
+            return "*"
+        result = ""
+        for context in contexts:
+            result += "{} ".format(context.short_name)
+        return result.strip()
+
     @classmethod
     def search(cls, term):
         return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
