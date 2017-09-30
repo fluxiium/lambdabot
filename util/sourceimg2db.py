@@ -9,6 +9,10 @@ from lamdabotweb.settings import SOURCEIMG_DIR, ALLOWED_EXTENSIONS
 from memeviewer.models import MemeSourceImageOverride, MemeContext
 
 imgdir = os.path.join(SOURCEIMG_DIR, "manual")
+os.makedirs(imgdir, exist_ok=True)
+deldir = os.path.join(SOURCEIMG_DIR, "deleted")
+os.makedirs(deldir, exist_ok=True)
+
 context = input("Context? (empty for any)\n")
 if context == "":
     context = None
@@ -23,3 +27,4 @@ for file in os.listdir(imgdir):
         if context is not None:
             img.contexts.add(context)
         img.save()
+        os.rename(os.path.join(imgdir, file), os.path.join(deldir, file))
