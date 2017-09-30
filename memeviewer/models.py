@@ -36,7 +36,7 @@ def next_template(context):
     if result.count() == 0:
 
         queue_length = int(Setting.get('template queue length', 77))
-        template_queue = MemeTemplate.objects.filter(disabled=False).filter(Q(contexts=context) | Q(contexts=None))\
+        template_queue = MemeTemplate.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
             .order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
 
         # save queue to db
@@ -52,7 +52,7 @@ def next_template(context):
     template_in_context.delete()
 
     template_obj = MemeTemplate.objects\
-        .filter(name=template, disabled=False)\
+        .filter(name=template, accepted=True)\
         .filter(Q(contexts=context) | Q(contexts=None))\
         .first()
 
@@ -198,7 +198,7 @@ class MemeTemplate(models.Model):
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
     bg_img = models.CharField(max_length=64, default='', blank=True, verbose_name='Background image')
-    disabled = models.BooleanField(default=False, verbose_name='Disabled')
+    accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
     @classmethod

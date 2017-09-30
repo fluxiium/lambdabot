@@ -108,11 +108,12 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('disabled', 'thumbnail', 'name', 'contexts_string', 'add_date', 'preview_url')
+    list_display = ('accepted', 'thumbnail', 'name', 'contexts_string', 'add_date', 'preview_url')
     list_display_links = ('thumbnail', 'name')
     ordering = ('-add_date', 'name')
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
+    actions = ['accept']
 
     readonly_fields = ['image', 'preview_url']
     fields = tuple([f.name for f in MemeTemplate._meta.fields + MemeTemplate._meta.many_to_many] + readonly_fields)
@@ -134,6 +135,10 @@ class MemeTemplateAdmin(admin.ModelAdmin):
         queryset, use_distinct = super(MemeTemplateAdmin, self).get_search_results(request, queryset, search_term)
         queryset |= MemeTemplate.search(search_term)
         return queryset, use_distinct
+
+    def accept(self, request, queryset):
+        queryset.update(accepted=True)
+    accept.short_description = "Approve selected templates"
 
 admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
