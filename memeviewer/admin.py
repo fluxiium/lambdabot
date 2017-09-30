@@ -79,7 +79,7 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     readonly_fields = tuple(readonly_fields)
 
     def image(self, obj):
-        return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
+        return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
     image.short_description = 'Image'
 
     def get_search_results(self, request, queryset, search_term):
