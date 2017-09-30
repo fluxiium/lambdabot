@@ -90,7 +90,7 @@ def next_sourceimg(context):
 
         queue_length = Setting.objects.filter(key='sourceimg queue length').first()
         queue_length = 133 if queue_length is None else int(queue_length.value)
-        sourceimg_queue = MemeSourceImageOverride.objects.filter(disabled=False).filter(Q(contexts=context) | Q(contexts=None))\
+        sourceimg_queue = MemeSourceImageOverride.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
             .order_by('?')[0:(min(queue_length, MemeSourceImageOverride.objects.count()))]
 
         # save queue to db
