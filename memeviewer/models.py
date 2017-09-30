@@ -74,8 +74,8 @@ def next_sourceimg(context):
     if result.count() == 0:
 
         queue_length = int(Setting.get('sourceimg queue length', 133))
-        sourceimg_queue = MemeSourceImageOverride.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
-            .order_by('?')[0:(min(queue_length, MemeSourceImageOverride.objects.count()))]
+        sourceimg_queue = MemeSourceImage.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
+            .order_by('?')[0:(min(queue_length, MemeSourceImage.objects.count()))]
 
         # save queue to db
         for s in sourceimg_queue:
@@ -89,7 +89,7 @@ def next_sourceimg(context):
     sourceimg = sourceimg_in_context.image_name
     sourceimg_in_context.delete()
 
-    sourceimg_obj = MemeSourceImageOverride.objects\
+    sourceimg_obj = MemeSourceImage.objects\
         .filter(name=sourceimg, accepted=True)\
         .filter(Q(contexts=context) | Q(contexts=None))\
         .first()
@@ -137,10 +137,10 @@ class MemeContext(models.Model):
         return self.name
 
 
-class MemeSourceImageOverride(models.Model):
+class MemeSourceImage(models.Model):
 
     class Meta:
-        verbose_name = "Source image override"
+        verbose_name = "Source image"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
@@ -176,7 +176,7 @@ class MemeSourceImageOverride(models.Model):
         image = Image.open(path)
         image = image.convert('RGB')
         image.save(os.path.join(SOURCEIMG_DIR, filename))
-        srcimg = MemeSourceImageOverride(name=filename)
+        srcimg = MemeSourceImage(name=filename)
         srcimg.save()
         return srcimg
 
@@ -243,7 +243,7 @@ class MemeTemplate(models.Model):
     def possible_combinations(self, context):
         possible = 1
         slots = MemeTemplateSlot.objects.filter(template=self)
-        srcimgs = MemeSourceImageOverride.count(context)
+        srcimgs = MemeSourceImage.count(context)
         prev_slot_id = None
         for slot in slots:
             if slot.slot_order == prev_slot_id:

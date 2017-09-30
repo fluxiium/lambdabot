@@ -3,7 +3,7 @@ import datetime
 from django.db import models
 from django.utils import timezone
 
-from memeviewer.models import MemeContext, Meem, MemeSourceImageOverride
+from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
 class DiscordServer(models.Model):
@@ -188,7 +188,7 @@ class DiscordSourceImgSubmission(models.Model):
         verbose_name = "Source image submission"
 
     server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.SET_NULL, verbose_name="Server user")
-    sourceimg = models.ForeignKey(MemeSourceImageOverride, on_delete=models.CASCADE, verbose_name="Source image")
+    sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE, verbose_name="Source image")
 
     def __str__(self):
         return "{0} ({1})".format(self.sourceimg, self.server_user)

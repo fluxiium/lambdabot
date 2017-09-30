@@ -6,7 +6,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
 from lamdabotweb.settings import SOURCEIMG_DIR, ALLOWED_EXTENSIONS
-from memeviewer.models import MemeSourceImageOverride, MemeContext
+from memeviewer.models import MemeSourceImage, MemeContext
 
 imgdir = os.path.join(SOURCEIMG_DIR, "manual")
 os.makedirs(imgdir, exist_ok=True)
@@ -22,7 +22,7 @@ else:
 for file in os.listdir(imgdir):
     if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
         print(file)
-        img = MemeSourceImageOverride.submit(os.path.join(imgdir, file))
+        img = MemeSourceImage.submit(os.path.join(imgdir, file))
         img.friendly_name = file
         if context is not None:
             img.contexts.add(context)

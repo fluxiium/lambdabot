@@ -201,7 +201,7 @@ async def cmd_meem(server, member, message, args, attachment, **_):
                     )
                     return
 
-            submission = MemeSourceImageOverride.submit(submitted_file)
+            submission = MemeSourceImage.submit(submitted_file)
             discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
             discord_submission.save()
 
@@ -325,7 +325,7 @@ async def cb_talk(channel, user, message, nodelay=False):
 
 # ============================================================================================
 
-from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImageOverride, Setting
+from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImage, Setting
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, MurphyRequest
 
 tmpdir = mkdtemp(prefix="lambdabot_")
@@ -412,7 +412,7 @@ async def process_message(message, old_message=None):
                 "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
                     message.author.mention,
                     MemeTemplate.count(server.context),
-                    MemeSourceImageOverride.count(server.context),
+                    MemeSourceImage.count(server.context),
                     Meem.possible_combinations(server.context)
                 )
             )

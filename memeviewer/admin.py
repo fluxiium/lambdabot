@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission
 from facebookbot.models import FacebookMeem
 from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImageOverride, Setting
+    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImage, Setting
 from twitterbot.models import TwitterMeem
 
 
@@ -66,7 +66,7 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
     extra = 0
 
 
-class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
+class MemeSourceImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'image', 'name', 'friendly_name', 'contexts_string', 'add_date')
     list_display_links = ('image', 'name')
     ordering = ('-add_date', 'name',)
@@ -75,7 +75,7 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     actions = ['accept']
 
     readonly_fields = ['image']
-    fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields + MemeSourceImageOverride._meta.many_to_many] + readonly_fields)
+    fields = tuple([f.name for f in MemeSourceImage._meta.fields + MemeSourceImage._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
     def image(self, obj):
@@ -83,15 +83,15 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
     image.short_description = 'Image'
 
     def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super(MemeSourceImageOverrideAdmin, self).get_search_results(request, queryset, search_term)
-        queryset |= MemeSourceImageOverride.search(search_term)
+        queryset, use_distinct = super(MemeSourceImageAdmin, self).get_search_results(request, queryset, search_term)
+        queryset |= MemeSourceImage.search(search_term)
         return queryset, use_distinct
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
     accept.short_description = "Approve selected source images"
 
-admin.site.register(MemeSourceImageOverride, MemeSourceImageOverrideAdmin)
+admin.site.register(MemeSourceImage, MemeSourceImageAdmin)
 
 
 class MemeTemplateSlotInline(admin.TabularInline):
