@@ -32,13 +32,13 @@ class DiscordInline(admin.TabularInline):
 
 
 class MeemAdmin(admin.ModelAdmin):
-    list_display = ('number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
+    list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
     ordering = ('-number', 'meme_id')
-    list_display_links = ('meme_id',)
+    list_display_links = ('thumbnail', 'number', 'meme_id',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
     search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name', 'sourceimgs')
 
-    readonly_fields = ['image', 'meme_url']
+    readonly_fields = ['image']
     fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
@@ -47,8 +47,12 @@ class MeemAdmin(admin.ModelAdmin):
     meme_url.short_description = 'Page'
 
     def image(self, obj):
-        return mark_safe('<img src="{}" width="350">'.format(obj.get_url()))
+        return mark_safe('<a href="{0}" target="_blank"><img src="{1}" width="350"></a>'.format(obj.get_info_url(), obj.get_url()))
     image.short_description = 'Image'
+
+    def thumbnail(self, obj):
+        return mark_safe('<img src="{}" width="150">'.format(obj.get_url()))
+    thumbnail.short_description = 'Thumbnail'
 
 admin.site.register(Meem, MeemAdmin)
 
@@ -67,8 +71,8 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
 
 
 class MemeSourceImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'image', 'name', 'friendly_name', 'contexts_string', 'add_date')
-    list_display_links = ('image', 'name')
+    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date')
+    list_display_links = ('thumbnail', 'name')
     ordering = ('-add_date', 'name',)
     search_fields = ('friendly_name', 'name',)
     inlines = [DiscordSourceImgSubmissionInline]
@@ -78,8 +82,12 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     fields = tuple([f.name for f in MemeSourceImage._meta.fields + MemeSourceImage._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
-    def image(self, obj):
+    def thumbnail(self, obj):
         return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
+    thumbnail.short_description = 'Thumbnail'
+
+    def image(self, obj):
+        return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
     image.short_description = 'Image'
 
     def get_search_results(self, request, queryset, search_term):
@@ -100,7 +108,8 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('disabled', 'name', 'contexts_string', 'add_date', 'preview_url')
+    list_display = ('disabled', 'thumbnail', 'name', 'contexts_string', 'add_date', 'preview_url')
+    list_display_links = ('thumbnail', 'name')
     ordering = ('-add_date', 'name')
     search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
@@ -111,12 +120,14 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 
     def preview_url(self, obj):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_preview_url(), "Preview"))
-
     preview_url.short_description = 'Preview'
 
-    def image(self, obj):
-        return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
+    def thumbnail(self, obj):
+        return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
+    thumbnail.short_description = 'Thumbnail'
 
+    def image(self, obj):
+        return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
     image.short_description = 'Image'
 
     def get_search_results(self, request, queryset, search_term):
