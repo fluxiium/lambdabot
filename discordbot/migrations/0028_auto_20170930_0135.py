@@ -35,12 +35,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='discordserveruser',
             name='meme_limit_count',
-            field=models.IntegerField(blank=True, default='', null=True, verbose_name='Meme limit'),
+            field=models.IntegerField(blank=True, default=None, null=True, verbose_name='Meme limit'),
         ),
         migrations.AlterField(
             model_name='discordserveruser',
             name='meme_limit_time',
-            field=models.IntegerField(blank=True, default='', null=True, verbose_name='Meme limit timeout'),
+            field=models.IntegerField(blank=True, default=None, null=True, verbose_name='Meme limit timeout'),
         ),
         migrations.AlterField(
             model_name='discordserveruser',
