@@ -244,8 +244,6 @@ class MurphyRequest(models.Model):
 
     @classmethod
     def ask(cls, question, server_user, channel_id, face_pic=None):
-        if question == "":
-            question = None
         request = cls(question=question, server_user=server_user, channel_id=channel_id, face_pic=face_pic)
         request.save()
         return request

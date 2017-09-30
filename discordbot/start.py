@@ -427,10 +427,11 @@ async def process_message(message, old_message=None):
                 msg = msg.replace(dl_embed_url, "", 1).strip()
 
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
+                face_pic = save_attachment(att) if att is not None else ''
                 if msg == "" and att is not None:
-                    MurphyRequest.ask(question='', server_user=member, channel_id=message.channel.id, face_pic=save_attachment(att))
+                    MurphyRequest.ask(question='', server_user=member, channel_id=message.channel.id, face_pic=face_pic)
                 elif msg != "":
-                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=save_attachment(att))
+                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
 
             elif msg.lower().startswith("what if "):
                 MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
