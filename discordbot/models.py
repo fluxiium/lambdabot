@@ -112,8 +112,8 @@ class DiscordServerUser(models.Model):
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
     nickname = models.CharField(max_length=64, verbose_name='Nickname', blank=True, default='')
 
-    meme_limit_count = models.IntegerField(verbose_name='Meme limit', default='', null=True, blank=True)
-    meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default='', null=True, blank=True)
+    meme_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
+    meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
 
     submit_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
     submit_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
