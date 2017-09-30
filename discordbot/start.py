@@ -167,26 +167,64 @@ CMD_FUN['help'] = cmd_help
 # ------------------------------------------------
 
 from memeviewer.preview import preview_meme
-from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic
+from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic, DiscordSourceImgSubmission
 
 
-async def cmd_meem(server, member, message, args, **_):
+async def cmd_meem(server, member, message, args, attachment, **_):
 
     await client.send_typing(message.channel)
 
     template = None
+
     if len(args) > 1:
-        template_name = ' '.join(args[1:]).strip()
-        if template_name == '^':
-            template = MemeTemplate.find(server.context)
+        if args[1].lower() == "submit" and attachment is not None:
+            submit_limit_count, submit_limit_time = member.get_submit_limit()
+            last_user_submits = member.get_submits(limit=submit_limit_count)
+            if last_user_submits.count() >= submit_limit_count:
+                submit_delta = datetime.timedelta(minutes=submit_limit_time)
+                submit_time = last_user_submits[submit_limit_count - 1].sourceimg.add_date
+                if timezone.now() - submit_delta <= submit_time:
+                    seconds_left = int(((submit_time + submit_delta) - timezone.now()).total_seconds()) + 1
+                    if seconds_left >= 3 * 60:
+                        timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
+                    else:
+                        timestr = "{0} more seconds".format(seconds_left)
+                    await client.send_message(
+                        message.channel,
+                        "{3} you can only submit {0} images every {1} minutes. Please wait {2}.".format(
+                            submit_limit_count,
+                            submit_limit_time,
+                            timestr,
+                            message.author.mention,
+                        )
+                    )
+                    return
+
+            submission = MemeSourceImageOverride.submit(attachment)
+            discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
+            discord_submission.save()
+
+            await client.send_message(
+                message.channel,
+                content="{0} thanks! The source image will be added once it's approved.".format(message.author.mention)
+            )
+
+            log('sourceimg submitted by {}'.format(member))
+
+            return
+
         else:
-            template = MemeTemplate.find(template_name)
-            if template is None:
-                await client.send_message(
-                    message.channel,
-                    content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
-                )
-                return
+            template_name = ' '.join(args[1:]).strip()
+            if template_name == '^':
+                template = MemeTemplate.find(server.context)
+            else:
+                template = MemeTemplate.find(template_name)
+                if template is None:
+                    await client.send_message(
+                        message.channel,
+                        content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
+                    )
+                    return
 
     meme_limit_count, meme_limit_time = member.get_meme_limit()
     last_user_memes = member.get_memes(limit=meme_limit_count)
@@ -286,7 +324,7 @@ async def cb_talk(channel, user, message, nodelay=False):
 
 # ============================================================================================
 
-from memeviewer.models import Meem, MemeTemplate, AccessToken, sourceimg_count
+from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImageOverride
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, MurphyRequest
 
 tmpdir = mkdtemp(prefix="lambdabot_")
@@ -295,6 +333,11 @@ tmpdir = mkdtemp(prefix="lambdabot_")
 @client.event
 async def process_message(message, old_message=None):
     global cb_conversations
+
+    msg = message.content.strip()
+
+    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
+        await asyncio.sleep(2)
 
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)
@@ -308,7 +351,48 @@ async def process_message(message, old_message=None):
     member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
     member.user.update(name=message.author.name)
 
-    msg = message.content.strip()
+    downloaded_attachment = None
+    dl_embed_url = None
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
+
+    if len(message.attachments) > 0:
+        att = message.attachments[0]
+        attachment_filename = os.path.join(tmpdir, "{0}{1}".format(str(uuid.uuid4()), att['filename']))
+        log('received attachment: {0} {1}'.format(att['url'], attachment_filename))
+
+        # noinspection PyShadowingNames
+        try:
+            attachment = requests.get(att['proxy_url'], headers=headers)
+            with open(attachment_filename, 'wb') as attachment_file:
+                attachment_file.write(attachment.content)
+            downloaded_attachment = attachment_filename
+        except Exception as exc:
+            log_exc(exc)
+
+    elif len(message.embeds) > 0:
+        emb = message.embeds[0]
+        att = emb.get('image')
+        if att is None:
+            att = emb.get('thumbnail')
+
+        if att is not None:
+            attachment_filename = os.path.join(tmpdir, str(uuid.uuid4()))
+            log('received embed: {0} {1}'.format(att['url'], attachment_filename))
+
+            # noinspection PyShadowingNames
+            try:
+                attachment = requests.get(att['proxy_url'], headers=headers)
+                with open(attachment_filename, 'wb') as attachment_file:
+                    attachment_file.write(attachment.content)
+                downloaded_attachment = attachment_filename
+                dl_embed_url = emb['url']
+            except Exception as exc:
+                log_exc(exc)
+
+    if downloaded_attachment is not None:
+        ProcessedMessage.process_id(message.id)
 
     if client.user in message.mentions:
 
@@ -321,49 +405,8 @@ async def process_message(message, old_message=None):
 
         log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
         ProcessedMessage.process_id(message.id)
-        downloaded_attachment = None
-        dl_embed_url = None
 
-        if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
-            await asyncio.sleep(2)
-
-        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
-
-        if len(message.attachments) > 0:
-            att = message.attachments[0]
-            attachment_filename = os.path.join(tmpdir, "{0}{1}".format(str(uuid.uuid4()), att['filename']))
-            log('received attachment: {0} {1}'.format(att['url'], attachment_filename))
-
-            # noinspection PyShadowingNames
-            try:
-                attachment = requests.get(att['proxy_url'], headers=headers)
-                with open(attachment_filename, 'wb') as attachment_file:
-                    attachment_file.write(attachment.content)
-                downloaded_attachment = attachment_filename
-            except Exception as exc:
-                log_exc(exc)
-
-        elif len(message.embeds) > 0:
-            emb = message.embeds[0]
-            att = emb.get('image')
-            if att is None:
-                att = emb.get('thumbnail')
-
-            if att is not None:
-                attachment_filename = os.path.join(tmpdir, str(uuid.uuid4()))
-                log('received embed: {0} {1}'.format(att['url'], attachment_filename))
-
-                # noinspection PyShadowingNames
-                try:
-                    attachment = requests.get(att['proxy_url'], headers=headers)
-                    with open(attachment_filename, 'wb') as attachment_file:
-                        attachment_file.write(attachment.content)
-                    downloaded_attachment = attachment_filename
-                    dl_embed_url = emb['url']
-                except Exception as exc:
-                    log_exc(exc)
-
-        elif msg == "":
+        if msg == "" and downloaded_attachment is None:
             await client.send_typing(message.channel)
             await client.send_message(
                 message.channel,
@@ -378,7 +421,7 @@ async def process_message(message, old_message=None):
                 "Created by morch kovalski (aka yackson): https://morchkovalski.com*".format(
                     message.author.mention,
                     MemeTemplate.count(server.context),
-                    sourceimg_count(server.context),
+                    MemeSourceImageOverride.count(server.context),
                     Meem.possible_combinations(server.context)
                 )
             )
@@ -394,7 +437,7 @@ async def process_message(message, old_message=None):
 
             if msg.lower().startswith("what if i ") or (msg == "" and downloaded_attachment is not None):
                 if msg == "" and downloaded_attachment is not None:
-                    MurphyRequest.ask(question=None, server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
+                    MurphyRequest.ask(question='', server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
                 elif msg != "":
                     MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=downloaded_attachment)
 
@@ -436,6 +479,7 @@ async def process_message(message, old_message=None):
                 member=member,
                 message=message,
                 args=splitcmd,
+                attachment=downloaded_attachment,
             )
 
 
@@ -464,7 +508,7 @@ murphybot_state = "0"
 murphybot_prevstate = "0"
 murphybot_request = None
 murphybot_media = None
-channel_facepic = None
+channel_facepic = ''
 murphybot_last_update = timezone.now()
 
 
@@ -500,7 +544,7 @@ async def process_murphy():
 
             channel_facepic = MurphyFacePic.get(murphybot_request.channel_id)
 
-            if murphybot_request.question is None and murphybot_request.face_pic is not None and \
+            if murphybot_request.question == '' and murphybot_request.face_pic != '' and \
                     os.path.isfile(murphybot_request.face_pic):
                 log_murphy("sending face pic")
                 try:
@@ -513,9 +557,9 @@ async def process_murphy():
 
             elif murphybot_request.question.lower().startswith("what if i "):
 
-                if murphybot_request.face_pic is None:
+                if murphybot_request.face_pic == '':
 
-                    if channel_facepic is None:
+                    if channel_facepic == '':
                         log_murphy("ERROR: channel face pic null")
 
                     elif MurphyFacePic.get_last_used() == channel_facepic:
@@ -585,7 +629,7 @@ async def process_murphy():
         elif murphybot_state == "1.2":
             log_murphy("face accepted")
             MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
-            if murphybot_request.question is None:
+            if murphybot_request.question == '':
                 await client.send_message(channel, "{} face accepted :+1:".format(mention))
             else:
                 murphybot_state = "2.2"

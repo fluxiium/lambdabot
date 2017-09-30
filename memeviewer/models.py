@@ -6,6 +6,8 @@ import re
 import uuid
 
 from functools import reduce
+
+from PIL import Image
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -35,7 +37,8 @@ def next_template(context):
 
         queue_length = Setting.objects.filter(key='template queue length').first()
         queue_length = 77 if queue_length is None else int(queue_length.value)
-        template_queue = MemeTemplate.objects.order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
+        template_queue = MemeTemplate.objects.filter(disabled=False).filter(Q(contexts=context) | Q(contexts=None))\
+            .order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
 
         # save queue to db
         for t in template_queue:
@@ -83,44 +86,12 @@ def next_sourceimg(context):
     result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG, context_link=context)
 
     # if empty, make new queue
-    if len(result) == 0:
-
-        # add common source images to list
-        available_sourceimgs = \
-            [file for file in os.listdir(SOURCEIMG_DIR) if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE)]
-
-        # add context's source images to list
-        if os.path.isdir(os.path.join(SOURCEIMG_DIR, context.short_name)):
-            available_sourceimgs += \
-                (os.path.join(context.short_name, file)
-                 for file in os.listdir(os.path.join(SOURCEIMG_DIR, context.short_name))
-                 if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE))
-
-        available_sourceimgs2 = []
-
-        for sourceimg_file in available_sourceimgs:
-            override = MemeSourceImageOverride.objects.filter(name=sourceimg_file).first()
-            if override is not None:
-                if not override.is_in_context(context):
-                    continue
-                if override.disabled:
-                    continue
-            available_sourceimgs2.append(sourceimg_file)
-
-        available_sourceimgs = available_sourceimgs2
-
-        if len(available_sourceimgs) == 0:
-            raise FileNotFoundError
-
-        # create queue
-        SYS_RANDOM.shuffle(available_sourceimgs)
+    if result.count() == 0:
 
         queue_length = Setting.objects.filter(key='sourceimg queue length').first()
         queue_length = 133 if queue_length is None else int(queue_length.value)
-        sourceimg_queue = available_sourceimgs[0:(min(queue_length, len(available_sourceimgs)))]
-
-        # get one source image and remvoe it from queue
-        sourceimg = sourceimg_queue.pop()
+        sourceimg_queue = MemeSourceImageOverride.objects.filter(disabled=False).filter(Q(contexts=context) | Q(contexts=None))\
+            .order_by('?')[0:(min(queue_length, MemeSourceImageOverride.objects.count()))]
 
         # save queue to db
         for s in sourceimg_queue:
@@ -128,16 +99,23 @@ def next_sourceimg(context):
                                                   context_link=context)
             sourceimg_in_context.save()
 
-    # otherwise, get one source image and remove it from queue
-    else:
-        sourceimg_in_context = result.first()
-        sourceimg = sourceimg_in_context.image_name
-        sourceimg_in_context.delete()
+        result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG, context_link=context)
 
-    if not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
+    sourceimg_in_context = result.first()
+    sourceimg = sourceimg_in_context.image_name
+    sourceimg_in_context.delete()
+
+    sourceimg_obj = MemeSourceImageOverride.objects\
+        .filter(name=sourceimg, accepted=True)\
+        .filter(Q(contexts=context) | Q(contexts=None))\
+        .first()
+
+    if sourceimg_obj is None:
         return next_sourceimg(context)
+    elif not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
+        raise FileNotFoundError
     else:
-        return sourceimg
+        return sourceimg_obj
 
 
 # MODELS --------------------------------------------------------------------------------------------------------
@@ -176,8 +154,9 @@ class MemeSourceImageOverride(models.Model):
         verbose_name = "Source image override"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
+    friendly_name = models.CharField(max_length=64, default='', verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
-    disabled = models.BooleanField(default=False, verbose_name='Disabled')
+    accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
     def is_in_context(self, context):
@@ -187,11 +166,29 @@ class MemeSourceImageOverride(models.Model):
         return STATIC_URL + 'lambdabot/resources/sourceimg/' + self.name
 
     def __str__(self):
-        return self.name
+        return self.friendly_name if self.friendly_name != '' else self.name
 
     @classmethod
     def search(cls, term):
         return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
+
+    @classmethod
+    def submit(cls, path):
+        filename = "{}.jpg".format(str(uuid.uuid4()))
+        image = Image.open(path)
+        image = image.convert('RGB')
+        image.save(os.path.join(SOURCEIMG_DIR, filename))
+        srcimg = MemeSourceImageOverride(name=filename)
+        srcimg.save()
+        return srcimg
+
+    @classmethod
+    def count(cls, context):
+        return cls.by_context(context).count()
+
+    @classmethod
+    def by_context(cls, context):
+        return cls.objects.filter(Q(contexts=context) | Q(contexts=None))
 
 
 class MemeTemplate(models.Model):
@@ -201,8 +198,8 @@ class MemeTemplate(models.Model):
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
-    bg_color = models.CharField(max_length=16, null=True, default=None, blank=True, verbose_name='Background color')
-    bg_img = models.CharField(max_length=64, null=True, default=None, blank=True, verbose_name='Background image')
+    bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
+    bg_img = models.CharField(max_length=64, default='', blank=True, verbose_name='Background image')
     disabled = models.BooleanField(default=False, verbose_name='Disabled')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
@@ -248,7 +245,7 @@ class MemeTemplate(models.Model):
     def possible_combinations(self, context):
         possible = 1
         slots = MemeTemplateSlot.objects.filter(template=self)
-        srcimgs = sourceimg_count(context)
+        srcimgs = MemeSourceImageOverride.count(context)
         prev_slot_id = None
         for slot in slots:
             if slot.slot_order == prev_slot_id:
@@ -326,7 +323,7 @@ class Meem(models.Model):
                 continue
             # pick source file that hasn't been used
             while True:
-                source_file = next_sourceimg(context)
+                source_file = next_sourceimg(context).name
                 if source_file not in source_files:
                     break
             source_files.append(source_file)

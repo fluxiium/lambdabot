@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from discordbot.models import DiscordMeem
+from discordbot.models import DiscordMeem, DiscordSourceImgSubmission
 from facebookbot.models import FacebookMeem
 from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
     MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImageOverride, Setting
@@ -44,12 +44,10 @@ class MeemAdmin(admin.ModelAdmin):
 
     def meme_url(self, obj):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Meme page"))
-
     meme_url.short_description = 'Page'
 
     def image(self, obj):
         return mark_safe('<img src="{}" width="350">'.format(obj.get_url()))
-
     image.short_description = 'Image'
 
 admin.site.register(Meem, MeemAdmin)
@@ -63,10 +61,18 @@ class ImageInContextAdmin(admin.ModelAdmin):
 admin.site.register(ImageInContext, ImageInContextAdmin)
 
 
+class DiscordSourceImgSubmissionInline(admin.TabularInline):
+    model = DiscordSourceImgSubmission
+    extra = 0
+
+
 class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
-    list_display = ('name', 'add_date', 'disabled')
-    ordering = ('name', '-add_date')
-    search_fields = ('name',)
+    list_display = ('image', 'name', 'friendly_name', 'add_date', 'accepted')
+    list_display_links = ('image', 'name')
+    ordering = ('-add_date', 'name',)
+    search_fields = ('friendly_name', 'name',)
+    inlines = [DiscordSourceImgSubmissionInline]
+    actions = ['accept']
 
     readonly_fields = ['image']
     fields = tuple([f.name for f in MemeSourceImageOverride._meta.fields + MemeSourceImageOverride._meta.many_to_many] + readonly_fields)
@@ -74,13 +80,16 @@ class MemeSourceImageOverrideAdmin(admin.ModelAdmin):
 
     def image(self, obj):
         return mark_safe('<img src="{}" width="350">'.format(obj.get_image_url()))
-
     image.short_description = 'Image'
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super(MemeSourceImageOverrideAdmin, self).get_search_results(request, queryset, search_term)
         queryset |= MemeSourceImageOverride.search(search_term)
         return queryset, use_distinct
+
+    def accept(self, request, queryset):
+        queryset.update(accepted=True)
+    accept.short_description = "Approve selected source images"
 
 admin.site.register(MemeSourceImageOverride, MemeSourceImageOverrideAdmin)
 
@@ -125,7 +134,6 @@ class MemeContextAdmin(admin.ModelAdmin):
 
     def reset_url(self, obj):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset"))
-
     reset_url.short_description = 'Reset queue'
 
 admin.site.register(MemeContext, MemeContextAdmin)

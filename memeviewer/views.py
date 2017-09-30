@@ -63,7 +63,7 @@ def meme_info_view(request, meme_id):
         raise Http404("Invalid meme ID")
 
     templatebg = None
-    if meme.template_link.bg_img is not None:
+    if meme.template_link.bg_img != '':
         templatebg = STATIC_URL + 'lambdabot/resources/templates/' + meme.template_link.bg_img
 
     fb_meme = meme.facebookmeem_set.first()

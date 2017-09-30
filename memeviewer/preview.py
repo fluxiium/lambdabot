@@ -18,7 +18,7 @@ def preview_meme(meme, add_watermark=False):
         source_files = meme.get_sourceimgs()
 
     foreground = Image.open(os.path.join(TEMPLATE_DIR, template.name)).convert("RGBA")
-    if template.bg_img is None:
+    if template.bg_img == '':
         background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
     else:
         background = Image.open(os.path.join(TEMPLATE_DIR, template.bg_img)).convert('RGBA')

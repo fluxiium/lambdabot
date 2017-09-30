@@ -3,7 +3,7 @@ import datetime
 from django.db import models
 from django.utils import timezone
 
-from memeviewer.models import MemeContext, Meem
+from memeviewer.models import MemeContext, Meem, MemeSourceImageOverride
 
 
 class DiscordServer(models.Model):
@@ -12,11 +12,15 @@ class DiscordServer(models.Model):
         verbose_name = "Server"
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
-    name = models.CharField(max_length=64, verbose_name="Server name", null=True, blank=True, default=None)
+    name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
     context = models.ForeignKey(MemeContext, verbose_name='Context')
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
+
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
+
+    submit_limit_count = models.IntegerField(default=10, verbose_name='Submission limit')
+    submit_limit_time = models.IntegerField(default=300, verbose_name='Submission limit cooldown')
 
     @classmethod
     def get_by_id(cls, server_id):
@@ -40,9 +44,9 @@ class DiscordCommand(models.Model):
         verbose_name = "Command"
 
     cmd = models.CharField(max_length=32, primary_key=True, verbose_name='Command')
-    help = models.TextField(null=True, blank=True, default=None, verbose_name='Help string')
-    help_params = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name='Parameters')
-    message = models.TextField(null=True, blank=True, default=None, verbose_name='Text message')
+    help = models.TextField(blank=True, default='', verbose_name='Help string')
+    help_params = models.CharField(max_length=256, blank=True, default='', verbose_name='Parameters')
+    message = models.TextField(blank=True, default='', verbose_name='Text message')
     hidden = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
 
@@ -106,9 +110,13 @@ class DiscordServerUser(models.Model):
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    nickname = models.CharField(max_length=64, verbose_name='Nickname', null=True, blank=True, default=None)
-    meme_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
-    meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
+    nickname = models.CharField(max_length=64, verbose_name='Nickname', blank=True, default='')
+
+    meme_limit_count = models.IntegerField(verbose_name='Meme limit', default='', null=True, blank=True)
+    meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default='', null=True, blank=True)
+
+    submit_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
+    submit_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
 
     @classmethod
     def get_by_id(cls, user_id, server):
@@ -128,10 +136,22 @@ class DiscordServerUser(models.Model):
             memes = memes[:limit]
         return memes
 
+    def get_submits(self, limit=None):
+        memes = DiscordSourceImgSubmission.objects.filter(server_user=self).order_by('-sourceimg__add_date')
+        if limit is not None:
+            memes = memes[:limit]
+        return memes
+
     def get_meme_limit(self):
         return (
             self.server.meme_limit_count if self.meme_limit_count is None else self.meme_limit_count,
             self.server.meme_limit_time if self.meme_limit_time is None else self.meme_limit_time,
+        )
+
+    def get_submit_limit(self):
+        return (
+            self.server.submit_limit_count if self.submit_limit_count is None else self.submit_limit_count,
+            self.server.submit_limit_time if self.submit_limit_time is None else self.submit_limit_time,
         )
 
     def get_commands(self):
@@ -161,6 +181,17 @@ class DiscordServerUser(models.Model):
 
     def __str__(self):
         return "{0} ({1})".format(self.nickname, self.server)
+
+
+class DiscordSourceImgSubmission(models.Model):
+    class Meta:
+        verbose_name = "Source image submission"
+
+    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.SET_NULL, verbose_name="Server user")
+    sourceimg = models.ForeignKey(MemeSourceImageOverride, on_delete=models.CASCADE, verbose_name="Source image")
+
+    def __str__(self):
+        return "{0} ({1})".format(self.sourceimg, self.server_user)
 
 
 class DiscordServerUserPermission(models.Model):
@@ -204,8 +235,8 @@ class MurphyRequest(models.Model):
     class Meta:
         verbose_name = "Murphy bot request"
 
-    question = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Question")
-    face_pic = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Face pic")
+    question = models.CharField(max_length=256, blank=True, default='', verbose_name="Question")
+    face_pic = models.CharField(max_length=256, blank=True, default='', verbose_name="Face pic")
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
     channel_id = models.CharField(max_length=32, verbose_name="Discord channel ID")
@@ -246,7 +277,7 @@ class MurphyFacePic(models.Model):
         verbose_name = "Murphy bot face pic"
 
     channel_id = models.CharField(max_length=32, primary_key=True, verbose_name="Discord channel ID")
-    face_pic = models.CharField(max_length=256, null=True, blank=True, default=None, verbose_name="Face pic")
+    face_pic = models.CharField(max_length=256,blank=True, default='', verbose_name="Face pic")
     last_used = models.DateTimeField(default=timezone.now, verbose_name='Last used')
 
     @classmethod
@@ -287,4 +318,5 @@ class ProcessedMessage(models.Model):
 
     @classmethod
     def process_id(cls, msg_id):
-        cls(msg_id=msg_id).save()
+        if cls.objects.filter(msg_id=msg_id).first() is None:
+            cls(msg_id=msg_id).save()
