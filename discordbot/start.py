@@ -325,7 +325,7 @@ async def cb_talk(channel, user, message, nodelay=False):
 
 # ============================================================================================
 
-from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImageOverride
+from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImageOverride, Setting
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, MurphyRequest
 
 tmpdir = mkdtemp(prefix="lambdabot_")
@@ -495,6 +495,7 @@ async def on_ready():
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
+
 murphybot = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
 murphybot_state = "0"
 murphybot_prevstate = "0"
@@ -606,14 +607,16 @@ async def process_murphy():
 
         elif murphybot_state in ["1", "3"]:
             await asyncio.sleep(1)
-            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_last_update:
+            timeout = int(Setting.get("murphybot timeout", 20))
+            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
                 log_murphy("state {} timeout".format(murphybot_state))
                 murphybot_state = "no face"
             continue
 
         elif murphybot_state == "2":
             await asyncio.sleep(1)
-            if timezone.now() - datetime.timedelta(seconds=15) > murphybot_last_update:
+            timeout = int(Setting.get("murphybot timeout", 20))
+            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
                 log_murphy("state 2 timeout")
                 murphybot_state = "idk"
             continue

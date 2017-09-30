@@ -35,8 +35,7 @@ def next_template(context):
     # if empty, make new queue
     if result.count() == 0:
 
-        queue_length = Setting.objects.filter(key='template queue length').first()
-        queue_length = 77 if queue_length is None else int(queue_length.value)
+        queue_length = int(Setting.get('template queue length', 77))
         template_queue = MemeTemplate.objects.filter(disabled=False).filter(Q(contexts=context) | Q(contexts=None))\
             .order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
 
@@ -88,8 +87,7 @@ def next_sourceimg(context):
     # if empty, make new queue
     if result.count() == 0:
 
-        queue_length = Setting.objects.filter(key='sourceimg queue length').first()
-        queue_length = 133 if queue_length is None else int(queue_length.value)
+        queue_length = int(Setting.get('sourceimg queue length', 133))
         sourceimg_queue = MemeSourceImageOverride.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
             .order_by('?')[0:(min(queue_length, MemeSourceImageOverride.objects.count()))]
 
@@ -127,6 +125,11 @@ class Setting(models.Model):
 
     key = models.CharField(max_length=64, verbose_name='Key')
     value = models.CharField(max_length=64, verbose_name='Value')
+
+    @classmethod
+    def get(cls, key, default=None):
+        setting = cls.objects.filter(key=key).first()
+        return setting.value if setting is not None else default
 
 
 class MemeContext(models.Model):
