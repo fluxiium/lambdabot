@@ -115,8 +115,8 @@ class DiscordServerUser(models.Model):
     meme_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
     meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
 
-    submit_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
-    submit_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
+    submit_limit_count = models.IntegerField(verbose_name='Submission limit', default=None, null=True, blank=True)
+    submit_limit_time = models.IntegerField(verbose_name='Submission limit timeout', default=None, null=True, blank=True)
 
     @classmethod
     def get_by_id(cls, user_id, server):

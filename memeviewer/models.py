@@ -64,20 +64,6 @@ def next_template(context):
         return template_obj
 
 
-def sourceimg_count(context):
-    available_sourceimgs = 0
-    for file in os.listdir(SOURCEIMG_DIR):
-        if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
-            available_sourceimgs += 1
-
-    if os.path.isdir(os.path.join(SOURCEIMG_DIR, context.short_name)):
-        for file in os.listdir(os.path.join(SOURCEIMG_DIR, context.short_name)):
-            if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
-                available_sourceimgs += 1
-
-    return available_sourceimgs
-
-
 def next_sourceimg(context):
     """ returns next source image filename """
 
@@ -200,7 +186,7 @@ class MemeSourceImageOverride(models.Model):
 
     @classmethod
     def by_context(cls, context):
-        return cls.objects.filter(Q(contexts=context) | Q(contexts=None))
+        return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
 
 
 class MemeTemplate(models.Model):
@@ -221,7 +207,7 @@ class MemeTemplate(models.Model):
 
     @classmethod
     def by_context(cls, context):
-        return cls.objects.filter(Q(contexts=context) | Q(contexts=None))
+        return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
 
     @classmethod
     def find(cls, name):
