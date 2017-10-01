@@ -14,7 +14,10 @@ import re
 import requests
 
 from tempfile import mkdtemp
+
+from bs4 import BeautifulSoup
 from cleverwrap import CleverWrap
+from discord import Embed
 from discord import Member, Status, Server, Game, Channel
 from discord.state import ConnectionState
 from django.utils import timezone
@@ -294,28 +297,19 @@ CMD_FUN['meme'] = cmd_meme_hl
 async def cmd_wiki(server, member, message, args, **_):
     await client.send_typing(message.channel)
 
-    wiki_url = Setting.get('hl wiki url', 'http://half-life.wikia.com')
-    article_url = None
+    wiki_url = Setting.get('hl wiki url', 'http://combineoverwiki.net')
+    article = None
 
     if len(args) == 1:
         # noinspection PyShadowingNames
         try:
             response = requests.get(
-                '{0}/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json'.format(wiki_url),
+                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
                 headers=headers,
             )
+            print(response.content)
             article_data = json.loads(response.content.decode('utf-8'))
-            article_id = article_data['query']['random'][0]['id']
-
-            response = requests.get(
-                '{0}/api/v1/Articles/Details?ids={1}'.format(wiki_url, article_id),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            article_url = "{0}{1}".format(
-                wiki_url,
-                article_data['items'][str(article_id)]['url']
-            )
+            article = next(iter(article_data['query']['pages'].values()))
 
         except Exception as exc:
             log_exc(exc)
@@ -325,25 +319,38 @@ async def cmd_wiki(server, member, message, args, **_):
         try:
             query = ' '.join(args[1:]).strip()
             response = requests.get(
-                '{0}/api/v1/Search/List?query={1}&limit=1'.format(wiki_url, query),
+                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
                 headers=headers,
             )
             article_data = json.loads(response.content.decode('utf-8'))
-            if article_data.get('exception') is None:
-                article_url = article_data['items'][0]['url']
+            if article_data.get('query') is not None:
+                article = next(iter(article_data['query']['pages'].values()))
         except Exception as exc:
             log_exc(exc)
 
-    if article_url is None:
+    if article is None:
         await client.send_message(
             message.channel,
             content="{0} article not found :cry:".format(message.author.mention)
         )
-    else:
-        await client.send_message(
-            message.channel,
-            content="{0} {1}".format(message.author.mention, article_url)
-        )
+        return
+
+    embed = Embed(title=article['title'], url=article['fullurl'], color=0xF7923A)
+    embed.set_author(name="Combine Overwiki")
+
+    response = requests.get(article['fullurl'], headers=headers)
+    soup = BeautifulSoup(response.content.decode('utf-8'), "html.parser")
+    pic_tag = soup.select_one('td.infoboximage a img')
+
+    if pic_tag is not None:
+        print(pic_tag['src'])
+        embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
+
+    await client.send_message(
+        message.channel,
+        content="{0} {1}".format(message.author.mention, article['fullurl']),
+        embed=embed,
+    )
 
 CMD_FUN['wiki'] = cmd_wiki
 
