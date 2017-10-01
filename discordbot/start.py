@@ -307,7 +307,6 @@ async def cmd_wiki(server, member, message, args, **_):
                 '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
                 headers=headers,
             )
-            print(response.content)
             article_data = json.loads(response.content.decode('utf-8'))
             article = next(iter(article_data['query']['pages'].values()))
 
@@ -343,7 +342,6 @@ async def cmd_wiki(server, member, message, args, **_):
     pic_tag = soup.select_one('td.infoboximage a img')
 
     if pic_tag is not None:
-        print(pic_tag['src'])
         embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
 
     await client.send_message(
