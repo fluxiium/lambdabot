@@ -163,7 +163,7 @@ class DiscordServerUser(models.Model):
         return result
 
     def check_permission(self, permission):
-        permission = DiscordPermission.objects.filter(name=permission).first()
+        permission = DiscordPermission.objects.filter(name__iexact=permission).first()
         if permission is None:
             return None
         perm_data = DiscordServerUserPermission.objects.filter(server_user=self, permission=permission).first()

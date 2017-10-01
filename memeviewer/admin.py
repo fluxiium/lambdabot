@@ -108,7 +108,7 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', 'name', 'contexts_string', 'add_date', 'preview_url')
+    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date', 'preview_url')
     list_display_links = ('thumbnail', 'name')
     ordering = ('-add_date', 'name')
     search_fields = ('name',)

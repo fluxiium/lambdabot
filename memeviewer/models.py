@@ -114,7 +114,7 @@ class Setting(models.Model):
 
     @classmethod
     def get(cls, key, default=None):
-        setting = cls.objects.filter(key=key).first()
+        setting = cls.objects.filter(key__iexact=key).first()
         return setting.value if setting is not None else default
 
 
@@ -168,7 +168,7 @@ class MemeSourceImage(models.Model):
 
     @classmethod
     def search(cls, term):
-        return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
+        return cls.objects.filter(Q(name__icontains=term) | Q(friendly_name__icontains=term) | Q(contexts__short_name__icontains=term))
 
     @classmethod
     def submit(cls, path):
@@ -195,6 +195,7 @@ class MemeTemplate(models.Model):
         verbose_name = "Template"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
+    friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
     bg_img = models.CharField(max_length=64, default='', blank=True, verbose_name='Background image')
@@ -214,31 +215,34 @@ class MemeTemplate(models.Model):
         if isinstance(name, MemeContext):
             found = Meem.objects.filter(context_link=name).order_by('-gen_date').first()
             return found.template_link if found is not None else None
-        found = cls.objects.filter(name=name).first()
+        found = cls.objects.filter(friendly_name__iexact=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(name__startswith=name).first()
+        found = cls.objects.filter(friendly_name__istartswith=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(name__contains=name).first()
+        found = cls.objects.filter(friendly_name__icontains=name).first()
         if found is not None:
             return found
-        name = re.split(' |\.|/', name)
-        found = cls.objects.filter(reduce(operator.and_, (Q(name__contains=x) for x in name))).first()
+        name_words = re.split(' |\.|/', name)
+        found = cls.objects.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
         if found is not None:
             return found
-        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name=word) for word in name])).first()
+        found = cls.objects.filter(name__iexact=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name__startswith=word) for word in name])).first()
+        found = cls.objects.filter(name__istartswith=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(reduce(lambda x, y: x | y, [Q(name__contains=word) for word in name])).first()
+        found = cls.objects.filter(name__icontains=name).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
         return found
 
     @classmethod
     def search(cls, term):
-        return cls.objects.filter(Q(name__contains=term) | Q(contexts__short_name__contains=term))
+        return cls.objects.filter(Q(name__icontains=term) | Q(friendly_name__icontains=term) | Q(contexts__short_name__icontains=term))
 
     def possible_combinations(self, context):
         possible = 1
@@ -268,7 +272,7 @@ class MemeTemplate(models.Model):
         return result.strip()
 
     def __str__(self):
-        return self.name
+        return self.friendly_name if self.friendly_name != '' else self.name
 
 
 class MemeTemplateSlot(models.Model):
