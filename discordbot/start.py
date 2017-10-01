@@ -1,3 +1,4 @@
+import json
 import os
 import asyncio
 import random
@@ -130,6 +131,11 @@ ConnectionState.parse_presence_update = parse_presence_update_patched
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
+from memeviewer.preview import preview_meme
+from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic, DiscordSourceImgSubmission, DiscordServer,\
+    DiscordCommand, DiscordServerUser, MurphyRequest
+from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImage, Setting
+
 log("")
 log("##############################")
 log("#  LambdaBot 3883 - Discord  #")
@@ -137,6 +143,9 @@ log("##############################")
 log("")
 
 client = discord.Client()
+tmpdir = mkdtemp(prefix="lambdabot_")
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
 
 CMD_FUN = {}
 
@@ -165,10 +174,6 @@ CMD_FUN['help'] = cmd_help
 
 
 # ------------------------------------------------
-
-from memeviewer.preview import preview_meme
-from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic, DiscordSourceImgSubmission
-
 
 async def cmd_meem(server, member, message, args, attachment, **_):
 
@@ -286,6 +291,65 @@ CMD_FUN['meme'] = cmd_meme_hl
 
 # ------------------------------------------------
 
+async def cmd_wiki(server, member, message, args, **_):
+    await client.send_typing(message.channel)
+
+    wiki_url = Setting.get('hl wiki url', 'http://half-life.wikia.com')
+    article_url = None
+
+    if len(args) == 1:
+        # noinspection PyShadowingNames
+        try:
+            response = requests.get(
+                '{0}/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json'.format(wiki_url),
+                headers=headers,
+            )
+            article_data = json.loads(response.content)
+            article_id = article_data['query']['random'][0]['id']
+
+            response = requests.get(
+                '{0}/api/v1/Articles/Details?ids={1}'.format(wiki_url, article_id),
+                headers=headers,
+            )
+            article_data = json.loads(response.content)
+            article_url = "{0}{1}".format(
+                wiki_url,
+                article_data['items'][str(article_id)]['url']
+            )
+
+        except Exception as exc:
+            log_exc(exc)
+
+    else:
+        # noinspection PyShadowingNames
+        try:
+            query = ' '.join(args[1:]).strip()
+            response = requests.get(
+                '{0}/api/v1/Search/List?query={1}&limit=1'.format(wiki_url, query),
+                headers=headers,
+            )
+            article_data = json.loads(response.content)
+            if article_data.get('exception') is None:
+                article_url = article_data['items'][0]['url']
+        except Exception as exc:
+            log_exc(exc)
+
+    if article_url is None:
+        await client.send_message(
+            message.channel,
+            content="{0} article not found :cry:".format(message.author.mention)
+        )
+    else:
+        await client.send_message(
+            message.channel,
+            content="{0} {1}".format(message.author.mention, article_url)
+        )
+
+CMD_FUN['wiki'] = cmd_wiki
+
+
+# ------------------------------------------------
+
 CP_ID = "289816859002273792"
 CP_HELLOS = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
 CP_BYES = ['ok bye', 'cya', 'see ya', 'bye', 'later', 'gtg bye']
@@ -324,14 +388,6 @@ async def cb_talk(channel, user, message, nodelay=False):
 
 
 # ============================================================================================
-
-from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImage, Setting
-from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, MurphyRequest
-
-tmpdir = mkdtemp(prefix="lambdabot_")
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
-
 
 def save_attachment(att):
     filename = os.path.join(tmpdir, str(uuid.uuid4()))
