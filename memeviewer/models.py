@@ -215,29 +215,29 @@ class MemeTemplate(models.Model):
         if isinstance(name, MemeContext):
             found = Meem.objects.filter(context_link=name).order_by('-gen_date').first()
             return found.template_link if found is not None else None
+        found = cls.objects.filter(name__iexact=name).first()
+        if found is not None:
+            return found
         found = cls.objects.filter(friendly_name__iexact=name).first()
         if found is not None:
             return found
+        found = cls.objects.filter(name__istartswith=name).first()
+        if found is not None:
+            return found
         found = cls.objects.filter(friendly_name__istartswith=name).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(name__icontains=name).first()
         if found is not None:
             return found
         found = cls.objects.filter(friendly_name__icontains=name).first()
         if found is not None:
             return found
         name_words = re.split(' |\.|/', name)
-        found = cls.objects.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
-        if found is not None:
-            return found
-        found = cls.objects.filter(name__iexact=name).first()
-        if found is not None:
-            return found
-        found = cls.objects.filter(name__istartswith=name).first()
-        if found is not None:
-            return found
-        found = cls.objects.filter(name__icontains=name).first()
-        if found is not None:
-            return found
         found = cls.objects.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
+        if found is not None:
+            return found
+        found = cls.objects.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
         return found
 
     @classmethod

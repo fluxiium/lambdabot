@@ -338,6 +338,8 @@ async def cmd_wiki(server, member, message, args, **_):
     soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
 
     pic_tag = soup.select_one('td.infoboximage > a > img')
+    if pic_tag is None:
+        pic_tag = soup.select_one('img.thumbimage')
 
     desc_tag = soup.select_one('div#mw-content-text > p:nth-of-type(2)')
     desc = textwrap.shorten(desc_tag.getText(), width=250) if desc_tag is not None else None
@@ -354,7 +356,8 @@ async def cmd_wiki(server, member, message, args, **_):
     )
 
     if pic_tag is not None:
-        embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
+        embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
+        # embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
 
     await client.send_message(
         message.channel,
