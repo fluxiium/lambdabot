@@ -334,12 +334,24 @@ async def cmd_wiki(server, member, message, args, **_):
         )
         return
 
-    embed = Embed(title=article['title'], url=article['fullurl'], color=0xF7923A)
-    embed.set_author(name="Combine Overwiki")
-
     response = requests.get(article['fullurl'], headers=headers)
-    soup = BeautifulSoup(response.content.decode('utf-8'), "html.parser")
-    pic_tag = soup.select_one('td.infoboximage a img')
+    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+
+    pic_tag = soup.select_one('td.infoboximage > a > img')
+
+    desc_tag = soup.select_one('div#mw-content-text > p:nth-of-type(2)')
+    desc = textwrap.shorten(desc_tag.getText(), width=250) if desc_tag is not None else None
+
+    embed = Embed(
+        title=article['title'],
+        url=article['fullurl'],
+        color=0xF7923A,
+        description=desc,
+    )
+    embed.set_footer(
+        text="Combine Overwiki",
+        icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png".format(wiki_url)
+    )
 
     if pic_tag is not None:
         embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
