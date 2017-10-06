@@ -265,7 +265,7 @@ async def cmd_meem(server, member, message, args, attachment, **_):
 
     await client.send_message(
         message.channel,
-        content="{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link.name)
+        content="{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
     )
 
     discord_meme.mark_sent()
