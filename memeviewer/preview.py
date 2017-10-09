@@ -15,7 +15,6 @@ def preview_meme(meme, add_watermark=False):
         return Image.open(meme_file)
     else:
         template = meme.template_link
-        source_files = meme.get_sourceimgs()
 
     foreground = Image.open(os.path.join(TEMPLATE_DIR, template.name)).convert("RGBA")
     if template.bg_img == '':
@@ -23,15 +22,10 @@ def preview_meme(meme, add_watermark=False):
     else:
         background = Image.open(os.path.join(TEMPLATE_DIR, template.bg_img)).convert('RGBA')
 
-    source_file_id = -1
-    prev_slot_id = None
+    for srcimg_data in meme.get_sourceimgs():
 
-    for slot in template.memetemplateslot_set.order_by('slot_order').all():
-
-        if prev_slot_id != slot.slot_order:
-            source_file_id += 1
-
-        source_image_original = Image.open(os.path.join(SOURCEIMG_DIR, source_files[source_file_id])).convert("RGBA")
+        source_image_original = Image.open(os.path.join(SOURCEIMG_DIR, srcimg_data.source_image.name)).convert("RGBA")
+        slot = srcimg_data.slot
 
         # resize, crop, and rotate source image
         source_image = source_image_original.copy()
@@ -75,8 +69,6 @@ def preview_meme(meme, add_watermark=False):
         else:
             # paste on foreground layer
             foreground.paste(source_image, paste_pos, source_alpha)
-
-        prev_slot_id = slot.slot_order
 
     meme_image = Image.alpha_composite(background, foreground)
 

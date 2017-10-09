@@ -313,25 +313,29 @@ class Meem(models.Model):
 
     @classmethod
     def create(cls, template, sourceimgs, context):
-        meem = cls(template_link=template, sourceimgs=json.dumps(sourceimgs), context_link=context)
+        meem = cls(template_link=template, sourceimgs="", context_link=context)
         meem.save()
+        for slot, sourceimg in sourceimgs.items():
+            MemeSourceImageInSlot(meme=meem, slot=slot, source_image=sourceimg).save()
         return meem
 
     @classmethod
     def generate(cls, context, template=None):
         if template is None:
             template = next_template(context)
-        source_files = []
+        source_files = {}
         prev_slot_id = None
+        source_file = None
         for slot in template.memetemplateslot_set.order_by('slot_order').all():
             if slot.slot_order == prev_slot_id:
+                source_files[slot] = source_file
                 continue
             # pick source file that hasn't been used
             while True:
-                source_file = next_sourceimg(context).name
-                if source_file not in source_files:
+                source_file = next_sourceimg(context)
+                if source_file not in source_files.values():
                     break
-            source_files.append(source_file)
+            source_files[slot] = source_file
             prev_slot_id = slot.slot_order
         meem = cls.create(template, source_files, context)
         return meem
@@ -344,7 +348,7 @@ class Meem(models.Model):
         return possible
 
     def get_sourceimgs(self):
-        return json.loads(self.sourceimgs)
+        return MemeSourceImageInSlot.objects.filter(meme=self).order_by('slot__slot_order')
 
     def get_local_path(self):
         return os.path.join(MEMES_DIR, self.meme_id + '.jpg')
@@ -357,6 +361,16 @@ class Meem(models.Model):
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)
+
+
+class MemeSourceImageInSlot(models.Model):
+
+    class Meta:
+        verbose_name = "Source image in slot"
+
+    meme = models.ForeignKey(Meem, verbose_name="Meme")
+    slot = models.ForeignKey(MemeTemplateSlot, verbose_name="Template slot")
+    source_image = models.ForeignKey(MemeSourceImage, verbose_name="Source image")
 
 
 class ImageInContext(models.Model):

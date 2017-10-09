@@ -77,7 +77,7 @@ def meme_info_view(request, meme_id):
         'template_url': meme.template_link.get_image_url(),
         'template_bg_url': templatebg,
         'source_urls':
-            [STATIC_URL + 'lambdabot/resources/sourceimg/' + sourceimg for sourceimg in meme.get_sourceimgs()],
+            [STATIC_URL + 'lambdabot/resources/sourceimg/' + sourceimg.source_image.name for sourceimg in meme.get_sourceimgs()],
         'context': meme.context_link.name,
         'gen_date': meme.gen_date,
         'num': meme.number,

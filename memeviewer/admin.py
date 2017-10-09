@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission
 from facebookbot.models import FacebookMeem
 from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImage, Setting
+    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImage, Setting, MemeSourceImageInSlot
 from twitterbot.models import TwitterMeem
 
 
@@ -31,14 +31,19 @@ class DiscordInline(admin.TabularInline):
     extra = 0
 
 
+class MemeSourceImageInSlotInline(admin.TabularInline):
+    model = MemeSourceImageInSlot
+    extra = 0
+
+
 class MeemAdmin(admin.ModelAdmin):
     list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
     ordering = ('-number', 'meme_id')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
-    inlines = [FacebookInline, TwitterInline, DiscordInline]
+    inlines = [MemeSourceImageInSlotInline, FacebookInline, TwitterInline, DiscordInline]
     search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name', 'sourceimgs')
 
-    readonly_fields = ['image']
+    readonly_fields = ['image', 'meme_url']
     fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
     readonly_fields = tuple(readonly_fields)
 
