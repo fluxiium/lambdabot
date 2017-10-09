@@ -312,7 +312,7 @@ class Meem(models.Model):
 
     @classmethod
     def create(cls, template, sourceimgs, context):
-        meem = cls(template_link=template, sourceimgs="", context_link=context)
+        meem = cls(template_link=template, context_link=context)
         meem.save()
         for slot, sourceimg in sourceimgs.items():
             MemeSourceImageInSlot(meme=meem, slot=slot, source_image=sourceimg).save()
