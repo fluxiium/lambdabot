@@ -41,7 +41,7 @@ class MeemAdmin(admin.ModelAdmin):
     ordering = ('-number', 'meme_id')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
     inlines = [MemeSourceImageInSlotInline, FacebookInline, TwitterInline, DiscordInline]
-    search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name', 'sourceimgs')
+    search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name')  # TODO: search by srcimg
 
     readonly_fields = ['image', 'meme_url']
     fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
