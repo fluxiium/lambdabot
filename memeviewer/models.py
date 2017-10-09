@@ -211,33 +211,36 @@ class MemeTemplate(models.Model):
         return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
 
     @classmethod
-    def find(cls, name):
+    def find(cls, name, allow_disabled=False):
         if isinstance(name, MemeContext):
             found = Meem.objects.filter(context_link=name).order_by('-gen_date').first()
             return found.template_link if found is not None else None
-        found = cls.objects.filter(name__iexact=name).first()
+        obj = cls.objects
+        if not allow_disabled:
+            obj = obj.filter(accepted=True)
+        found = obj.filter(name__iexact=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(friendly_name__iexact=name).first()
+        found = obj.filter(friendly_name__iexact=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(name__istartswith=name).first()
+        found = obj.filter(name__istartswith=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(friendly_name__istartswith=name).first()
+        found = obj.filter(friendly_name__istartswith=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(name__icontains=name).first()
+        found = obj.filter(name__icontains=name).first()
         if found is not None:
             return found
-        found = cls.objects.filter(friendly_name__icontains=name).first()
+        found = obj.filter(friendly_name__icontains=name).first()
         if found is not None:
             return found
         name_words = re.split(' |\.|/', name)
-        found = cls.objects.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
+        found = obj.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
         if found is not None:
             return found
-        found = cls.objects.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
+        found = obj.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
         return found
 
     @classmethod

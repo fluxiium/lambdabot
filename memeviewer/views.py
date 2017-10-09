@@ -25,7 +25,7 @@ def template_preview_view(request, template_name):
     try:
         meme = Meem.generate(
             context=MemeContext.by_id('template_preview'),
-            template=MemeTemplate.find(template_name),
+            template=MemeTemplate.find(template_name, allow_disabled=True),
         )
     except ObjectDoesNotExist:
         raise Http404("template does not exist")

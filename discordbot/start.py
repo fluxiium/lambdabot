@@ -647,10 +647,9 @@ async def process_murphy():
                     try:
                         murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
                         murphybot_state = "3"
+                        continue
                     except Exception as ex:
                         log_exc(ex)
-                        murphybot_state = "error"
-                    continue
 
                 else:
                     log_murphy("ERROR: request face pic file doesn't exist: {}".format(murphybot_request.face_pic))
