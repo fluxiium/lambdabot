@@ -41,10 +41,11 @@ def log_exc(exc):
 
 
 class DelayedTask:
-    def __init__(self, delay, callback, data):
+    def __init__(self, delay, callback, args=(), kwargs=None):
         self._delay = delay
         self._callback = callback
-        self._data = data
+        self._args = args
+        self._kwargs = kwargs if kwargs is not None else {}
         self._task = None
 
     def run(self):
@@ -52,11 +53,23 @@ class DelayedTask:
 
     async def _job(self):
         await asyncio.sleep(self._delay)
-        await self._callback(self._data)
+        await self._callback(*self._args, **self._kwargs)
 
     def cancel(self):
         if self._task is not None:
             self._task.cancel()
+
+
+async def delay_send(func, *args, **kwargs):
+    try:
+        await func(*args, **kwargs)
+    except discord.Forbidden:
+        if func != client.send_typing:
+            log("channel forbidden")
+    except Exception as e:
+        log_exc(e)
+
+# ============================================================================================
 
 
 # noinspection PyBroadException,PyArgumentList
@@ -171,7 +184,7 @@ async def cmd_help(server, member, message, **_):
         if cmd_data.help:
             helpstr += " - {0}".format(cmd_data.help)
 
-    await client.send_message(message.channel, helpstr)
+    await delay_send(client.send_message, message.channel, helpstr)
 
 CMD_FUN['help'] = cmd_help
 
@@ -180,7 +193,7 @@ CMD_FUN['help'] = cmd_help
 
 async def cmd_meem(server, member, message, args, attachment, **_):
 
-    await client.send_typing(message.channel)
+    await delay_send(client.send_typing, message.channel)
 
     template = None
 
@@ -198,7 +211,8 @@ async def cmd_meem(server, member, message, args, attachment, **_):
                         timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
                     else:
                         timestr = "{0} more seconds".format(seconds_left)
-                    await client.send_message(
+                    await delay_send(
+                        client.send_message,
                         message.channel,
                         "{3} you can only submit {0} images every {1} minutes. Please wait {2}.".format(
                             submit_limit_count,
@@ -213,9 +227,10 @@ async def cmd_meem(server, member, message, args, attachment, **_):
             discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
             discord_submission.save()
 
-            await client.send_message(
+            await delay_send(
+                client.send_message,
                 message.channel,
-                content="{0} thanks! The source image will be added once it's approved.".format(message.author.mention)
+                "{0} thanks! The source image will be added once it's approved.".format(message.author.mention)
             )
 
             log('sourceimg submitted by {}'.format(member))
@@ -229,9 +244,10 @@ async def cmd_meem(server, member, message, args, attachment, **_):
             else:
                 template = MemeTemplate.find(template_name)
                 if template is None:
-                    await client.send_message(
+                    await delay_send(
+                        client.send_message,
                         message.channel,
-                        content="{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
+                        "{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
                     )
                     return
 
@@ -246,7 +262,8 @@ async def cmd_meem(server, member, message, args, attachment, **_):
                 timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
             else:
                 timestr = "{0} more seconds".format(seconds_left)
-            await client.send_message(
+            await delay_send(
+                client.send_message,
                 message.channel,
                 "{3} you can only generate {0} memes every {1} minutes. Please wait {2}.".format(
                     meme_limit_count,
@@ -263,9 +280,10 @@ async def cmd_meem(server, member, message, args, attachment, **_):
     discord_meme = DiscordMeem(meme=meme, server_user=member, channel_id=message.channel.id)
     discord_meme.save()
 
-    await client.send_message(
+    await delay_send(
+        client.send_message,
         message.channel,
-        content="{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
+        "{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
     )
 
     discord_meme.mark_sent()
@@ -277,36 +295,25 @@ CMD_FUN['meem'] = cmd_meem
 
 # ------------------------------------------------
 
-async def delay_message(data):
-    await client.send_message(*data)
-
-
-async def delay_typing(channel):
-    await client.send_typing(channel)
-
-
-async def cmd_meme_hl(message, **_):
-    DelayedTask(1.9, delay_typing, message.channel).run()
-    DelayedTask(2.3, delay_message, (message.channel, "<@238650794679730178> kys")).run()
-
-CMD_FUN['meme'] = cmd_meme_hl
-
-
-# ------------------------------------------------
-
 async def cmd_wiki(server, member, message, args, **_):
-    await client.send_typing(message.channel)
+    await delay_send(client.send_typing, message.channel)
 
     wiki_url = Setting.get('hl wiki url', 'http://combineoverwiki.net')
     article = None
+    was_random = False
 
     if len(args) == 1:
         # noinspection PyShadowingNames
         try:
+            was_random = True
             response = requests.get(
-                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, "ar2"),
                 headers=headers,
             )
+            # response = requests.get(
+            #     '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+            #     headers=headers,
+            # )
             article_data = json.loads(response.content.decode('utf-8'))
             article = next(iter(article_data['query']['pages'].values()))
 
@@ -327,15 +334,38 @@ async def cmd_wiki(server, member, message, args, **_):
         except Exception as exc:
             log_exc(exc)
 
-    if article is None:
-        await client.send_message(
-            message.channel,
-            content="{0} article not found :cry:".format(message.author.mention)
-        )
-        return
+    proceed = False
+    soup = None
 
-    response = requests.get(article['fullurl'], headers=headers)
-    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+    while not proceed:
+        if article is None:
+            await delay_send(
+                client.send_message,
+                message.channel,
+                "{0} article not found :cry:".format(message.author.mention)
+            )
+            return
+
+        response = requests.get(article['fullurl'], headers=headers)
+        soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+
+        heading = soup.select_one('#firstHeading')
+        if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
+            proceed = True
+        else:
+            page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
+            random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
+            if random_page is None:
+                article = None
+            else:
+                response = requests.get(
+                    '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
+                        wiki_url, random_page),
+                    headers=headers,
+                )
+                article_data = json.loads(response.content.decode('utf-8'))
+                if article_data.get('query') is not None:
+                    article = next(iter(article_data['query']['pages'].values()))
 
     pic_tag = soup.select_one('td.infoboximage > a > img')
     if pic_tag is None:
@@ -359,9 +389,10 @@ async def cmd_wiki(server, member, message, args, **_):
         embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
         # embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
 
-    await client.send_message(
+    await delay_send(
+        client.send_message,
         message.channel,
-        content="{0} {1}".format(message.author.mention, article['fullurl']),
+        "{0} {1}".format(message.author.mention, article['fullurl']),
         embed=embed,
     )
 
@@ -379,9 +410,9 @@ cb_conversations = {}
 
 async def cptalk_say(channel, sender_id, message, delay):
     if delay > 0:
-        DelayedTask(delay, delay_typing, channel).run()
+        DelayedTask(delay, delay_send, (client.send_typing, channel)).run()
         delay += min(0.17 * len(message), 4)
-    DelayedTask(delay, delay_message, (channel, "<@{0}> {1}".format(sender_id, message))).run()
+    DelayedTask(delay, delay_send, (client.send_message, channel, "<@{0}> {1}".format(sender_id, message))).run()
 
 
 async def cmd_cptalk(message, **_):
@@ -452,11 +483,13 @@ async def process_message(message, old_message=None):
 
     elif len(message.embeds) > 0:
         emb = message.embeds[0]
-        att = emb.get('image')
-        if att is None:
-            att = emb.get('thumbnail')
-        if att is not None:
-            dl_embed_url = emb['url']
+        url = emb.get('url')
+        if url is not None:
+            att = emb.get('image')
+            if att is None:
+                att = emb.get('thumbnail')
+            if att is not None:
+                dl_embed_url = emb['url']
 
     if att is not None:
         ProcessedMessage.process_id(message.id)
@@ -474,8 +507,9 @@ async def process_message(message, old_message=None):
         ProcessedMessage.process_id(message.id)
 
         if msg == "" and att is None:
-            await client.send_typing(message.channel)
-            await client.send_message(
+            await delay_send(client.send_typing, message.channel)
+            await delay_send(
+                client.send_message,
                 message.channel,
                 "{0} LambdaBot is a bot which generates completely random Half-Life memes. It does this by picking a "
                 "random meme template and combining it with one or more randomly picked source images related to "
@@ -524,7 +558,10 @@ async def process_message(message, old_message=None):
         return
 
     else:
-        splitcmd = shlex.split(msg[len(server.prefix):])
+        try:
+            splitcmd = shlex.split(msg[len(server.prefix):])
+        except ValueError:
+            splitcmd = msg[len(server.prefix):].split(' ')
 
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
@@ -537,8 +574,8 @@ async def process_message(message, old_message=None):
         ))
 
         if cmd.message is not None and len(cmd.message) > 0:
-            await client.send_typing(message.channel)
-            await client.send_message(message.channel, cmd.message)
+            await delay_send(client.send_typing, message.channel)
+            await delay_send(client.send_message, message.channel, cmd.message)
 
         cmd_fun = CMD_FUN.get(cmd.cmd)
         if cmd_fun is not None:
@@ -600,7 +637,10 @@ async def process_murphy():
         if murphybot_state != "0":
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{}>".format(murphybot_request.server_user.user.user_id)
-            await client.send_typing(channel)
+            try:
+                await delay_send(client.send_typing, channel)
+            except discord.Forbidden:
+                log("can't send message to channel")
 
         if murphybot_state == "0":
             await asyncio.sleep(1)
@@ -700,7 +740,7 @@ async def process_murphy():
             log_murphy("face accepted")
             MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
             if murphybot_request.question == '':
-                await client.send_message(channel, "{} face accepted :+1:".format(mention))
+                await delay_send(client.send_message, channel, "{} face accepted :+1:".format(mention))
             else:
                 murphybot_state = "2.2"
                 continue
@@ -708,7 +748,7 @@ async def process_murphy():
         elif murphybot_state == "2.2":
             log_murphy("sending answer")
             output = murphybot.download_media(murphybot_media, file=tmpdir)
-            await client.send_file(channel, output, content=mention)
+            await delay_send(client.send_file, channel, output, content=mention)
 
         elif murphybot_state == "3.2":
             log_murphy("face accepted, sending question")
@@ -719,22 +759,22 @@ async def process_murphy():
 
         elif murphybot_state == "upload face":
             log_murphy("no channel face pic")
-            await client.send_message(channel, "{} please upload a face first".format(mention))
+            await delay_send(client.send_message, channel, "{} please upload a face first".format(mention))
 
         elif murphybot_state == "no face":
             log_murphy("no face detected")
-            await client.send_message(channel, "{} no face detected :cry:".format(mention))
+            await delay_send(client.send_message, channel, "{} no face detected :cry:".format(mention))
 
         elif murphybot_state == "idk":
             log_murphy("idk")
             if murphybot_request.server_user.check_permission("cleverbot"):
                 await cb_talk(channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
             else:
-                await client.send_message(channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+                await delay_send(client.send_message, channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
 
         elif murphybot_state == "error":
             log_murphy("error")
-            await client.send_message(channel, "{} error :cry:".format(mention))
+            await delay_send(client.send_message, channel, "{} error :cry:".format(mention))
 
         murphybot_request.mark_processed()
         murphybot_state = "0"

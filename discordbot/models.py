@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
@@ -56,10 +57,19 @@ class DiscordCommand(models.Model):
 
     @classmethod
     def get_cmd(cls, cmd):
-        return cls.objects.filter(cmd__iexact=cmd).first()
+        return cls.objects.filter(Q(cmd__iexact=cmd) | Q(discordcommandalias__alias__iexact=cmd)).first()
 
     def __str__(self):
         return self.cmd
+
+
+class DiscordCommandAlias(models.Model):
+
+    class Meta:
+        verbose_name = "Command alias"
+
+    alias = models.CharField(max_length=32, primary_key=True, verbose_name='Alias')
+    cmd = models.ForeignKey(DiscordCommand, on_delete=models.CASCADE, verbose_name='Command')
 
 
 class DiscordPermission(models.Model):

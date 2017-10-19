@@ -167,10 +167,6 @@ class MemeSourceImage(models.Model):
         return result.strip()
 
     @classmethod
-    def search(cls, term):
-        return cls.objects.filter(Q(name__icontains=term) | Q(friendly_name__icontains=term) | Q(contexts__short_name__icontains=term))
-
-    @classmethod
     def submit(cls, path):
         filename = "{}.jpg".format(str(uuid.uuid4()))
         image = Image.open(path)
@@ -242,10 +238,6 @@ class MemeTemplate(models.Model):
             return found
         found = obj.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
         return found
-
-    @classmethod
-    def search(cls, term):
-        return cls.objects.filter(Q(name__icontains=term) | Q(friendly_name__icontains=term) | Q(contexts__short_name__icontains=term))
 
     def possible_combinations(self, context):
         possible = 1
@@ -367,9 +359,9 @@ class MemeSourceImageInSlot(models.Model):
     class Meta:
         verbose_name = "Source image in slot"
 
-    meme = models.ForeignKey(Meem, verbose_name="Meme")
-    slot = models.ForeignKey(MemeTemplateSlot, verbose_name="Template slot")
-    source_image = models.ForeignKey(MemeSourceImage, verbose_name="Source image")
+    meme = models.ForeignKey(Meem, verbose_name="Meme", on_delete=models.CASCADE)
+    slot = models.ForeignKey(MemeTemplateSlot, verbose_name="Template slot", on_delete=models.CASCADE)
+    source_image = models.ForeignKey(MemeSourceImage, verbose_name="Source image", on_delete=models.CASCADE)
 
 
 class ImageInContext(models.Model):

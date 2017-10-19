@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, \
     DiscordServerUserPermission, DiscordServerPermission, MurphyRequest, ProcessedMessage, MurphyFacePic, \
-    DiscordPermission
+    DiscordPermission, DiscordCommandAlias
 
 
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
@@ -27,10 +27,16 @@ class DiscordServerAdmin(admin.ModelAdmin):
 admin.site.register(DiscordServer, DiscordServerAdmin)
 
 
+class DiscordCommandAliasInline(admin.TabularInline):
+    model = DiscordCommandAlias
+    extra = 0
+
+
 class DiscordCommandAdmin(admin.ModelAdmin):
     list_display = ('cmd', 'help', 'message', 'hidden', 'restricted')
     ordering = ('cmd',)
     search_fields = ('cmd',)
+    inlines = [DiscordCommandAliasInline]
 
 
 admin.site.register(DiscordCommand, DiscordCommandAdmin)

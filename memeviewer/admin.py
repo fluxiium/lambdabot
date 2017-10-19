@@ -38,10 +38,11 @@ class MemeSourceImageInSlotInline(admin.TabularInline):
 
 class MeemAdmin(admin.ModelAdmin):
     list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
-    ordering = ('-number', 'meme_id')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
+    list_filter = ('context_link', 'memesourceimageinslot__source_image')
+    search_fields = ('number', 'meme_id', 'template_link__name')
+    ordering = ('-number', 'meme_id')
     inlines = [MemeSourceImageInSlotInline, FacebookInline, TwitterInline, DiscordInline]
-    search_fields = ('number', 'meme_id', 'context_link__short_name', 'template_link__name')  # TODO: search by srcimg
 
     readonly_fields = ['image', 'meme_url']
     fields = tuple([f.name for f in Meem._meta.fields + Meem._meta.many_to_many] + readonly_fields)
@@ -78,8 +79,9 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
 class MemeSourceImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date')
     list_display_links = ('thumbnail', 'name')
+    list_filter = ('contexts',)
+    search_fields = ('name', 'friendly_name')
     ordering = ('-add_date', 'name',)
-    search_fields = ('friendly_name', 'name',)
     inlines = [DiscordSourceImgSubmissionInline]
     actions = ['accept']
 
@@ -94,11 +96,6 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     def image(self, obj):
         return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
     image.short_description = 'Image'
-
-    def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super(MemeSourceImageAdmin, self).get_search_results(request, queryset, search_term)
-        queryset |= MemeSourceImage.search(search_term)
-        return queryset, use_distinct
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
@@ -115,8 +112,9 @@ class MemeTemplateSlotInline(admin.TabularInline):
 class MemeTemplateAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date', 'preview_url')
     list_display_links = ('thumbnail', 'name')
+    list_filter = ('contexts',)
+    search_fields = ('name', 'friendly_name')
     ordering = ('-add_date', 'name')
-    search_fields = ('name',)
     inlines = [MemeTemplateSlotInline]
     actions = ['accept']
 
@@ -135,11 +133,6 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     def image(self, obj):
         return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
     image.short_description = 'Image'
-
-    def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super(MemeTemplateAdmin, self).get_search_results(request, queryset, search_term)
-        queryset |= MemeTemplate.search(search_term)
-        return queryset, use_distinct
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
