@@ -307,13 +307,9 @@ async def cmd_wiki(server, member, message, args, **_):
         try:
             was_random = True
             response = requests.get(
-                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
+                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
                 headers=headers,
             )
-            # response = requests.get(
-            #     '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
-            #     headers=headers,
-            # )
             article_data = json.loads(response.content.decode('utf-8'))
             article = next(iter(article_data['query']['pages'].values()))
 
