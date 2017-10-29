@@ -298,15 +298,28 @@ CMD_FUN['meem'] = cmd_meem
 async def cmd_noviews(server, member, message, args, **_):
     await delay_send(client.send_typing, message.channel)
 
-    response = requests.get('http://www.petittube.com', headers=headers)
-    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-    videourl = re.search('\/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
+    attempt = 0
+    videourl = None
+    while videourl is None and attempt < 5:
+        try:
+            response = requests.get('http://www.petittube.com', headers=headers)
+            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+            videourl = re.search('\/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
+        except Exception as e:
+            attempt += 1
 
-    await delay_send(
-        client.send_message,
-        message.channel,
-        "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
-    )
+    if videourl is None:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} error :cry:".format(message.author.mention),
+        )
+    else:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
+        )
 
 CMD_FUN['noviews'] = cmd_noviews
 
