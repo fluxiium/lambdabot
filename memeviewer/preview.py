@@ -6,7 +6,7 @@ from PIL import ImageFilter
 from lamdabotweb.settings import TEMPLATE_DIR, SOURCEIMG_DIR, RESOURCE_DIR
 
 
-def preview_meme(meme, add_watermark=False):
+def preview_meme(meme):
     """ retrieve a previously generated meme """
 
     meme_file = meme.get_local_path()
@@ -71,23 +71,6 @@ def preview_meme(meme, add_watermark=False):
             foreground.paste(source_image, paste_pos, source_alpha)
 
     meme_image = Image.alpha_composite(background, foreground)
-
-    if add_watermark:
-        # load watermark
-        watermark_image = Image.open(RESOURCE_DIR + '/watermark.png').convert("RGBA")
-
-        # create final canvas
-        watermarked_meme_image = Image.new(
-            meme_image.mode,
-            (meme_image.size[0], meme_image.size[1] + watermark_image.size[1])
-        )
-
-        # paste meme and watermark
-        watermarked_meme_image.paste(meme_image, (0, 0), meme_image)
-        watermarked_meme_image.paste(watermark_image,
-                                     (0, meme_image.size[1]), watermark_image)
-
-        meme_image = watermarked_meme_image
 
     meme_image = meme_image.convert('RGB')
     meme_image.save(meme_file)

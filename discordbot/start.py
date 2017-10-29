@@ -295,6 +295,23 @@ CMD_FUN['meem'] = cmd_meem
 
 # ------------------------------------------------
 
+async def cmd_noviews(server, member, message, args, **_):
+    await delay_send(client.send_typing, message.channel)
+
+    response = requests.get('http://www.petittube.com', headers=headers)
+    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+    videourl = re.search('\/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
+
+    await delay_send(
+        client.send_message,
+        message.channel,
+        "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
+    )
+
+CMD_FUN['noviews'] = cmd_noviews
+
+# ------------------------------------------------
+
 async def cmd_wiki(server, member, message, args, **_):
     await delay_send(client.send_typing, message.channel)
 
