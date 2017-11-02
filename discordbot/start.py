@@ -163,8 +163,6 @@ tmpdir = mkdtemp(prefix="lambdabot_")
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
 
-CMD_FUN = {}
-
 
 # ------------------------------------------------
 
@@ -186,12 +184,10 @@ async def cmd_help(server, member, message, **_):
 
     await delay_send(client.send_message, message.channel, helpstr)
 
-CMD_FUN['help'] = cmd_help
-
 
 # ------------------------------------------------
 
-async def cmd_meem(server, member, message, args, attachment, **_):
+async def cmd_meem(server, member, message, args, argstr, attachment, **_):
 
     await delay_send(client.send_typing, message.channel)
 
@@ -238,7 +234,7 @@ async def cmd_meem(server, member, message, args, attachment, **_):
             return
 
         else:
-            template_name = ' '.join(args[1:]).strip()
+            template_name = argstr
             if template_name == '^':
                 template = MemeTemplate.find(server.context)
             else:
@@ -290,8 +286,82 @@ async def cmd_meem(server, member, message, args, attachment, **_):
 
     log('meme generated:', meme)
 
-CMD_FUN['meem'] = cmd_meem
+# ------------------------------------------------
 
+async def cmd_led(server, member, message, args, argstr, **_):
+    await delay_send(client.send_typing, message.channel)
+
+    if len(args) == 1:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} usage: `{1} (text)`".format(message.author.mention, args[0]),
+        )
+        return
+
+    response = requests.post('http://wigflip.com/signbot/', data={
+        'T': argstr,
+        'S': 'L',
+    }, headers=headers)
+
+    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+    img = soup.select_one('#output img')
+    if img is not None:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} {1}".format(message.author.mention, img['src']),
+        )
+    else:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} error :cry:".format(message.author.mention),
+        )
+
+# ------------------------------------------------
+
+async def cmd_mario(server, member, message, args, argstr, **_):
+    await delay_send(client.send_typing, message.channel)
+
+    if len(args) < 3:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} usage: `{1} [name] (first line) (message)`".format(message.author.mention, args[0]),
+        )
+        return
+
+    if len(args) == 4:
+        name = args[1]
+        title = args[2]
+        msgtext = args[3]
+    else:
+        name = None
+        title = args[1]
+        msgtext = args[2]
+
+    response = requests.post('http://wigflip.com/thankyoumario/', data={
+        'name': name,
+        'title': title,
+        'lines': msgtext,
+        'double': 'y',
+    }, headers=headers)
+
+    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+    img = soup.select_one('#output img')
+    if img is not None:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} {1}".format(message.author.mention, img['src']),
+        )
+    else:
+        await delay_send(
+            client.send_message,
+            message.channel,
+            "{0} error :cry:".format(message.author.mention),
+        )
 
 # ------------------------------------------------
 
@@ -321,11 +391,9 @@ async def cmd_noviews(server, member, message, args, **_):
             "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
         )
 
-CMD_FUN['noviews'] = cmd_noviews
-
 # ------------------------------------------------
 
-async def cmd_wiki(server, member, message, args, **_):
+async def cmd_wiki(server, member, message, args, argstr, **_):
     await delay_send(client.send_typing, message.channel)
 
     wiki_url = Setting.get('hl wiki url', 'http://combineoverwiki.net')
@@ -349,7 +417,7 @@ async def cmd_wiki(server, member, message, args, **_):
     else:
         # noinspection PyShadowingNames
         try:
-            query = ' '.join(args[1:]).strip()
+            query = argstr
             response = requests.get(
                 '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
                 headers=headers,
@@ -422,9 +490,6 @@ async def cmd_wiki(server, member, message, args, **_):
         embed=embed,
     )
 
-CMD_FUN['wiki'] = cmd_wiki
-
-
 # ------------------------------------------------
 
 CP_ID = "289816859002273792"
@@ -440,7 +505,6 @@ async def cptalk_say(channel, sender_id, message, delay):
         delay += min(0.17 * len(message), 4)
     DelayedTask(delay, delay_send, (client.send_message, channel, "<@{0}> {1}".format(sender_id, message))).run()
 
-
 async def cmd_cptalk(message, **_):
     global cb_conversations
     if cb_conversations.get(CP_ID) is None:
@@ -448,9 +512,6 @@ async def cmd_cptalk(message, **_):
         await cptalk_say(message.channel, CP_ID, random.choice(CP_HELLOS), 0.1)
     else:
         cb_conversations[CP_ID] = None
-
-CMD_FUN['cptalk'] = cmd_cptalk
-
 
 async def cb_talk(channel, user, message, nodelay=False):
     if cb_conversations.get(user.user.user_id) is None:
@@ -603,13 +664,14 @@ async def process_message(message, old_message=None):
             await delay_send(client.send_typing, message.channel)
             await delay_send(client.send_message, message.channel, cmd.message)
 
-        cmd_fun = CMD_FUN.get(cmd.cmd)
+        cmd_fun = globals().get('cmd_' + cmd.cmd)
         if cmd_fun is not None:
             await cmd_fun(
                 server=server,
                 member=member,
                 message=message,
                 args=splitcmd,
+                argstr=msg[(len(server.prefix) + len(cmd.cmd)):].strip(),
                 attachment=att,
             )
 
