@@ -671,7 +671,7 @@ async def process_message(message, old_message=None):
                 member=member,
                 message=message,
                 args=splitcmd,
-                argstr=msg[(len(server.prefix) + len(cmd.cmd)):].strip(),
+                argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
                 attachment=att,
             )
 
