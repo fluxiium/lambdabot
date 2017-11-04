@@ -2,7 +2,6 @@ import facebook
 
 # http://nodotcom.org/python-facebook-tutorial.html
 import sys
-from lambdabot.settings import *
 
 cfg = {
     "page_id": "486920085001034",  # lambdabot
