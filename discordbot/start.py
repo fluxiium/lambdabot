@@ -524,6 +524,10 @@ async def cb_talk(channel, user, message, nodelay=False):
     log("response: {}".format(response), tag="cleverbot")
     await cptalk_say(channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
 
+# ------------------------------------------------
+
+async def cmd_test(message, **_):
+    await delay_send(client.send_message, client.get_channel("154637540341710848"), "test")
 
 # ============================================================================================
 
@@ -641,14 +645,13 @@ async def process_message(message, old_message=None):
 
         return
 
-    elif not msg.startswith(server.prefix):
+    if not msg.startswith(server.prefix):
         return
 
-    else:
-        try:
-            splitcmd = shlex.split(msg[len(server.prefix):])
-        except ValueError:
-            splitcmd = msg[len(server.prefix):].split(' ')
+    try:
+        splitcmd = shlex.split(msg[len(server.prefix):])
+    except ValueError:
+        splitcmd = msg[len(server.prefix):].split(' ')
 
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
