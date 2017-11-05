@@ -16,6 +16,7 @@ class DiscordServer(models.Model):
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
     context = models.ForeignKey(MemeContext, verbose_name='Context')
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
+    log_channel = models.CharField(max_length=32, default='', blank=True)
 
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')

@@ -158,7 +158,7 @@ log("#  LambdaBot 3883 - Discord  #")
 log("##############################")
 log("")
 
-client = discord.Client()
+client = discord.Client(max_messages=10000)
 tmpdir = mkdtemp(prefix="lambdabot_")
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
@@ -324,11 +324,11 @@ async def cmd_led(server, member, message, args, argstr, **_):
 async def cmd_mario(server, member, message, args, argstr, **_):
     await delay_send(client.send_typing, message.channel)
 
-    if len(args) < 3:
+    if len(args) < 3 or len(args) > 4:
         await delay_send(
             client.send_message,
             message.channel,
-            "{0} usage: `{1} [name] (first line) (message)`".format(message.author.mention, args[0]),
+            '{0} usage: `{1} ["name"] "first line" "message"`'.format(message.author.mention, args[0]),
         )
         return
 
@@ -527,7 +527,7 @@ async def cb_talk(channel, user, message, nodelay=False):
 # ------------------------------------------------
 
 async def cmd_test(message, **_):
-    await delay_send(client.send_message, client.get_channel("154637540341710848"), "test")
+    await delay_send(client.send_message, client.get_channel("291537367452614658"), "test")
 
 # ============================================================================================
 
@@ -686,6 +686,34 @@ async def on_message(message):
 
 @client.event
 async def on_message_edit(old_message, message):
+    server_id = message.server.id
+    server = DiscordServer.get_by_id(server_id)
+
+    if server is not None and server.log_channel != "" and old_message.content != message.content:
+        embed = Embed(
+            description="**Message sent by {0} edited in <#{1}>**".format(message.author.mention, message.channel.id),
+            color=0x117EA6,
+        )
+        embed.set_author(
+            name=str(message.author),
+            icon_url=message.author.avatar_url
+        )
+        embed.set_footer(
+            text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
+        )
+        embed.add_field(
+            name="Old message",
+            value=textwrap.shorten(old_message.content, width=1000),
+            inline=False,
+        )
+        embed.add_field(
+            name="New message",
+            value=textwrap.shorten(message.content, width=1000),
+            inline=False,
+        )
+
+        await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
+
     await process_message(message, old_message)
 
 
