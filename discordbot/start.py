@@ -689,7 +689,12 @@ async def on_message_edit(old_message, message):
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)
 
-    if server is not None and server.log_channel != "" and old_message.content != message.content:
+    member = DiscordServerUser.get_by_id(message.author.id, server)
+    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
+    member.user.update(name=message.author.name)
+
+    if server is not None and server.log_channel != "" and old_message.content != message.content and \
+            not member.check_permission('no edits log'):
         embed = Embed(
             description="**Message sent by {0} edited in <#{1}>**".format(message.author.mention, message.channel.id),
             color=0x117EA6,
