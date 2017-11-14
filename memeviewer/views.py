@@ -73,7 +73,7 @@ def meme_info_view(request, meme_id):
         'meme_id': meme_id,
         'meme_url': meme.get_url(),
         'meme_info_url': meme.get_info_url(),
-        'template_name': meme.template_link.name,
+        'template_name': meme.template_link,
         'template_url': meme.template_link.get_image_url(),
         'template_bg_url': templatebg,
         'source_urls':
