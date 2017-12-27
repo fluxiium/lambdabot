@@ -535,11 +535,13 @@ async def cmd_test(message, **_):
 def get_server_and_member(message):
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)
-    server.update(name=message.server.name)
+    if server is not None:
+        server.update(name=message.server.name)
 
     member = DiscordServerUser.get_by_id(message.author.id, server)
-    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
-    member.user.update(name=message.author.name)
+    if member is not None:
+        member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
+        member.user.update(name=message.author.name)
 
     return server, member
 
