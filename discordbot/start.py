@@ -105,13 +105,13 @@ init_commands()
 async def process_message(message, old_message=None):
     msg = message.content.strip()
 
-    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
-        await asyncio.sleep(2)
-
     server, member = get_server_and_member(message)
 
-    if server is None or ProcessedMessage.was_id_processed(message.id):
+    if server is None or ProcessedMessage.was_id_processed(message.id) or message.author.id == client.user.id:
         return
+
+    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
+        await asyncio.sleep(2)
 
     att, dl_embed_url = get_attachment(message)
     control_channel = Setting.get("control channel")
