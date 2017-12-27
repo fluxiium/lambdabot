@@ -751,7 +751,7 @@ async def on_message_delete(message):
         )
         embed.add_field(
             name="URL",
-            value=att['url'],
+            value=att['proxy_url'],
             inline=False,
         )
 
