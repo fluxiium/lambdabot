@@ -531,6 +531,39 @@ async def cmd_test(message, **_):
 
 # ============================================================================================
 
+
+def get_server_and_member(message):
+    server_id = message.server.id
+    server = DiscordServer.get_by_id(server_id)
+    server.update(name=message.server.name)
+
+    member = DiscordServerUser.get_by_id(message.author.id, server)
+    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
+    member.user.update(name=message.author.name)
+
+    return server, member
+
+
+def get_attachment(message):
+    att = None
+    dl_embed_url = None
+
+    if len(message.attachments) > 0:
+        att = message.attachments[0]
+
+    elif len(message.embeds) > 0:
+        emb = message.embeds[0]
+        url = emb.get('url')
+        if url is not None:
+            att = emb.get('image')
+            if att is None:
+                att = emb.get('thumbnail')
+            if att is not None:
+                dl_embed_url = emb['url']
+
+    return att, dl_embed_url
+
+
 def save_attachment(att):
     filename = os.path.join(tmpdir, str(uuid.uuid4()))
     log('received attachment: {0} {1}'.format(att['url'], filename))
@@ -554,33 +587,12 @@ async def process_message(message, old_message=None):
     if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
         await asyncio.sleep(2)
 
-    server_id = message.server.id
-    server = DiscordServer.get_by_id(server_id)
+    server, member = get_server_and_member(message)
 
     if server is None or ProcessedMessage.was_id_processed(message.id):
         return
 
-    server.update(name=message.server.name)
-
-    member = DiscordServerUser.get_by_id(message.author.id, server)
-    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
-    member.user.update(name=message.author.name)
-
-    att = None
-    dl_embed_url = None
-
-    if len(message.attachments) > 0:
-        att = message.attachments[0]
-
-    elif len(message.embeds) > 0:
-        emb = message.embeds[0]
-        url = emb.get('url')
-        if url is not None:
-            att = emb.get('image')
-            if att is None:
-                att = emb.get('thumbnail')
-            if att is not None:
-                dl_embed_url = emb['url']
+    att, dl_embed_url = get_attachment(message)
 
     if att is not None:
         ProcessedMessage.process_id(message.id)
@@ -686,14 +698,11 @@ async def on_message(message):
 
 @client.event
 async def on_message_edit(old_message, message):
-    server_id = message.server.id
-    server = DiscordServer.get_by_id(server_id)
+    server, member = get_server_and_member(message)
+    att_old, _ = get_attachment(old_message)
+    att_new, _ = get_attachment(message)
 
-    member = DiscordServerUser.get_by_id(message.author.id, server)
-    member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
-    member.user.update(name=message.author.name)
-
-    if server is not None and server.log_channel != "" and old_message.content != message.content and \
+    if server is not None and server.log_channel != "" and (old_message.content != message.content) and \
             not member.check_permission('no edits log'):
         embed = Embed(
             description="**Message sent by {0} edited in <#{1}>**".format(message.author.mention, message.channel.id),
@@ -720,6 +729,33 @@ async def on_message_edit(old_message, message):
         await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
 
     await process_message(message, old_message)
+
+
+@client.event
+async def on_message_delete(message):
+    server, member = get_server_and_member(message)
+    att, dl_embed_url = get_attachment(message)
+
+    if server is not None and server.log_channel != "" and not member.check_permission('no edits log') and \
+            att is not None and dl_embed_url is None:
+        embed = Embed(
+            description="**Attachment sent by {0} deleted in <#{1}>**".format(message.author.mention, message.channel.id),
+            color=0xFF470F,
+        )
+        embed.set_author(
+            name=str(message.author),
+            icon_url=message.author.avatar_url
+        )
+        embed.set_footer(
+            text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
+        )
+        embed.add_field(
+            name="URL",
+            value=att['url'],
+            inline=False,
+        )
+
+        await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
 
 
 @client.event
