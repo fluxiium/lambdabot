@@ -10,15 +10,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='discordpermission',
+            name='name',
+            field=models.CharField(max_length=64, primary_key=False, verbose_name='Permission'),
+        ),
         migrations.AddField(
             model_name='discordpermission',
             name='id',
             field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
             preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name='discordpermission',
-            name='name',
-            field=models.CharField(max_length=64, verbose_name='Permission'),
         ),
     ]
