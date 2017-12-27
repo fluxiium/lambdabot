@@ -33,7 +33,8 @@ class DiscordCommandAliasInline(admin.TabularInline):
 
 
 class DiscordCommandAdmin(admin.ModelAdmin):
-    list_display = ('cmd', 'help', 'message', 'hidden', 'restricted')
+    list_display = ('cmd', 'help', 'message', 'custom_perm', 'hidden', 'restricted', 'is_control')
+    list_filter = ('hidden', 'restricted', 'is_control')
     ordering = ('cmd',)
     search_fields = ('cmd',)
     inlines = [DiscordCommandAliasInline]

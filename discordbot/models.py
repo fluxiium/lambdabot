@@ -40,6 +40,17 @@ class DiscordServer(models.Model):
         return str(self.name)
 
 
+class DiscordPerm(models.Model):
+
+    class Meta:
+        verbose_name = "Permission"
+
+    name = models.CharField(max_length=64, verbose_name="Permission")
+
+    def __str__(self):
+        return str(self.name)
+
+
 class DiscordCommand(models.Model):
 
     class Meta:
@@ -51,9 +62,16 @@ class DiscordCommand(models.Model):
     message = models.TextField(blank=True, default='', verbose_name='Text message')
     hidden = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
+    is_control = models.BooleanField(default=False)
+    custom_perm = models.ForeignKey(DiscordPerm, default=None, blank=True, null=True, verbose_name='Permission',
+                                    on_delete=models.SET_NULL)
 
     def check_permission(self, member):
-        allow = member.check_permission("cmd_{0}".format(self.cmd))
+        if self.custom_perm:
+            perm = self.custom_perm.name
+        else:
+            perm = "cmd_{0}".format(self.cmd)
+        allow = member.check_permission(perm)
         return allow if allow is not None else not self.restricted
 
     @classmethod
@@ -71,17 +89,6 @@ class DiscordCommandAlias(models.Model):
 
     alias = models.CharField(max_length=32, primary_key=True, verbose_name='Alias')
     cmd = models.ForeignKey(DiscordCommand, on_delete=models.CASCADE, verbose_name='Command')
-
-
-class DiscordPerm(models.Model):
-
-    class Meta:
-        verbose_name = "Permission"
-
-    name = models.CharField(max_length=64, verbose_name="Permission")
-
-    def __str__(self):
-        return str(self.name)
 
 
 class DiscordServerPerm(models.Model):

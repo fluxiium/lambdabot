@@ -1,76 +1,15 @@
-import json
 import os
 import asyncio
-import random
 import shlex
 import textwrap
-import traceback
-import uuid
 import django
 import discord
-import datetime
-
 import re
-import requests
 
-from tempfile import mkdtemp
-
-from bs4 import BeautifulSoup
-from cleverwrap import CleverWrap
 from discord import Embed
-from discord import Member, Status, Server, Game, Channel
+from discord import Status, Server, Game, Channel
 from discord.state import ConnectionState
 from django.utils import timezone
-from telethon import TelegramClient
-from telethon.tl.types import UpdateShortMessage
-
-
-def log(*args, tag=None):
-    if tag is not None:
-        tag = "[{}]".format(tag)
-    else:
-        tag = ""
-    print(timezone.now(), tag, *args)
-
-
-# noinspection PyShadowingNames
-def log_exc(exc):
-    log("--- ERROR ---")
-    print(exc)
-    print(traceback.format_exc())
-
-
-class DelayedTask:
-    def __init__(self, delay, callback, args=(), kwargs=None):
-        self._delay = delay
-        self._callback = callback
-        self._args = args
-        self._kwargs = kwargs if kwargs is not None else {}
-        self._task = None
-
-    def run(self):
-        self._task = asyncio.ensure_future(self._job())
-
-    async def _job(self):
-        await asyncio.sleep(self._delay)
-        await self._callback(*self._args, **self._kwargs)
-
-    def cancel(self):
-        if self._task is not None:
-            self._task.cancel()
-
-
-async def delay_send(func, *args, **kwargs):
-    try:
-        await func(*args, **kwargs)
-    except discord.Forbidden:
-        if func != client.send_typing:
-            log("channel forbidden")
-    except Exception as e:
-        log_exc(e)
-
-# ============================================================================================
-
 
 # noinspection PyBroadException,PyArgumentList
 def _sync_patched(self, data):
@@ -142,14 +81,14 @@ Server._sync = _sync_patched
 ConnectionState.parse_presence_update = parse_presence_update_patched
 
 
-# ============================================================================================
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.preview import preview_meme
-from discordbot.models import DiscordMeem, ProcessedMessage, MurphyFacePic, DiscordSourceImgSubmission, DiscordServer,\
-    DiscordCommand, DiscordServerUser, MurphyRequest
+from discordbot.cleverbot import cb_talk
+from discordbot.murphybot import start_murphy, is_murphy_active
+from discordbot.util import log, get_server_and_member, get_attachment, delay_send, save_attachment
+from discordbot.commands import init_commands, get_command
+from discordbot.models import ProcessedMessage, DiscordCommand, MurphyRequest
 from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImage, Setting
 
 log("")
@@ -159,431 +98,11 @@ log("##############################")
 log("")
 
 client = discord.Client(max_messages=10000)
-tmpdir = mkdtemp(prefix="lambdabot_")
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'}
-
-
-# ------------------------------------------------
-
-async def cmd_help(server, member, message, **_):
-    helpstr = "{0} available commands:".format(message.author.mention)
-    for cmd_data in member.get_commands():
-        if cmd_data.hidden:
-            continue
-
-        helpstr += "\n`{0}{1}".format(server.prefix, cmd_data.cmd)
-
-        if cmd_data.help_params:
-            helpstr += " {}`".format(cmd_data.help_params)
-        else:
-            helpstr += "`"
-
-        if cmd_data.help:
-            helpstr += " - {0}".format(cmd_data.help)
-
-    await delay_send(client.send_message, message.channel, helpstr)
-
-
-# ------------------------------------------------
-
-async def cmd_meem(server, member, message, args, argstr, attachment, **_):
-
-    await delay_send(client.send_typing, message.channel)
-
-    template = None
-
-    if len(args) > 1:
-        if args[1].lower() == "submit" and attachment is not None:
-            submitted_file = save_attachment(attachment)
-            submit_limit_count, submit_limit_time = member.get_submit_limit()
-            last_user_submits = member.get_submits(limit=submit_limit_count)
-            if last_user_submits.count() >= submit_limit_count:
-                submit_delta = datetime.timedelta(minutes=submit_limit_time)
-                submit_time = last_user_submits[submit_limit_count - 1].sourceimg.add_date
-                if timezone.now() - submit_delta <= submit_time:
-                    seconds_left = int(((submit_time + submit_delta) - timezone.now()).total_seconds()) + 1
-                    if seconds_left >= 3 * 60:
-                        timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
-                    else:
-                        timestr = "{0} more seconds".format(seconds_left)
-                    await delay_send(
-                        client.send_message,
-                        message.channel,
-                        "{3} you can only submit {0} images every {1} minutes. Please wait {2}.".format(
-                            submit_limit_count,
-                            submit_limit_time,
-                            timestr,
-                            message.author.mention,
-                        )
-                    )
-                    return
-
-            submission = MemeSourceImage.submit(submitted_file)
-            discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
-            discord_submission.save()
-
-            await delay_send(
-                client.send_message,
-                message.channel,
-                "{0} thanks! The source image will be added once it's approved.".format(message.author.mention)
-            )
-
-            log('sourceimg submitted by {}'.format(member))
-
-            return
-
-        else:
-            template_name = argstr
-            if template_name == '^':
-                template = MemeTemplate.find(server.context)
-            else:
-                template = MemeTemplate.find(template_name)
-                if template is None:
-                    await delay_send(
-                        client.send_message,
-                        message.channel,
-                        "{0} template `{1}` not found :cry:".format(message.author.mention, template_name)
-                    )
-                    return
-
-    meme_limit_count, meme_limit_time = member.get_meme_limit()
-    last_user_memes = member.get_memes(limit=meme_limit_count)
-    if last_user_memes.count() >= meme_limit_count:
-        meme_delta = datetime.timedelta(minutes=meme_limit_time)
-        meme_time = last_user_memes[meme_limit_count - 1].meme.gen_date
-        if timezone.now() - meme_delta <= meme_time:
-            seconds_left = int(((meme_time + meme_delta) - timezone.now()).total_seconds()) + 1
-            if seconds_left >= 3 * 60:
-                timestr = "{0} more minutes".format(int(seconds_left / 60) + 1)
-            else:
-                timestr = "{0} more seconds".format(seconds_left)
-            await delay_send(
-                client.send_message,
-                message.channel,
-                "{3} you can only generate {0} memes every {1} minutes. Please wait {2}.".format(
-                    meme_limit_count,
-                    meme_limit_time,
-                    timestr,
-                    message.author.mention,
-                )
-            )
-            return
-
-    meme = Meem.generate(context=server.context, template=template)
-    preview_meme(meme)
-
-    discord_meme = DiscordMeem(meme=meme, server_user=member, channel_id=message.channel.id)
-    discord_meme.save()
-
-    await delay_send(
-        client.send_message,
-        message.channel,
-        "{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
-    )
-
-    discord_meme.mark_sent()
-
-    log('meme generated:', meme)
-
-# ------------------------------------------------
-
-async def cmd_led(server, member, message, args, argstr, **_):
-    await delay_send(client.send_typing, message.channel)
-
-    if len(args) == 1:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} usage: `{1} (text)`".format(message.author.mention, args[0]),
-        )
-        return
-
-    response = requests.post('http://wigflip.com/signbot/', data={
-        'T': argstr,
-        'S': 'L',
-    }, headers=headers)
-
-    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-    img = soup.select_one('#output img')
-    if img is not None:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} {1}".format(message.author.mention, img['src']),
-        )
-    else:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
-
-# ------------------------------------------------
-
-async def cmd_mario(server, member, message, args, argstr, **_):
-    await delay_send(client.send_typing, message.channel)
-
-    if len(args) < 3 or len(args) > 4:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            '{0} usage: `{1} ["name"] "first line" "message"`'.format(message.author.mention, args[0]),
-        )
-        return
-
-    if len(args) == 4:
-        name = args[1]
-        title = args[2]
-        msgtext = args[3]
-    else:
-        name = None
-        title = args[1]
-        msgtext = args[2]
-
-    response = requests.post('http://wigflip.com/thankyoumario/', data={
-        'name': name,
-        'title': title,
-        'lines': msgtext,
-        'double': 'y',
-    }, headers=headers)
-
-    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-    img = soup.select_one('#output img')
-    if img is not None:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} {1}".format(message.author.mention, img['src']),
-        )
-    else:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
-
-# ------------------------------------------------
-
-async def cmd_noviews(server, member, message, args, **_):
-    await delay_send(client.send_typing, message.channel)
-
-    attempt = 0
-    videourl = None
-    while videourl is None and attempt < 5:
-        try:
-            response = requests.get('http://www.petittube.com', headers=headers)
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-            videourl = re.search('\/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
-        except Exception as e:
-            attempt += 1
-
-    if videourl is None:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
-    else:
-        await delay_send(
-            client.send_message,
-            message.channel,
-            "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
-        )
-
-# ------------------------------------------------
-
-async def cmd_wiki(server, member, message, args, argstr, **_):
-    await delay_send(client.send_typing, message.channel)
-
-    wiki_url = Setting.get('hl wiki url', 'http://combineoverwiki.net')
-    article = None
-    was_random = False
-
-    if len(args) == 1:
-        # noinspection PyShadowingNames
-        try:
-            was_random = True
-            response = requests.get(
-                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            article = next(iter(article_data['query']['pages'].values()))
-
-        except Exception as exc:
-            log_exc(exc)
-
-    else:
-        # noinspection PyShadowingNames
-        try:
-            query = argstr
-            response = requests.get(
-                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            if article_data.get('query') is not None:
-                article = next(iter(article_data['query']['pages'].values()))
-        except Exception as exc:
-            log_exc(exc)
-
-    proceed = False
-    soup = None
-
-    while not proceed:
-        if article is None:
-            await delay_send(
-                client.send_message,
-                message.channel,
-                "{0} article not found :cry:".format(message.author.mention)
-            )
-            return
-
-        response = requests.get(article['fullurl'], headers=headers)
-        soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-
-        heading = soup.select_one('#firstHeading')
-        if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
-            proceed = True
-        else:
-            page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
-            random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
-            if random_page is None:
-                article = None
-            else:
-                response = requests.get(
-                    '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
-                        wiki_url, random_page),
-                    headers=headers,
-                )
-                article_data = json.loads(response.content.decode('utf-8'))
-                if article_data.get('query') is not None:
-                    article = next(iter(article_data['query']['pages'].values()))
-
-    pic_tag = soup.select_one('td.infoboximage > a > img')
-    if pic_tag is None:
-        pic_tag = soup.select_one('img.thumbimage')
-
-    desc_tag = soup.select_one('div#mw-content-text > p:nth-of-type(2)')
-    desc = textwrap.shorten(desc_tag.getText(), width=250) if desc_tag is not None else None
-
-    embed = Embed(
-        title=article['title'],
-        url=article['fullurl'],
-        color=0xF7923A,
-        description=desc,
-    )
-    embed.set_footer(
-        text="Combine Overwiki",
-        icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png".format(wiki_url)
-    )
-
-    if pic_tag is not None:
-        embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
-        # embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
-
-    await delay_send(
-        client.send_message,
-        message.channel,
-        "{0} {1}".format(message.author.mention, article['fullurl']),
-        embed=embed,
-    )
-
-# ------------------------------------------------
-
-CP_ID = "289816859002273792"
-CP_HELLOS = ['hi', 'hello', 'sup', 'yo', 'waddup', 'wuss poppin b', 'good morning', 'greetings']
-CP_BYES = ['ok bye', 'cya', 'see ya', 'bye', 'later', 'gtg bye']
-
-cb_conversations = {}
-
-
-async def cptalk_say(channel, sender_id, message, delay):
-    if delay > 0:
-        DelayedTask(delay, delay_send, (client.send_typing, channel)).run()
-        delay += min(0.17 * len(message), 4)
-    DelayedTask(delay, delay_send, (client.send_message, channel, "<@{0}> {1}".format(sender_id, message))).run()
-
-async def cmd_cptalk(message, **_):
-    global cb_conversations
-    if cb_conversations.get(CP_ID) is None:
-        cb_conversations[CP_ID] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-        await cptalk_say(message.channel, CP_ID, random.choice(CP_HELLOS), 0.1)
-    else:
-        cb_conversations[CP_ID] = None
-
-async def cb_talk(channel, user, message, nodelay=False):
-    if cb_conversations.get(user.user.user_id) is None:
-        if user.user.user_id == CP_ID:
-            return
-        log("creating session for {}".format(user), tag="cleverbot")
-        cb_conversations[user.user.user_id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
-
-    response = cb_conversations[user.user.user_id].say(message)
-    log("response: {}".format(response), tag="cleverbot")
-    await cptalk_say(channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
-
-# ------------------------------------------------
-
-async def cmd_test(message, **_):
-    await delay_send(client.send_message, client.get_channel("291537367452614658"), "test")
-
-# ============================================================================================
-
-
-def get_server_and_member(message):
-    server_id = message.server.id
-    server = DiscordServer.get_by_id(server_id)
-    if server is not None:
-        server.update(name=message.server.name)
-
-    member = DiscordServerUser.get_by_id(message.author.id, server)
-    if member is not None:
-        member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
-        member.user.update(name=message.author.name)
-
-    return server, member
-
-
-def get_attachment(message):
-    att = None
-    dl_embed_url = None
-
-    if len(message.attachments) > 0:
-        att = message.attachments[0]
-
-    elif len(message.embeds) > 0:
-        emb = message.embeds[0]
-        url = emb.get('url')
-        if url is not None:
-            att = emb.get('image')
-            if att is None:
-                att = emb.get('thumbnail')
-            if att is not None:
-                dl_embed_url = emb['url']
-
-    return att, dl_embed_url
-
-
-def save_attachment(att):
-    filename = os.path.join(tmpdir, str(uuid.uuid4()))
-    log('received attachment: {0} {1}'.format(att['url'], filename))
-    # noinspection PyShadowingNames
-    try:
-        attachment = requests.get(att['proxy_url'], headers=headers)
-        with open(filename, 'wb') as attachment_file:
-            attachment_file.write(attachment.content)
-        return filename
-    except Exception as exc:
-        log_exc(exc)
-        return None
+init_commands()
 
 
 @client.event
 async def process_message(message, old_message=None):
-    global cb_conversations
-
     msg = message.content.strip()
 
     if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
@@ -595,11 +114,12 @@ async def process_message(message, old_message=None):
         return
 
     att, dl_embed_url = get_attachment(message)
+    control_channel = Setting.get("control channel")
 
     if att is not None:
         ProcessedMessage.process_id(message.id)
 
-    if client.user in message.mentions:
+    if client.user in message.mentions and message.channel.id != control_channel:
 
         if msg.startswith(client.user.mention):
             msg = msg.replace(client.user.mention, "", 1).strip()
@@ -635,7 +155,7 @@ async def process_message(message, old_message=None):
 
         answered = False
 
-        if member.check_permission("murphybot") and not murphybot_error:
+        if member.check_permission("murphybot") and is_murphy_active():
             answered = True
 
             if dl_embed_url is not None:
@@ -655,7 +175,7 @@ async def process_message(message, old_message=None):
                 answered = False
 
         if not answered and member.check_permission("cleverbot"):
-            await cb_talk(message.channel, member, msg)
+            await cb_talk(client, message.channel, member, msg)
 
         return
 
@@ -671,6 +191,9 @@ async def process_message(message, old_message=None):
 
     if cmd is not None and cmd.check_permission(member):
 
+        if cmd.is_control and message.channel.id != control_channel:
+            return
+
         ProcessedMessage.process_id(message.id)
 
         log("{0}, {1}: {2}".format(
@@ -681,7 +204,7 @@ async def process_message(message, old_message=None):
             await delay_send(client.send_typing, message.channel)
             await delay_send(client.send_message, message.channel, cmd.message)
 
-        cmd_fun = globals().get('cmd_' + cmd.cmd)
+        cmd_fun = get_command(cmd.cmd)
         if cmd_fun is not None:
             await cmd_fun(
                 server=server,
@@ -690,6 +213,7 @@ async def process_message(message, old_message=None):
                 args=splitcmd,
                 argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
                 attachment=att,
+                client=client,
             )
 
 
@@ -769,259 +293,5 @@ async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
-
-# ============================================================================================
-
-MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
-TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
-
-murphybot = TelegramClient('murphy', int(TELEGRAM_TOKENS[0]), TELEGRAM_TOKENS[1])
-murphybot_state = "0"
-murphybot_prevstate = "0"
-murphybot_request = None
-murphybot_media = None
-channel_facepic = ''
-murphybot_last_update = timezone.now()
-
-
-def log_murphy(*args):
-    log(*args, tag="murphy")
-
-
-async def process_murphy():
-    global murphybot_state, murphybot_request, murphybot_last_update, murphybot_prevstate,\
-        channel_facepic
-    await client.wait_until_ready()
-
-    while not client.is_closed:
-
-        if murphybot_state != murphybot_prevstate:
-            log_murphy("[ state {0} -> {1} ]".format(murphybot_prevstate, murphybot_state))
-            murphybot_last_update = timezone.now()
-            murphybot_prevstate = murphybot_state
-
-        if murphybot_state != "0":
-            channel = client.get_channel(murphybot_request.channel_id)
-            mention = "<@{}>".format(murphybot_request.server_user.user.user_id)
-            try:
-                await delay_send(client.send_typing, channel)
-            except discord.Forbidden:
-                log("can't send message to channel")
-
-        if murphybot_state == "0":
-            await asyncio.sleep(1)
-            murphybot_request = MurphyRequest.get_next_unprocessed(minutes=5)
-
-            if murphybot_request is None:
-                continue
-
-            log_murphy("processing request: {}".format(murphybot_request))
-
-            channel_facepic = MurphyFacePic.get(murphybot_request.channel_id)
-
-            if murphybot_request.question == '' and murphybot_request.face_pic != '' and \
-                    os.path.isfile(murphybot_request.face_pic):
-                log_murphy("sending face pic")
-                try:
-                    murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
-                    murphybot_state = "1"
-                except Exception as ex:
-                    log_exc(ex)
-                    murphybot_state = "error"
-                continue
-
-            elif murphybot_request.question.lower().startswith("what if i "):
-
-                if murphybot_request.face_pic == '':
-
-                    if channel_facepic == '':
-                        log_murphy("ERROR: channel face pic null")
-
-                    elif MurphyFacePic.get_last_used() == channel_facepic:
-                        log_murphy("channel face pic = current face pic, sending question")
-                        murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
-                        murphybot_state = "2"
-                        continue
-
-                    else:
-                        log_murphy("channel face pic =/= current face pic")
-                        murphybot_state = "different channel face"
-                        continue
-
-                elif os.path.isfile(murphybot_request.face_pic):
-                    log_murphy("sending face pic from request")
-                    try:
-                        murphybot.send_file(MURPHYBOT_HANDLE, murphybot_request.face_pic)
-                        murphybot_state = "3"
-                        continue
-                    except Exception as ex:
-                        log_exc(ex)
-
-                else:
-                    log_murphy("ERROR: request face pic file doesn't exist: {}".format(murphybot_request.face_pic))
-
-                murphybot_state = "upload face"
-                continue
-
-            else:
-                log_murphy("sending question")
-                murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
-                murphybot_state = "2"
-                continue
-
-        elif murphybot_state in ["reupload face", "different channel face"]:
-
-            if channel_facepic is None or not os.path.isfile(channel_facepic):
-                log_murphy("ERROR: can't read channel face pic: {}".format(channel_facepic))
-                murphybot_state = "upload face"
-                continue
-
-            else:
-                log_murphy("reuploading channel face pic")
-                try:
-                    murphybot.send_file(MURPHYBOT_HANDLE, channel_facepic)
-                    murphybot_state = "1" if murphybot_state == "reupload face" else "3"
-                except Exception as ex:
-                    log_exc(ex)
-                    murphybot_state = "error"
-                continue
-
-        elif murphybot_state in ["1", "3"]:
-            await asyncio.sleep(1)
-            timeout = int(Setting.get("murphybot timeout", 20))
-            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
-                log_murphy("state {} timeout".format(murphybot_state))
-                murphybot_state = "no face"
-            continue
-
-        elif murphybot_state == "2":
-            await asyncio.sleep(1)
-            timeout = int(Setting.get("murphybot timeout", 20))
-            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
-                log_murphy("state 2 timeout")
-                murphybot_state = "idk"
-            continue
-
-        elif murphybot_state == "1.2":
-            log_murphy("face accepted")
-            MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
-            if murphybot_request.question == '':
-                await delay_send(client.send_message, channel, "{} face accepted :+1:".format(mention))
-            else:
-                murphybot_state = "2.2"
-                continue
-
-        elif murphybot_state == "2.2":
-            log_murphy("sending answer")
-            output = murphybot.download_media(murphybot_media, file=tmpdir)
-            await delay_send(client.send_file, channel, output, content=mention)
-
-        elif murphybot_state == "3.2":
-            log_murphy("face accepted, sending question")
-            MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
-            murphybot.send_message(MURPHYBOT_HANDLE, murphybot_request.question)
-            murphybot_state = "2"
-            continue
-
-        elif murphybot_state == "upload face":
-            log_murphy("no channel face pic")
-            await delay_send(client.send_message, channel, "{} please upload a face first".format(mention))
-
-        elif murphybot_state == "no face":
-            log_murphy("no face detected")
-            await delay_send(client.send_message, channel, "{} no face detected :cry:".format(mention))
-
-        elif murphybot_state == "idk":
-            log_murphy("idk")
-            if murphybot_request.server_user.check_permission("cleverbot"):
-                await cb_talk(channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
-            else:
-                await delay_send(client.send_message, channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
-
-        elif murphybot_state == "error":
-            log_murphy("error")
-            await delay_send(client.send_message, channel, "{} error :cry:".format(mention))
-
-        murphybot_request.mark_processed()
-        murphybot_state = "0"
-
-
-def is_murphy_message(update_object):
-    return isinstance(update_object, UpdateShortMessage) and not update_object.out
-
-
-def is_murphy_media(update_object):
-    return hasattr(update_object, 'updates') and len(update_object.updates) > 0 and \
-           hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media')
-
-MURPHYBOT_IGNORE_MSG = (
-    "You asked:",
-    "Here's an idea",
-    "Trying another photo",
-    "Wait, I'm still learning",
-    "Attachment received",
-    "POST to MorphiBot"
-)
-
-
-def murphybot_handler(msg):
-    global murphybot_state, murphybot_request, murphybot_last_update, murphybot_media
-
-    if is_murphy_message(msg) or is_murphy_media(msg):
-        murphybot_last_update = timezone.now()
-    else:
-        return
-
-    if is_murphy_message(msg):
-        log_murphy("received message: {}".format(textwrap.shorten(msg.message, width=128)))
-
-        if msg.message.startswith(MURPHYBOT_IGNORE_MSG):
-            return
-
-        if murphybot_state in ["1", "3"]:
-            if msg.message.startswith("Thanks, I will keep this photo"):
-                murphybot_state = "{}.2".format(murphybot_state)
-            else:
-                murphybot_state = "no face"
-
-        elif murphybot_state == "2":
-            if msg.message.startswith("Please upload a photo"):
-                murphybot_state = "reupload face"
-            else:
-                murphybot_state = "idk"
-
-    else:
-        log_murphy("received media")
-
-        if murphybot_state == "1":
-            murphybot_media = msg.updates[0].message.media
-            murphybot_state = "1.2"
-
-        elif murphybot_state == "2":
-            murphybot_media = msg.updates[0].message.media
-            murphybot_state = "2.2"
-
-        elif murphybot_state == "3":
-            murphybot_state = "3.2"
-
-
-murphybot_error = False
-# noinspection PyBroadException
-try:
-    murphybot.connect()
-    if not murphybot.is_user_authorized():
-        log_murphy("no telegram session file")
-        murphybot_error = True
-
-except Exception as exc:
-    log_exc(exc)
-    murphybot_error = True
-
-if not murphybot_error:
-    log_murphy('active')
-    murphybot.add_update_handler(murphybot_handler)
-    client.loop.create_task(process_murphy())
-
-# ============================================================================================
-
+start_murphy(client)
 client.run(AccessToken.objects.get(name="discord").token)
