@@ -84,7 +84,7 @@ class DiscordPerm(models.Model):
         return str(self.name)
 
 
-class DiscordServerPermission(models.Model):
+class DiscordServerPerm(models.Model):
 
     class Meta:
         verbose_name = "Server permission"
@@ -177,10 +177,10 @@ class DiscordServerUser(models.Model):
         permission = DiscordPerm.objects.filter(name__iexact=permission).first()
         if permission is None:
             return None
-        perm_data = DiscordServerUserPermission.objects.filter(server_user=self, permission=permission).first()
+        perm_data = DiscordServerUserPerm.objects.filter(server_user=self, permission=permission).first()
         if perm_data:
             return perm_data.allow
-        perm_data = DiscordServerPermission.objects.filter(server=self.server, permission=permission).first()
+        perm_data = DiscordServerPerm.objects.filter(server=self.server, permission=permission).first()
         if perm_data:
             return perm_data.allow
         else:
@@ -205,7 +205,7 @@ class DiscordSourceImgSubmission(models.Model):
         return "{0} ({1})".format(self.sourceimg, self.server_user)
 
 
-class DiscordServerUserPermission(models.Model):
+class DiscordServerUserPerm(models.Model):
 
     class Meta:
         verbose_name = "Server user permission"

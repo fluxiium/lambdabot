@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, \
-    DiscordServerUserPermission, DiscordServerPermission, MurphyRequest, ProcessedMessage, MurphyFacePic, \
+    DiscordServerUserPerm, DiscordServerPerm, MurphyRequest, ProcessedMessage, MurphyFacePic, \
     DiscordPerm, DiscordCommandAlias
 
 
@@ -10,11 +10,11 @@ class DiscordServerPermissionAdmin(admin.ModelAdmin):
     search_fields = ('permission__name', 'server__server_id', 'server__name', 'server__context__short_name')
     ordering = ('server', 'permission')
 
-admin.site.register(DiscordServerPermission, DiscordServerPermissionAdmin)
+admin.site.register(DiscordServerPerm, DiscordServerPermissionAdmin)
 
 
 class DiscordServerPermissionInline(admin.TabularInline):
-    model = DiscordServerPermission
+    model = DiscordServerPerm
     extra = 0
 
 
@@ -63,11 +63,11 @@ class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
                      'server_user__server__context__short_name')
     ordering = ('server_user', 'permission')
 
-admin.site.register(DiscordServerUserPermission, DiscordServerUserPermissionAdmin)
+admin.site.register(DiscordServerUserPerm, DiscordServerUserPermissionAdmin)
 
 
 class DiscordServerUserPermissionInline(admin.TabularInline):
-    model = DiscordServerUserPermission
+    model = DiscordServerUserPerm
     extra = 0
 
 
