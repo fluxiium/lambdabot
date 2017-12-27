@@ -73,7 +73,7 @@ class DiscordCommandAlias(models.Model):
     cmd = models.ForeignKey(DiscordCommand, on_delete=models.CASCADE, verbose_name='Command')
 
 
-class DiscordPermission(models.Model):
+class DiscordPerm(models.Model):
 
     class Meta:
         verbose_name = "Permission"
@@ -90,7 +90,7 @@ class DiscordServerPermission(models.Model):
         verbose_name = "Server permission"
 
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    permission = models.ForeignKey(DiscordPermission, on_delete=models.CASCADE, verbose_name="Permission")
+    permission = models.ForeignKey(DiscordPerm, on_delete=models.CASCADE, verbose_name="Permission")
     allow = models.BooleanField(default=True, verbose_name="Allow")
 
     def __str__(self):
@@ -174,7 +174,7 @@ class DiscordServerUser(models.Model):
         return result
 
     def check_permission(self, permission):
-        permission = DiscordPermission.objects.filter(name__iexact=permission).first()
+        permission = DiscordPerm.objects.filter(name__iexact=permission).first()
         if permission is None:
             return None
         perm_data = DiscordServerUserPermission.objects.filter(server_user=self, permission=permission).first()
@@ -212,7 +212,7 @@ class DiscordServerUserPermission(models.Model):
         unique_together = ('server_user', 'permission')
 
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, verbose_name="Server user")
-    permission = models.ForeignKey(DiscordPermission, on_delete=models.CASCADE, verbose_name="Permission")
+    permission = models.ForeignKey(DiscordPerm, on_delete=models.CASCADE, verbose_name="Permission")
     allow = models.BooleanField(default=True, verbose_name="Allow")
 
     def __str__(self):

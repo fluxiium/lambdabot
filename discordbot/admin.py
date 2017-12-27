@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, \
     DiscordServerUserPermission, DiscordServerPermission, MurphyRequest, ProcessedMessage, MurphyFacePic, \
-    DiscordPermission, DiscordCommandAlias
+    DiscordPerm, DiscordCommandAlias
 
 
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
@@ -87,7 +87,7 @@ class DiscordPermissionAdmin(admin.ModelAdmin):
     ordering = ('name',)
     inlines = [DiscordServerPermissionInline, DiscordServerUserPermissionInline]
 
-admin.site.register(DiscordPermission, DiscordPermissionAdmin)
+admin.site.register(DiscordPerm, DiscordPermissionAdmin)
 
 
 class MurphyRequestAdmin(admin.ModelAdmin):
