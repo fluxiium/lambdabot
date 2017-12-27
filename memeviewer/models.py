@@ -298,8 +298,8 @@ class Meem(models.Model):
 
     number = models.IntegerField(default=next_meme_number, verbose_name='Number')
     meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4, verbose_name='ID')
-    template_link = models.ForeignKey(MemeTemplate, verbose_name='Template')
-    context_link = models.ForeignKey(MemeContext, verbose_name='Context')
+    template_link = models.ForeignKey(MemeTemplate, verbose_name='Template', on_delete=models.CASCADE)
+    context_link = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
     gen_date = models.DateTimeField(default=timezone.now, verbose_name='Date generated')
 
     @classmethod

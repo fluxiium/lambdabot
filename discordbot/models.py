@@ -14,7 +14,7 @@ class DiscordServer(models.Model):
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
-    context = models.ForeignKey(MemeContext, verbose_name='Context')
+    context = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
     log_channel = models.CharField(max_length=32, default='', blank=True)
 
@@ -78,7 +78,7 @@ class DiscordPermission(models.Model):
     class Meta:
         verbose_name = "Permission"
 
-    name = models.CharField(max_length=64, verbose_name="Permission", primary_key=True)
+    name = models.CharField(max_length=64, verbose_name="Permission")
 
     def __str__(self):
         return str(self.name)
