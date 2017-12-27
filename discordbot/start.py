@@ -755,6 +755,10 @@ async def on_message_delete(message):
             inline=False,
         )
 
+        img_archive = Setting.get("img archive channel")
+        if img_archive is not None:
+            await delay_send(client.send_message, client.get_channel(img_archive), content=att['proxy_url'])
+
         await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
 
 
