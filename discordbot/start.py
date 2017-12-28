@@ -271,7 +271,9 @@ async def on_message_delete(message):
             att, _ = get_attachment(msg_archived)
 
         embed = Embed(
-            description="**Attachment sent by {0} deleted in <#{1}>**".format(message.author.mention, message.channel.id),
+            description="**Attachment sent by {0} deleted in <#{1}>**\n{2}".format(
+                message.author.mention, message.channel.id, att['proxy_url']
+            ),
             color=0xFF470F,
         )
         embed.set_author(
@@ -280,11 +282,6 @@ async def on_message_delete(message):
         )
         embed.set_footer(
             text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
-        )
-        embed.add_field(
-            name="URL",
-            value=att['proxy_url'],
-            inline=False,
         )
 
         await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
