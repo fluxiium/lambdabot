@@ -169,11 +169,28 @@ class MemeSourceImage(models.Model):
 
     @classmethod
     def submit(cls, path, filename=None):
-        image = Image.open(path)
+        try:
+            image = Image.open(path)
+        except OSError:
+            return None
+
         if filename is None:
             filename = "{0}.{1}".format(str(uuid.uuid4()), imghdr.what(path))
         else:
             filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
+
+        stat = os.stat(path)
+        max_srcimg_size = int(Setting.get('max srcimg size', '1500000'))
+        if stat.st_size > max_srcimg_size and image.mode == "RGBA":
+            image = image.convert('RGB')
+            filename += ".jpeg"
+            path += ".jpeg"
+            image.save(path)
+            stat = os.stat(path)
+
+        if stat.st_size > max_srcimg_size:
+            return None
+
         image.save(os.path.join(SOURCEIMG_DIR, filename))
         srcimg = MemeSourceImage(name=filename)
         srcimg.save()

@@ -97,13 +97,15 @@ def get_attachment(message):
     return att, dl_embed_url
 
 
-def save_attachment(att):
+def save_attachment(url, filename=None):
+    if filename is None:
+        filename = str(uuid.uuid4())
     tmpdir = mkdtemp(prefix="lambdabot_attach_")
-    filename = os.path.join(tmpdir, att.get('filename', str(uuid.uuid4())))
-    log('received attachment: {0} {1}'.format(att['url'], filename))
+    filename = os.path.join(tmpdir, filename)
+    log('received attachment: {0} {1}'.format(url, filename))
     # noinspection PyShadowingNames
     try:
-        attachment = requests.get(att['proxy_url'], headers=headers)
+        attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
             attachment_file.write(attachment.content)
         return filename

@@ -36,7 +36,7 @@ async def cmd_help(client, server, member, message, **_):
     await delay_send(client.send_message, message.channel, helpstr)
 
 
-async def cmd_meem(client, server, member, message, args, argstr, attachment, **_):
+async def cmd_meem(client, server, member, message, args, argstr, attachment, dl_embed_url, **_):
 
     await delay_send(client.send_typing, message.channel)
 
@@ -44,7 +44,10 @@ async def cmd_meem(client, server, member, message, args, argstr, attachment, **
 
     if len(args) > 1:
         if args[1].lower() == "submit" and attachment is not None:
-            submitted_file = save_attachment(attachment)
+            if dl_embed_url is None:
+                submitted_file = save_attachment(attachment['proxy_url'], attachment['filename'])
+            else:
+                submitted_file = save_attachment(dl_embed_url)
             submit_limit_count, submit_limit_time = member.get_submit_limit()
             last_user_submits = member.get_submits(limit=submit_limit_count)
             if last_user_submits.count() >= submit_limit_count:
@@ -68,17 +71,16 @@ async def cmd_meem(client, server, member, message, args, argstr, attachment, **
                     )
                     return
 
-            submission_stat = os.stat(submitted_file)
+            submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
             max_srcimg_size = int(Setting.get('max srcimg size', '1500000'))
-            if submission_stat.st_size > max_srcimg_size:
+            if submission is None:
                 await delay_send(
                     client.send_message,
                     message.channel,
-                    "{0} the image is too big! (max {1} KB)".format(message.author.mention, max_srcimg_size / 1000)
+                    "{0} the image is too big or invalid format! (supported jpeg/png < {1} KB)".format(message.author.mention, max_srcimg_size / 1000)
                 )
                 return
 
-            submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
             discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
             discord_submission.save()
 

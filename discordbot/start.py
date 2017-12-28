@@ -162,7 +162,8 @@ async def process_message(message, old_message=None):
                 msg = msg.replace(dl_embed_url, "", 1).strip()
 
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
-                face_pic = save_attachment(att) if att is not None else ''
+                face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
+                    if att is not None else ''
                 if msg == "" and att is not None:
                     MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
                 elif msg != "":
@@ -213,6 +214,7 @@ async def process_message(message, old_message=None):
                 args=splitcmd,
                 argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
                 attachment=att,
+                dl_embed_url=dl_embed_url,
                 client=client,
             )
 
@@ -264,7 +266,7 @@ async def on_message_delete(message):
 
     if server is not None and server.log_channel != "" and not member.check_permission('no edits log') and \
             att is not None and dl_embed_url is None:
-        att_path = save_attachment(att)
+        att_path = save_attachment(att['proxy_url'], att['filename'])
         img_archive = Setting.get("img archive channel")
         if img_archive is not None:
             msg_archived = await delay_send(client.send_file, client.get_channel(img_archive), att_path)
