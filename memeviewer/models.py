@@ -169,6 +169,7 @@ class MemeSourceImage(models.Model):
     @classmethod
     def submit(cls, path, filename):
         image = Image.open(path)
+        filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
         image.save(os.path.join(SOURCEIMG_DIR, filename))
         srcimg = MemeSourceImage(name=filename)
         srcimg.save()
