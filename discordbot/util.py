@@ -99,7 +99,7 @@ def get_attachment(message):
 
 def save_attachment(att):
     tmpdir = mkdtemp(prefix="lambdabot_attach_")
-    filename = os.path.join(tmpdir, att['filename'])
+    filename = os.path.join(tmpdir, att.get('filename', str(uuid.uuid4())))
     log('received attachment: {0} {1}'.format(att['url'], filename))
     # noinspection PyShadowingNames
     try:

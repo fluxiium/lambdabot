@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 from discord import Embed
 from django.utils import timezone
 
+import os
+
 from discordbot.models import DiscordSourceImgSubmission, DiscordMeem
 from discordbot.util import delay_send, save_attachment, log, log_exc, headers
 from memeviewer.models import MemeSourceImage, MemeTemplate, Meem, Setting
@@ -66,7 +68,17 @@ async def cmd_meem(client, server, member, message, args, argstr, attachment, **
                     )
                     return
 
-            submission = MemeSourceImage.submit(submitted_file, attachment['filename'])
+            submission_stat = os.stat(submitted_file)
+            max_srcimg_size = int(Setting.get('max srcimg size', '1500000'))
+            if submission_stat.st_size > max_srcimg_size:
+                await delay_send(
+                    client.send_message,
+                    message.channel,
+                    "{0} the image is too big! (max {1} KB)".format(message.author.mention, max_srcimg_size / 1000)
+                )
+                return
+
+            submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
             discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
             discord_submission.save()
 

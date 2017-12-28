@@ -1,3 +1,4 @@
+import imghdr
 import json
 import operator
 import os
@@ -167,9 +168,12 @@ class MemeSourceImage(models.Model):
         return result.strip()
 
     @classmethod
-    def submit(cls, path, filename):
+    def submit(cls, path, filename=None):
         image = Image.open(path)
-        filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
+        if filename is None:
+            filename = "{0}.{1}".format(str(uuid.uuid4()), imghdr.what(path))
+        else:
+            filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
         image.save(os.path.join(SOURCEIMG_DIR, filename))
         srcimg = MemeSourceImage(name=filename)
         srcimg.save()
