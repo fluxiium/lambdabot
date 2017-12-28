@@ -7,15 +7,17 @@ SAY_CHANNEL = ''
 async def cmd_saych(client, message, args, **_):
     global SAY_CHANNEL
 
-    if len(args) != 2:
+    if len(args) > 2:
         await delay_send(
             client.send_message,
             message.channel,
-            "{0} usage: `{1} (channel ID)`".format(message.author.mention, args[0]),
+            "{0} usage: `{1} [channel ID]`".format(message.author.mention, args[0]),
         )
         return
 
-    SAY_CHANNEL = args[1]
+    if len(args) != 1:
+        SAY_CHANNEL = args[1]
+
     if client.get_channel(SAY_CHANNEL) is None:
         SAY_CHANNEL = message.channel.id
 

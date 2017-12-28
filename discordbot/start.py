@@ -264,6 +264,12 @@ async def on_message_delete(message):
 
     if server is not None and server.log_channel != "" and not member.check_permission('no edits log') and \
             att is not None and dl_embed_url is None:
+        att_path = save_attachment(att)
+        img_archive = Setting.get("img archive channel")
+        if img_archive is not None:
+            msg_archived = await delay_send(client.send_file, client.get_channel(img_archive), att_path)
+            att, _ = get_attachment(msg_archived)
+
         embed = Embed(
             description="**Attachment sent by {0} deleted in <#{1}>**".format(message.author.mention, message.channel.id),
             color=0xFF470F,
@@ -280,10 +286,6 @@ async def on_message_delete(message):
             value=att['proxy_url'],
             inline=False,
         )
-
-        img_archive = Setting.get("img archive channel")
-        if img_archive is not None:
-            await delay_send(client.send_message, client.get_channel(img_archive), content=att['proxy_url'])
 
         await delay_send(client.send_message, client.get_channel(server.log_channel), embed=embed)
 

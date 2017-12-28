@@ -66,7 +66,7 @@ async def cmd_meem(client, server, member, message, args, argstr, attachment, **
                     )
                     return
 
-            submission = MemeSourceImage.submit(submitted_file)
+            submission = MemeSourceImage.submit(submitted_file, attachment['filename'])
             discord_submission = DiscordSourceImgSubmission(server_user=member, sourceimg=submission)
             discord_submission.save()
 

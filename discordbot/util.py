@@ -54,7 +54,7 @@ def log_exc(exc):
 
 async def delay_send(func, *args, **kwargs):
     try:
-        await func(*args, **kwargs)
+        return await func(*args, **kwargs)
     except discord.Forbidden:
         # if func != client.send_typing:
         #     log("channel forbidden")
@@ -99,7 +99,7 @@ def get_attachment(message):
 
 def save_attachment(att):
     tmpdir = mkdtemp(prefix="lambdabot_attach_")
-    filename = os.path.join(tmpdir, str(uuid.uuid4()))
+    filename = os.path.join(tmpdir, att['filename'])
     log('received attachment: {0} {1}'.format(att['url'], filename))
     # noinspection PyShadowingNames
     try:
