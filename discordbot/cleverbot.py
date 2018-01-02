@@ -1,5 +1,7 @@
 import random
 from cleverwrap import CleverWrap
+from json.decoder import JSONDecodeError
+
 from discordbot.util import DelayedTask, delay_send, log
 from memeviewer.models import AccessToken
 
@@ -23,7 +25,10 @@ async def cb_talk(client, channel, user, message, nodelay=False):
         log("creating session for {}".format(user), tag="cleverbot")
         cb_conversations[user.user.user_id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
 
-    response = cb_conversations[user.user.user_id].say(message)
+    try:
+        response = cb_conversations[user.user.user_id].say(message)
+    except JSONDecodeError:
+        response = "error"
     log("response: {}".format(response), tag="cleverbot")
     await cptalk_say(client, channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
 
