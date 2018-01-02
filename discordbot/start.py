@@ -1,5 +1,6 @@
 import os
 import asyncio
+import requests
 import shlex
 import textwrap
 import django
@@ -86,7 +87,7 @@ django.setup()
 
 from discordbot.cleverbot import cb_talk
 from discordbot.murphybot import start_murphy, is_murphy_active
-from discordbot.util import log, get_server_and_member, get_attachment, delay_send, save_attachment
+from discordbot.util import log, get_server_and_member, get_attachment, delay_send, save_attachment, headers
 from discordbot.commands import init_commands, get_command
 from discordbot.models import ProcessedMessage, DiscordCommand, MurphyRequest
 from memeviewer.models import Meem, MemeTemplate, AccessToken, MemeSourceImage, Setting
@@ -117,6 +118,8 @@ async def process_message(message, old_message=None):
     control_channel = Setting.get("control channel")
 
     if att is not None:
+        if dl_embed_url is None:
+            requests.get(att['proxy_url'], headers=headers)
         ProcessedMessage.process_id(message.id)
 
     if client.user in message.mentions and message.channel.id != control_channel:
