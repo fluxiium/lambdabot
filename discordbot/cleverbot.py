@@ -28,7 +28,7 @@ async def cb_talk(client, channel, user, message, nodelay=False):
     try:
         response = cb_conversations[user.user.user_id].say(message)
     except JSONDecodeError:
-        response = "error"
+        response = "There's an error here <@257499042039332866>"
     log("response: {}".format(response), tag="cleverbot")
     await cptalk_say(client, channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
 
