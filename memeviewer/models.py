@@ -143,7 +143,7 @@ class MemeSourceImage(models.Model):
     class Meta:
         verbose_name = "Source image"
 
-    name = models.CharField(max_length=64, primary_key=True, verbose_name='File name')
+    name = models.CharField(max_length=256, primary_key=True, verbose_name='File name')
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
