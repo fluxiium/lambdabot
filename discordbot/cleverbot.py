@@ -25,10 +25,18 @@ async def cb_talk(client, channel, user, message, nodelay=False):
         log("creating session for {}".format(user), tag="cleverbot")
         cb_conversations[user.user.user_id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
 
-    try:
-        response = cb_conversations[user.user.user_id].say(message)
-    except JSONDecodeError:
-        response = "There's an error here <@257499042039332866>"
+    response = "There's an error here <@257499042039332866>"
+    success = False
+    retries = 5
+    while not success and retries > 0:
+        try:
+            response = cb_conversations[user.user.user_id].say(message)
+            success = True
+        except JSONDecodeError:
+            log("cleverbot error! recreating session for {}".format(user), tag="cleverbot")
+            cb_conversations[user.user.user_id] = CleverWrap(AccessToken.objects.get(name="cleverbot").token)
+            retries -= 1
+
     log("response: {}".format(response), tag="cleverbot")
     await cptalk_say(client, channel, user.user.user_id, response, 0 if nodelay else 0.2 + min(0.04 * len(message), 4))
 
