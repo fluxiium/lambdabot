@@ -4,6 +4,9 @@ import textwrap
 import datetime
 import re
 import requests
+import traceback
+import types
+from asyncio import iscoroutine
 
 from bs4 import BeautifulSoup
 from discord import Embed
@@ -348,5 +351,26 @@ async def cmd_wiki(client, server, member, message, args, argstr, **_):
     )
 
 
-async def cmd_test(client, message, **_):
+async def cmd_test(client, **_):
     await delay_send(client.send_message, client.get_channel("291537367452614658"), "test")
+
+
+async def cmd_eval2(client,  message,  args, argstr, attachment, dl_embed_url, **_):
+    if message.author.id != "257499042039332866":
+        return
+    try:
+        cl = client
+        msg = message
+        att = attachment
+        emb = dl_embed_url
+        tmp = eval(argstr)
+        result = str(tmp)
+    except Exception as exc:
+        tmp = None
+        result = str(exc)
+    result = "```{}```".format(result.replace("`", "'"))
+    await delay_send(client.send_message, message.channel, "{0} {1}".format(message.author.mention, result))
+    if iscoroutine(tmp):
+        await tmp
+
+# TODO: cmd_lbexec

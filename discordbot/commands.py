@@ -1,5 +1,5 @@
 from discordbot.cmd_control_fun import cmd_say, cmd_saych
-from discordbot.cmd_fun import cmd_help, cmd_meem, cmd_led, cmd_mario, cmd_noviews, cmd_wiki, cmd_test
+from discordbot.cmd_fun import cmd_help, cmd_meem, cmd_led, cmd_mario, cmd_noviews, cmd_wiki, cmd_test, cmd_eval2
 
 COMMANDS = {}
 
@@ -20,6 +20,7 @@ def init_commands():
     add_command(cmd_noviews)
     add_command(cmd_wiki)
     add_command(cmd_test)
+    add_command(cmd_eval2)
 
     add_command(cmd_saych)
     add_command(cmd_say)
