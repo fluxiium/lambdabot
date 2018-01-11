@@ -193,7 +193,10 @@ async def process_message(message, old_message=None):
 
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
-    if cmd is not None and cmd.check_permission(member):
+    if cmd is None:
+        return
+
+    if cmd.check_permission(member):
 
         if cmd.is_control and message.channel.id != control_channel:
             return
@@ -220,6 +223,12 @@ async def process_message(message, old_message=None):
                 dl_embed_url=dl_embed_url,
                 client=client,
             )
+
+        return
+
+    if cmd.denied_message != "":
+        await delay_send(client.send_typing, message.channel)
+        await delay_send(client.send_message, message.channel, cmd.denied_message.replace("{user}", message.author.mention))
 
 
 @client.event

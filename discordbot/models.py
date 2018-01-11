@@ -60,6 +60,7 @@ class DiscordCommand(models.Model):
     help = models.TextField(blank=True, default='', verbose_name='Help string')
     help_params = models.CharField(max_length=256, blank=True, default='', verbose_name='Parameters')
     message = models.TextField(blank=True, default='', verbose_name='Text message')
+    denied_message = models.TextField(blank=True, default='', verbose_name='Access denied message')
     hidden = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
     is_control = models.BooleanField(default=False)
