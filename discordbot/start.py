@@ -7,6 +7,7 @@ import django
 import discord
 import re
 
+from disco.client import Client as DiscoClient, ClientConfig as DiscoClientConfig
 from discord import Embed
 from discord import Status, Server, Game, Channel
 from discord.state import ConnectionState
@@ -307,4 +308,8 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 start_murphy(client)
-client.run(AccessToken.objects.get(name="discord").token)
+
+discord_token = AccessToken.objects.get(name="discord").token
+disco_api = DiscoClient(DiscoClientConfig({'token': discord_token})).api
+setattr(client, "disco_api", disco_api)
+client.run(discord_token)

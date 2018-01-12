@@ -4,15 +4,11 @@ import textwrap
 import datetime
 import re
 import requests
-import traceback
-import types
 from asyncio import iscoroutine
 
 from bs4 import BeautifulSoup
 from discord import Embed
 from django.utils import timezone
-
-import os
 
 from discordbot.models import DiscordSourceImgSubmission, DiscordMeem
 from discordbot.util import delay_send, save_attachment, log, log_exc, headers
@@ -355,15 +351,15 @@ async def cmd_test(client, **_):
     await delay_send(client.send_message, client.get_channel("291537367452614658"), "test")
 
 
-async def cmd_eval2(client,  message,  args, argstr, attachment, dl_embed_url, **_):
+async def cmd_eval2(client, message, args, argstr, attachment, dl_embed_url, **_):
     if message.author.id != "257499042039332866":
         return
     try:
-        cl = client
-        msg = message
-        att = attachment
-        emb = dl_embed_url
-        tmp = eval(argstr)
+        api = client.disco_api
+        tmp = eval(argstr, {
+            'api': api,
+            'msg': api.channels_messages_get(str(message.channel.id), str(message.id)),
+        })
         result = str(tmp)
     except Exception as exc:
         tmp = None
