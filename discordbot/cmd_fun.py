@@ -356,10 +356,8 @@ async def cmd_eval2(client, message, args, argstr, attachment, dl_embed_url, **_
         return
     try:
         api = client.disco_api
-        tmp = eval(argstr, {
-            'api': api,
-            'msg': api.channels_messages_get(str(message.channel.id), str(message.id)),
-        })
+        msg = api.channels_messages_get(str(message.channel.id), str(message.id))
+        tmp = eval(argstr)
         result = str(tmp)
     except Exception as exc:
         tmp = None
