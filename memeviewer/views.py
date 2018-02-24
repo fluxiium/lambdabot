@@ -1,11 +1,15 @@
+import json
 import os
+import requests
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from bs4 import BeautifulSoup
 
+from discordbot.util import headers
 from lamdabotweb.settings import STATIC_URL
 from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
 from memeviewer.preview import preview_meme
@@ -86,3 +90,14 @@ def meme_info_view(request, meme_id):
     }
 
     return render(request, 'memeviewer/meme_info_view.html', context)
+
+
+def hdtfyet_view(request):
+    # game_area_purchase > div > div > div.game_purchase_action > div > div.btn_addtocart > a > span
+    response = requests.get("http://store.steampowered.com/api/appdetails?appids=723390", headers=headers)
+    data = json.loads(response.text)
+    coming_soon = data['723390']['data']['release_date']['coming_soon']
+    hdtfyet = "🚫 not yet 🚫" if coming_soon else "🎉 IT'S OUT 🎉"
+    return render(request, 'memeviewer/hdtfyet_view.html', {
+        'hdtf_yet': hdtfyet,
+    })
