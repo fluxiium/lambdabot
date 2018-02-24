@@ -93,11 +93,15 @@ def meme_info_view(request, meme_id):
 
 
 def hdtfyet_view(request):
-    # game_area_purchase > div > div > div.game_purchase_action > div > div.btn_addtocart > a > span
-    response = requests.get("http://store.steampowered.com/api/appdetails?appids=723390", headers=headers)
-    data = json.loads(response.text)
-    coming_soon = data['723390']['data']['release_date']['coming_soon']
-    hdtfyet = "🚫 not yet 🚫" if coming_soon else "🎉 IT'S OUT 🎉"
-    return render(request, 'memeviewer/hdtfyet_view.html', {
-        'hdtf_yet': hdtfyet,
-    })
+    try:
+        response = requests.get("http://store.steampowered.com/api/appdetails?appids=723390", headers=headers)
+        data = json.loads(response.text)
+        coming_soon = data['723390']['data']['release_date']['coming_soon']
+        hdtfyet = "🚫 not yet 🚫" if coming_soon else "🎉 IT'S OUT 🎉"
+        return render(request, 'memeviewer/hdtfyet_view.html', {
+            'hdtf_yet': hdtfyet,
+        })
+    except Exception as ex:
+        return render(request, 'memeviewer/hdtfyet_view.html', {
+            'hdtf_yet': '¯\_(ツ)_/¯',
+        })
