@@ -11,7 +11,7 @@ from discordbot.util import discord_send, log_exc, headers
 CMD_FUN = {}
 
 
-async def _cmd_led(client, server, member, message, args, argstr, **_):
+async def _cmd_led(client, message, args, argstr, **_):
     await discord_send(client.send_typing, message.channel)
 
     if len(args) == 1:
@@ -45,7 +45,7 @@ async def _cmd_led(client, server, member, message, args, argstr, **_):
 CMD_FUN['led'] = _cmd_led
 
 
-async def _cmd_mario(client, server, member, message, args, argstr, **_):
+async def _cmd_mario(client, message, args, **_):
     await discord_send(client.send_typing, message.channel)
 
     if len(args) < 3 or len(args) > 4:
@@ -90,7 +90,7 @@ async def _cmd_mario(client, server, member, message, args, argstr, **_):
 CMD_FUN['mario'] = _cmd_mario
 
 
-async def _cmd_noviews(client, server, member, message, args, **_):
+async def _cmd_noviews(client, message, **_):
     await discord_send(client.send_typing, message.channel)
 
     attempt = 0
@@ -119,7 +119,7 @@ async def _cmd_noviews(client, server, member, message, args, **_):
 CMD_FUN['noviews'] = _cmd_noviews
 
 
-async def _cmd_wiki(client, server, member, message, args, argstr, **_):
+async def _cmd_wiki(client, message, args, argstr, **_):
     await discord_send(client.send_typing, message.channel)
 
     wiki_url = 'http://combineoverwiki.net'
@@ -127,7 +127,6 @@ async def _cmd_wiki(client, server, member, message, args, argstr, **_):
     was_random = False
 
     if len(args) == 1:
-        # noinspection PyShadowingNames
         try:
             was_random = True
             response = requests.get(
@@ -141,7 +140,6 @@ async def _cmd_wiki(client, server, member, message, args, argstr, **_):
             log_exc(exc)
 
     else:
-        # noinspection PyShadowingNames
         try:
             query = argstr
             response = requests.get(

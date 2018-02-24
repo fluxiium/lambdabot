@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 from django.utils import timezone
 from telethon import TelegramClient
 from telethon.tl.types import UpdateShortMessage
-
 from discordbot.cleverbot import cb_talk
 from discordbot.models import MurphyRequest, MurphyFacePic
 from discordbot.util import log, discord_send, log_exc

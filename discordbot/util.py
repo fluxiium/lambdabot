@@ -44,7 +44,6 @@ def log(*args, tag=None):
     print(timezone.now(), tag, *args)
 
 
-# noinspection PyShadowingNames
 def log_exc(exc):
     log("--- ERROR ---")
     print(exc)
@@ -102,7 +101,6 @@ def save_attachment(url, filename=None):
     tmpdir = mkdtemp(prefix="lambdabot_attach_")
     filename = os.path.join(tmpdir, filename)
     log('received attachment: {0} {1}'.format(url, filename))
-    # noinspection PyShadowingNames
     try:
         attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
