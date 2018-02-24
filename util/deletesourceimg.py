@@ -8,8 +8,10 @@ import re
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import SOURCEIMG_DIR, ALLOWED_EXTENSIONS
+from lamdabotweb.settings import SOURCEIMG_DIR
 from memeviewer.models import MemeSourceImage
+
+ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'
 
 deldir = os.path.join(SOURCEIMG_DIR, "deleted")
 os.makedirs(deldir, exist_ok=True)

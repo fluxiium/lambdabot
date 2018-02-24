@@ -105,5 +105,6 @@ desktop.ini
 /lamdabotweb/settings_secret.py
 /db.sqlite3
 /static
+/media
 *.session
 /todo.txt

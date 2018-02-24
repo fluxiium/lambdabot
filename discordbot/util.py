@@ -11,7 +11,6 @@ from tempfile import mkdtemp
 
 from discordbot.models import DiscordServer, DiscordServerUser
 
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'
 }
@@ -52,7 +51,7 @@ def log_exc(exc):
     print(traceback.format_exc())
 
 
-async def delay_send(func, *args, **kwargs):
+async def discord_send(func, *args, **kwargs):
     try:
         return await func(*args, **kwargs)
     except discord.Forbidden:

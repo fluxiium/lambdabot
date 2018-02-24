@@ -1,7 +1,7 @@
 import os
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 from lamdabotweb.settings_secret import *
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,14 +74,16 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-RESOURCE_DIR = os.path.join(STATIC_ROOT or os.path.join(BASE_DIR, "static"), 'lambdabot', 'resources')
+RESOURCE_DIR = os.path.join(MEDIA_ROOT or os.path.join(BASE_DIR, "static"), MEDIA_SUBDIR)
 MEMES_DIR = os.path.join(RESOURCE_DIR, 'memes')
 SOURCEIMG_DIR = os.path.join(RESOURCE_DIR, 'sourceimg')
 TEMPLATE_DIR = os.path.join(RESOURCE_DIR, 'templates')
 
-RESOURCE_URL = STATIC_URL + 'lambdabot/resources/'
+os.makedirs(MEMES_DIR, exist_ok=True)
+os.makedirs(SOURCEIMG_DIR, exist_ok=True)
+os.makedirs(TEMPLATE_DIR, exist_ok=True)
+
+RESOURCE_URL = MEDIA_URL + MEDIA_SUBDIR + '/'
 MEMES_URL = RESOURCE_URL + 'memes/'
 SOURCEIMG_URL = RESOURCE_URL + 'sourceimg/'
 TEMPLATE_URL = RESOURCE_URL + 'templates/'
-
-ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'

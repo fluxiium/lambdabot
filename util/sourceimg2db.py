@@ -8,8 +8,10 @@ import re
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import SOURCEIMG_DIR, ALLOWED_EXTENSIONS
+from lamdabotweb.settings import SOURCEIMG_DIR
 from memeviewer.models import MemeSourceImage, MemeContext
+
+ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'
 
 imgdir = os.path.join(SOURCEIMG_DIR, "manual")
 os.makedirs(imgdir, exist_ok=True)

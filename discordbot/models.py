@@ -16,7 +16,6 @@ class DiscordServer(models.Model):
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
     context = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
-    log_channel = models.CharField(max_length=32, default='', blank=True)
 
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
@@ -63,7 +62,6 @@ class DiscordCommand(models.Model):
     denied_message = models.TextField(blank=True, default='', verbose_name='Access denied message')
     hidden = models.BooleanField(default=False)
     restricted = models.BooleanField(default=False)
-    is_control = models.BooleanField(default=False)
     custom_perm = models.ForeignKey(DiscordPerm, default=None, blank=True, null=True, verbose_name='Permission',
                                     on_delete=models.SET_NULL)
 
@@ -192,7 +190,7 @@ class DiscordServerUser(models.Model):
         if perm_data:
             return perm_data.allow
         else:
-            return None  # TODO: change when added roles
+            return None
 
     def update(self, nickname):
         self.nickname = nickname
@@ -235,15 +233,6 @@ class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE, verbose_name='Meme link')
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     channel_id = models.CharField(max_length=32)
-    sent_date = models.DateTimeField(null=True, blank=True, default=None, verbose_name='Date sent')
-
-    @classmethod
-    def get_next_unsent(cls):
-        return cls.objects.filter(sent_date__isnull=True).order_by('meme__gen_date').first()
-
-    def mark_sent(self):
-        self.sent_date = timezone.now()
-        self.save()
 
     def __str__(self):
         return "{0} ({1})".format(self.meme.meme_id, self.server_user)
@@ -294,7 +283,7 @@ class MurphyFacePic(models.Model):
         verbose_name = "Murphy bot face pic"
 
     channel_id = models.CharField(max_length=32, primary_key=True, verbose_name="Discord channel ID")
-    face_pic = models.CharField(max_length=256,blank=True, default='', verbose_name="Face pic")
+    face_pic = models.CharField(max_length=256, blank=True, default='', verbose_name="Face pic")
     last_used = models.DateTimeField(default=timezone.now, verbose_name='Last used')
 
     @classmethod

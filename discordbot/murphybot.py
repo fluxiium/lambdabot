@@ -1,3 +1,5 @@
+# this module is one big hack, don't read too deep into it
+
 import os
 import asyncio
 import textwrap
@@ -11,8 +13,9 @@ from telethon.tl.types import UpdateShortMessage
 
 from discordbot.cleverbot import cb_talk
 from discordbot.models import MurphyRequest, MurphyFacePic
-from discordbot.util import log, delay_send, log_exc
-from memeviewer.models import AccessToken, Setting
+from discordbot.util import log, discord_send, log_exc
+from lamdabotweb.settings import MURPHYBOT_TIMEOUT
+from memeviewer.models import AccessToken
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 TELEGRAM_TOKENS = AccessToken.objects.get(name="telegram-murphybot").token.splitlines()
@@ -71,7 +74,7 @@ async def process_murphy(client):
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{}>".format(murphybot_request.server_user.user.user_id)
             try:
-                await delay_send(client.send_typing, channel)
+                await discord_send(client.send_typing, channel)
             except discord.Forbidden:
                 log("can't send message to channel")
 
@@ -155,16 +158,14 @@ async def process_murphy(client):
 
         elif murphybot_state in ["1", "3"]:
             await asyncio.sleep(1)
-            timeout = int(Setting.get("murphybot timeout", 20))
-            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
+            if timezone.now() - datetime.timedelta(seconds=MURPHYBOT_TIMEOUT) > murphybot_last_update:
                 log_murphy("state {} timeout".format(murphybot_state))
                 murphybot_state = "no face"
             continue
 
         elif murphybot_state == "2":
             await asyncio.sleep(1)
-            timeout = int(Setting.get("murphybot timeout", 20))
-            if timezone.now() - datetime.timedelta(seconds=timeout) > murphybot_last_update:
+            if timezone.now() - datetime.timedelta(seconds=MURPHYBOT_TIMEOUT) > murphybot_last_update:
                 log_murphy("state 2 timeout")
                 murphybot_state = "idk"
             continue
@@ -173,7 +174,7 @@ async def process_murphy(client):
             log_murphy("face accepted")
             MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
             if murphybot_request.question == '':
-                await delay_send(client.send_message, channel, "{} face accepted :+1:".format(mention))
+                await discord_send(client.send_message, channel, "{} face accepted :+1:".format(mention))
             else:
                 murphybot_state = "2.2"
                 continue
@@ -182,7 +183,7 @@ async def process_murphy(client):
             log_murphy("sending answer")
             tmpdir = mkdtemp(prefix="lambdabot_murphy_")
             output = murphybot.download_media(murphybot_media, file=tmpdir)
-            await delay_send(client.send_file, channel, output, content=mention)
+            await discord_send(client.send_file, channel, output, content=mention)
 
         elif murphybot_state == "3.2":
             log_murphy("face accepted, sending question")
@@ -193,22 +194,22 @@ async def process_murphy(client):
 
         elif murphybot_state == "upload face":
             log_murphy("no channel face pic")
-            await delay_send(client.send_message, channel, "{} please upload a face first".format(mention))
+            await discord_send(client.send_message, channel, "{} please upload a face first".format(mention))
 
         elif murphybot_state == "no face":
             log_murphy("no face detected")
-            await delay_send(client.send_message, channel, "{} no face detected :cry:".format(mention))
+            await discord_send(client.send_message, channel, "{} no face detected :cry:".format(mention))
 
         elif murphybot_state == "idk":
             log_murphy("idk")
             if murphybot_request.server_user.check_permission("cleverbot"):
                 await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
             else:
-                await delay_send(client.send_message, channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+                await discord_send(client.send_message, channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
 
         elif murphybot_state == "error":
             log_murphy("error")
-            await delay_send(client.send_message, channel, "{} error :cry:".format(mention))
+            await discord_send(client.send_message, channel, "{} error :cry:".format(mention))
 
         murphybot_request.mark_processed()
         murphybot_state = "0"

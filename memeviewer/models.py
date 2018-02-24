@@ -1,22 +1,17 @@
 import imghdr
 import operator
 import os
-import random
 import re
 import uuid
 
 from functools import reduce
-
 from PIL import Image
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-
-from lamdabotweb.settings import MEMES_DIR,  WEBSITE, SOURCEIMG_DIR, TEMPLATE_DIR, TEMPLATE_URL, SOURCEIMG_URL,\
-    MEMES_URL
-
-SYS_RANDOM = random.SystemRandom()
+from lamdabotweb.settings import MEMES_DIR, WEBSITE_URL, SOURCEIMG_DIR, TEMPLATE_DIR, TEMPLATE_URL, SOURCEIMG_URL, \
+    MEMES_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE
 
 
 def struuid4():
@@ -36,7 +31,7 @@ def next_image(context, image_type):
     # if empty, make new queue
     if result.count() == 0:
 
-        queue_length = int(Setting.get('img queue length', 100))
+        queue_length = IMG_QUEUE_LENGTH
         img_queue = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
             .order_by('?')[0:(min(queue_length, objects.count()))]
 
@@ -70,20 +65,6 @@ def next_sourceimg(context):
 
 
 # MODELS --------------------------------------------------------------------------------------------------------
-
-class Setting(models.Model):
-
-    class Meta:
-        verbose_name = "Setting"
-
-    key = models.CharField(max_length=64, verbose_name='Key')
-    value = models.CharField(max_length=64, verbose_name='Value')
-
-    @classmethod
-    def get(cls, key, default=None):
-        setting = cls.objects.filter(key__iexact=key).first()
-        return setting.value if setting is not None else default
-
 
 class MemeContext(models.Model):
 
@@ -143,15 +124,14 @@ class MemeSourceImage(models.Model):
             filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
 
         stat = os.stat(original_filename)
-        max_srcimg_size = int(Setting.get('max srcimg size', '1500000'))
-        if stat.st_size > max_srcimg_size and image.mode == "RGBA":
+        if stat.st_size > MAX_SRCIMG_SIZE and image.mode == "RGBA":
             image = image.convert('RGB')
             filename += ".jpeg"
             original_filename += ".jpeg"
             image.save(original_filename)
             stat = os.stat(original_filename)
 
-        if stat.st_size > max_srcimg_size:
+        if stat.st_size > MAX_SRCIMG_SIZE:
             return None
 
         image.save(os.path.join(SOURCEIMG_DIR, filename))
@@ -337,7 +317,7 @@ class Meem(models.Model):
         return MEMES_URL + self.meme_id + '.jpg'
 
     def get_info_url(self):
-        return WEBSITE + 'meme/' + self.meme_id
+        return WEBSITE_URL + 'meme/' + self.meme_id
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)

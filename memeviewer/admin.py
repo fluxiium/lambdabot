@@ -4,15 +4,8 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission
 from facebookbot.models import FacebookMeem
 from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
-    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImage, Setting, MemeSourceImageInSlot
+    MemeTemplateSlot, MemeContext, AccessToken, MemeSourceImage, MemeSourceImageInSlot
 from twitterbot.models import TwitterMeem
-
-
-@admin.register(Setting)
-class SettingAdmin(admin.ModelAdmin):
-    list_display = ('key', 'value')
-    ordering = ('key',)
-    search_fields = ('key', 'value')
 
 
 class FacebookInline(admin.TabularInline):
