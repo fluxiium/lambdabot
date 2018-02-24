@@ -12,5 +12,4 @@ urlpatterns = [
         views.meme_info_view, name='meme_view'),
     url(r'^(?i)meme_info/(?P<meme_id>[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})$',
         views.meme_info_view, name='meme_info_view'),
-    url(r'^(?i)hdtfyet$', views.hdtfyet_view, name='hdtfyet_view'),
 ]

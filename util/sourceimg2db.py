@@ -1,3 +1,6 @@
+# i dont remember what this script does tbh, i only needed it once when doing some
+# major changes to the database... just ignore it
+
 import os
 import django
 import re

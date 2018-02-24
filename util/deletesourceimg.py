@@ -1,3 +1,6 @@
+# this script moves all images that are not associated with a source image object in the database
+# into a directory called "deleted"
+
 import os
 import django
 import re

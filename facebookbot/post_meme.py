@@ -24,5 +24,4 @@ comment_status = api.put_comment(
 print("comment added!")
 print(comment_status)
 
-facebook_meme = FacebookMeem(meme=meme, post=post_status['post_id'])
-facebook_meme.save()
+facebook_meme = FacebookMeem.objects.create(meme=meme, post=post_status['post_id'])

@@ -8,12 +8,11 @@ from memeviewer.models import Meem, ImageInContext, MemeTemplate, \
 from twitterbot.models import TwitterMeem
 
 
+@admin.register(Setting)
 class SettingAdmin(admin.ModelAdmin):
     list_display = ('key', 'value')
     ordering = ('key',)
     search_fields = ('key', 'value')
-
-admin.site.register(Setting, SettingAdmin)
 
 
 class FacebookInline(admin.TabularInline):
@@ -36,6 +35,7 @@ class MemeSourceImageInSlotInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(Meem)
 class MeemAdmin(admin.ModelAdmin):
     list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date', 'meme_url')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
@@ -60,15 +60,12 @@ class MeemAdmin(admin.ModelAdmin):
         return mark_safe('<img src="{}" width="150">'.format(obj.get_url()))
     thumbnail.short_description = 'Thumbnail'
 
-admin.site.register(Meem, MeemAdmin)
 
-
+@admin.register(ImageInContext)
 class ImageInContextAdmin(admin.ModelAdmin):
     list_display = ('image_name', 'image_type', 'context_link')
     list_display_links = ('image_name',)
     search_fields = ('image_name', 'image_type', 'context_link__short_name')
-
-admin.site.register(ImageInContext, ImageInContextAdmin)
 
 
 class DiscordSourceImgSubmissionInline(admin.TabularInline):
@@ -76,6 +73,7 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date')
     list_display_links = ('thumbnail', 'name')
@@ -101,14 +99,13 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
         queryset.update(accepted=True)
     accept.short_description = "Approve selected source images"
 
-admin.site.register(MemeSourceImage, MemeSourceImageAdmin)
-
 
 class MemeTemplateSlotInline(admin.TabularInline):
     model = MemeTemplateSlot
     extra = 0
 
 
+@admin.register(MemeTemplate)
 class MemeTemplateAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date', 'preview_url')
     list_display_links = ('thumbnail', 'name')
@@ -138,9 +135,8 @@ class MemeTemplateAdmin(admin.ModelAdmin):
         queryset.update(accepted=True)
     accept.short_description = "Approve selected templates"
 
-admin.site.register(MemeTemplate, MemeTemplateAdmin)
 
-
+@admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
     list_display = ('name', 'short_name', 'reset_url')
     search_fields = ('short_name', 'name')
@@ -150,10 +146,7 @@ class MemeContextAdmin(admin.ModelAdmin):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset"))
     reset_url.short_description = 'Reset queue'
 
-admin.site.register(MemeContext, MemeContextAdmin)
 
-
+@admin.register(AccessToken)
 class AccessTokenAdmin(admin.ModelAdmin):
     pass
-
-admin.site.register(AccessToken, AccessTokenAdmin)

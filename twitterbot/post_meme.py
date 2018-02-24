@@ -26,5 +26,4 @@ status = api.PostUpdate(
 print("post added!")
 print(status)
 
-twitter_meme = TwitterMeem(meme=meme, post=status.id)
-twitter_meme.save()
+twitter_meme = TwitterMeem.objects.create(meme=meme, post=status.id)

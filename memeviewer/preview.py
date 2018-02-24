@@ -3,11 +3,11 @@ import os
 from PIL import Image
 from PIL import ImageFilter
 
-from lamdabotweb.settings import TEMPLATE_DIR, SOURCEIMG_DIR, RESOURCE_DIR
+from lamdabotweb.settings import TEMPLATE_DIR, SOURCEIMG_DIR
 
 
 def preview_meme(meme):
-    """ retrieve a previously generated meme """
+    """ return image based on meme data """
 
     meme_file = meme.get_local_path()
 

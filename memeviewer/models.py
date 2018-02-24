@@ -1,5 +1,4 @@
 import imghdr
-import json
 import operator
 import os
 import random
@@ -14,7 +13,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from lamdabotweb.settings import MEMES_DIR, STATIC_URL, WEBSITE, SOURCEIMG_DIR, ALLOWED_EXTENSIONS, TEMPLATE_DIR
+from lamdabotweb.settings import MEMES_DIR,  WEBSITE, SOURCEIMG_DIR, TEMPLATE_DIR, TEMPLATE_URL, SOURCEIMG_URL,\
+    MEMES_URL
 
 SYS_RANDOM = random.SystemRandom()
 
@@ -27,80 +27,46 @@ def next_meme_number():
     return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
 
 
-def next_template(context):
-    """ returns next template filename """
-
+def next_image(context, image_type):
     # read queue from db
-    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_TEMPLATE, context_link=context)
+    result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
+    objects = MemeSourceImage.objects if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else MemeTemplate.objects
+    imagedir = SOURCEIMG_DIR if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else TEMPLATE_DIR
 
     # if empty, make new queue
     if result.count() == 0:
 
-        queue_length = int(Setting.get('template queue length', 77))
-        template_queue = MemeTemplate.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
-            .order_by('?')[0:(min(queue_length, MemeTemplate.objects.count()))]
+        queue_length = int(Setting.get('img queue length', 100))
+        img_queue = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
+            .order_by('?')[0:(min(queue_length, objects.count()))]
 
         # save queue to db
-        for t in template_queue:
-            template_in_context = ImageInContext(image_name=t.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE,
-                                                 context_link=context)
-            template_in_context.save()
+        for s in img_queue:
+            img_in_context = ImageInContext(image_name=s.name, image_type=image_type, context_link=context)
+            img_in_context.save()
 
-        result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_TEMPLATE, context_link=context)
+        result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
 
-    template_in_context = result.first()
-    template = template_in_context.image_name
-    template_in_context.delete()
+    img_in_context = result.first()
+    sourceimg = img_in_context.image_name
+    img_in_context.delete()
 
-    template_obj = MemeTemplate.objects\
-        .filter(name=template, accepted=True)\
-        .filter(Q(contexts=context) | Q(contexts=None))\
-        .first()
+    img_obj = objects.filter(name=sourceimg, accepted=True).filter(Q(contexts=context) | Q(contexts=None)).first()
 
-    if template_obj is None:
-        return next_template(context)
-    elif not os.path.isfile(os.path.join(TEMPLATE_DIR, template)):
+    if img_obj is None:
+        return next_image(context, image_type)
+    elif not os.path.isfile(os.path.join(imagedir, sourceimg)):
         raise FileNotFoundError
     else:
-        return template_obj
+        return img_obj
+
+
+def next_template(context):
+    return next_image(context, ImageInContext.IMAGE_TYPE_TEMPLATE)
 
 
 def next_sourceimg(context):
-    """ returns next source image filename """
-
-    # read queue from db
-    result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG, context_link=context)
-
-    # if empty, make new queue
-    if result.count() == 0:
-
-        queue_length = int(Setting.get('sourceimg queue length', 133))
-        sourceimg_queue = MemeSourceImage.objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
-            .order_by('?')[0:(min(queue_length, MemeSourceImage.objects.count()))]
-
-        # save queue to db
-        for s in sourceimg_queue:
-            sourceimg_in_context = ImageInContext(image_name=s, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG,
-                                                  context_link=context)
-            sourceimg_in_context.save()
-
-        result = ImageInContext.objects.filter(image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG, context_link=context)
-
-    sourceimg_in_context = result.first()
-    sourceimg = sourceimg_in_context.image_name
-    sourceimg_in_context.delete()
-
-    sourceimg_obj = MemeSourceImage.objects\
-        .filter(name=sourceimg, accepted=True)\
-        .filter(Q(contexts=context) | Q(contexts=None))\
-        .first()
-
-    if sourceimg_obj is None:
-        return next_sourceimg(context)
-    elif not os.path.isfile(os.path.join(SOURCEIMG_DIR, sourceimg)):
-        raise FileNotFoundError
-    else:
-        return sourceimg_obj
+    return next_image(context, ImageInContext.IMAGE_TYPE_SOURCEIMG)
 
 
 # MODELS --------------------------------------------------------------------------------------------------------
@@ -149,14 +115,11 @@ class MemeSourceImage(models.Model):
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
-    def is_in_context(self, context):
-        return self.contexts.count() == 0 or self.contexts.filter(short_name=context.short_name).first() is not None
-
     def get_image_url(self):
-        return STATIC_URL + 'lambdabot/resources/sourceimg/' + self.name
+        return SOURCEIMG_URL + self.name
 
     def __str__(self):
-        return self.friendly_name if self.friendly_name != '' else self.name
+        return self.friendly_name or self.name
 
     def contexts_string(self):
         contexts = self.contexts.all()
@@ -164,29 +127,29 @@ class MemeSourceImage(models.Model):
             return "*"
         result = ""
         for context in contexts:
-            result += "{} ".format(context.short_name)
+            result += context.short_name + " "
         return result.strip()
 
     @classmethod
-    def submit(cls, path, filename=None):
+    def submit(cls, original_filename, filename=None):
         try:
-            image = Image.open(path)
+            image = Image.open(original_filename)
         except OSError:
             return None
 
         if filename is None:
-            filename = "{0}.{1}".format(str(uuid.uuid4()), imghdr.what(path))
+            filename = "{0}.{1}".format(str(uuid.uuid4()), imghdr.what(original_filename))
         else:
             filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
 
-        stat = os.stat(path)
+        stat = os.stat(original_filename)
         max_srcimg_size = int(Setting.get('max srcimg size', '1500000'))
         if stat.st_size > max_srcimg_size and image.mode == "RGBA":
             image = image.convert('RGB')
             filename += ".jpeg"
-            path += ".jpeg"
-            image.save(path)
-            stat = os.stat(path)
+            original_filename += ".jpeg"
+            image.save(original_filename)
+            stat = os.stat(original_filename)
 
         if stat.st_size > max_srcimg_size:
             return None
@@ -229,8 +192,11 @@ class MemeTemplate(models.Model):
     @classmethod
     def find(cls, name, allow_disabled=False):
         if isinstance(name, MemeContext):
+            # find the last meme generated in that context and return the template that was used
             found = Meem.objects.filter(context_link=name).order_by('-gen_date').first()
-            return found.template_link if found is not None else None
+            return found and found.template_link
+
+        # find template by string
         obj = cls.objects
         if not allow_disabled:
             obj = obj.filter(accepted=True)
@@ -275,7 +241,10 @@ class MemeTemplate(models.Model):
         return reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name})
 
     def get_image_url(self):
-        return STATIC_URL + 'lambdabot/resources/templates/' + self.name
+        return TEMPLATE_URL + self.name
+
+    def get_bgimage_url(self):
+        return self.bg_img and (TEMPLATE_URL + self.bg_img) or None
 
     def contexts_string(self):
         contexts = self.contexts.all()
@@ -287,7 +256,7 @@ class MemeTemplate(models.Model):
         return result.strip()
 
     def __str__(self):
-        return self.friendly_name if self.friendly_name != '' else self.name
+        return self.friendly_name or self.name
 
 
 class MemeTemplateSlot(models.Model):
@@ -365,7 +334,7 @@ class Meem(models.Model):
         return os.path.join(MEMES_DIR, self.meme_id + '.jpg')
 
     def get_url(self):
-        return STATIC_URL + 'lambdabot/resources/memes/' + self.meme_id + '.jpg'
+        return MEMES_URL + self.meme_id + '.jpg'
 
     def get_info_url(self):
         return WEBSITE + 'meme/' + self.meme_id

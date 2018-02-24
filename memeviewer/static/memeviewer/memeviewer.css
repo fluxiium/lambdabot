@@ -3,16 +3,8 @@
     padding: 0;
 }
 
-@font-face {
-    font-family: 'hlfont';
-    src: url('https://static.morchkovalski.com/memeviewer/hlfont.woff2') format('woff2'),
-    url('https://static.morchkovalski.com/memeviewer/hlfont.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
-
 body {
-    font-family: hlfont, sans-serif;
+    font-family: 'Mukta Malar', sans-serif;
     background-color: #222;
     color: #ddd;
     text-align: center;
@@ -29,19 +21,13 @@ img {
 }
 
 table {
-    /*background-color: #ddd;*/
     max-width: 700px;
-    /*width: 700px;*/
     margin: 0 auto;
     padding-top: 10px;
 }
 
 table, td, th {
     overflow: hidden;
-}
-
-td {
-    /*padding-top: 10px;*/
 }
 
 th {
