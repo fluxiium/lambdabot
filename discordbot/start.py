@@ -102,6 +102,9 @@ async def process_message(message):
     except ValueError:
         splitcmd = msg[len(server.prefix):].split(' ')
 
+    if len(splitcmd) == 0:
+        return
+
     cmd = DiscordCommand.get_cmd(splitcmd[0])
 
     if cmd is None:
