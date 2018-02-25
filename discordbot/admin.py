@@ -16,19 +16,6 @@ class DiscordServerPermissionInline(admin.TabularInline):
     extra = 0
 
 
-class DiscordServerUserInline(admin.TabularInline):
-    model = DiscordServerUser
-    extra = 0
-    ordering = ('user__name', 'nickname')
-    readonly_fields = ('user', 'nickname')
-    fields = ('nickname', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
-    can_delete = False
-    show_change_link = True
-
-    def has_add_permission(self, request):
-        return False
-
-
 class DiscordServerUserPermissionInline(admin.TabularInline):
     model = DiscordServerUserPerm
     extra = 0
@@ -42,7 +29,7 @@ class DiscordServerAdmin(admin.ModelAdmin):
     readonly_fields = ('name',)
     fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count',
               'submit_limit_time')
-    inlines = [DiscordCommandInline, DiscordServerPermissionInline, DiscordServerUserInline]
+    inlines = [DiscordCommandInline, DiscordServerPermissionInline]
 
 
 @admin.register(DiscordCommand)
@@ -65,8 +52,6 @@ class DiscordServerUserAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-    def has_module_permission(self, request):
-        return False
 
 # @admin.register(DiscordUser)
 # class DiscordUserAdmin(admin.ModelAdmin):
