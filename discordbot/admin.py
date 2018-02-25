@@ -42,6 +42,7 @@ class DiscordCommandAdmin(admin.ModelAdmin):
 @admin.register(DiscordServerUser)
 class DiscordServerUserAdmin(admin.ModelAdmin):
     list_display = ('nickname', 'server')
+    list_filter = ('server',)
     search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name', 'server__server_id',
                      'server__context__context_id')
     ordering = ('nickname', 'server')
