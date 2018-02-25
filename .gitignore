@@ -103,7 +103,7 @@ ENV/
 /data
 desktop.ini
 /lamdabotweb/settings_secret.py
-/db.sqlite3
+/db.sqlite3*
 /static
 /media
 *.session

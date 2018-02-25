@@ -51,7 +51,7 @@ def next_image(context, image_type):
     if img_obj is None:
         return next_image(context, image_type)
     elif not os.path.isfile(os.path.join(imagedir, sourceimg)):
-        raise FileNotFoundError
+        raise FileNotFoundError("Image file not found")
     else:
         return img_obj
 
@@ -281,6 +281,8 @@ class Meem(models.Model):
 
     @classmethod
     def generate(cls, context, template=None):
+        if MemeTemplate.count(context) == 0 or MemeSourceImage.count(context) == 0:
+            raise FileNotFoundError("Not enough available source images or templates")
         if template is None:
             template = next_template(context)
         source_files = {}

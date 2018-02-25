@@ -70,6 +70,10 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+FIXTURE_DIRS = [
+    os.path.join(BASE_DIR, "fixtures"),
+]
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]

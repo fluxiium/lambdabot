@@ -97,10 +97,3 @@ class MurphyFacePicAdmin(admin.ModelAdmin):
     list_display = ('channel_id', 'face_pic', 'last_used')
     search_fields = ('channel_id', 'face_pic')
     ordering = ('-last_used',)
-
-
-@admin.register(ProcessedMessage)
-class ProcessedMessageAdmin(admin.ModelAdmin):
-    list_display = ('msg_id', 'process_date')
-    search_fields = ('msg_id',)
-    ordering = ('-process_date',)
