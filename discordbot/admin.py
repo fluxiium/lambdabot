@@ -25,7 +25,7 @@ class DiscordServerUserPermissionInline(admin.TabularInline):
 class DiscordServerAdmin(admin.ModelAdmin):
     list_display = ('name', 'context', 'server_id', )
     ordering = ('name',)
-    search_fields = ('server_id', 'name', 'context__short_name')
+    search_fields = ('server_id', 'name', 'context__context_id')
     readonly_fields = ('name',)
     fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count',
               'submit_limit_time')
@@ -43,7 +43,7 @@ class DiscordCommandAdmin(admin.ModelAdmin):
 class DiscordServerUserAdmin(admin.ModelAdmin):
     list_display = ('nickname', 'server')
     search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name', 'server__server_id',
-                     'server__context__short_name')
+                     'server__context__context_id')
     ordering = ('nickname', 'server')
     fields = ('nickname', 'server', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
     readonly_fields = ('user', 'nickname', 'server')
@@ -56,7 +56,7 @@ class DiscordServerUserAdmin(admin.ModelAdmin):
 @admin.register(DiscordServerPerm)
 class DiscordServerPermissionAdmin(admin.ModelAdmin):
     list_display = ('server', 'permission', 'allow')
-    search_fields = ('server__server_id', 'server__name', 'server__context__short_name')
+    search_fields = ('server__server_id', 'server__name', 'server__context__context_id')
     ordering = ('server', 'permission')
 
 
@@ -65,7 +65,7 @@ class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
     list_display = ('server_user', 'permission', 'allow')
     search_fields = ('server_user__nickname', 'server_user__user__user_id', 'server_user__user__name',
                      'server_user__server__name', 'server_user__server__server_id',
-                     'server_user__server__context__short_name')
+                     'server_user__server__context__context_id')
     ordering = ('server_user', 'permission')
 
 
@@ -82,7 +82,7 @@ class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
 #     list_display = ('question', 'face_pic', 'server_user', 'ask_date', 'channel_id', 'processed')
 #     search_fields = ('question', 'face_pic', 'server_user__nickname', 'server_user__user__user_id',
 #                      'server_user__user__name', 'server_user__server__name', 'server_user__server__server_id',
-#                      'server_user__server__context__short_name')
+#                      'server_user__server__context__context_id')
 #     ordering = ('-ask_date',)
 #
 #
