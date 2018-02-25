@@ -59,7 +59,7 @@ class DiscordCommand(models.Model):
 class DiscordUser(models.Model):
 
     class Meta:
-        verbose_name = "User"
+        verbose_name = "Discord user"
 
     user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
     name = models.CharField(max_length=64, verbose_name='Username')
