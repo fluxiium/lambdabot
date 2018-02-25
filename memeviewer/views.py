@@ -17,7 +17,7 @@ def generate_meme_view(request):
     if not request.user.is_superuser:
         return HttpResponseForbidden()
 
-    meme = Meem.generate(context=MemeContext.by_id('template_preview'))
+    meme = Meem.generate(context=MemeContext.by_id_or_create('default', 'Default'))
     return redirect(meme.get_info_url())
 
 
@@ -29,7 +29,7 @@ def template_preview_view(request, template_name):
 
     try:
         meme = Meem.generate(
-            context=MemeContext.by_id('template_preview'),
+            context=MemeContext.by_id_or_create('default', 'Default'),
             template=MemeTemplate.find(template_name, allow_disabled=True),
         )
     except ObjectDoesNotExist:

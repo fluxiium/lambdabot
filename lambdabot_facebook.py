@@ -1,3 +1,5 @@
+# this script generates one meme and posts it to a facebook page
+
 import os
 import django
 import facebook
@@ -12,7 +14,7 @@ from memeviewer.preview import preview_meme
 from facebookbot.models import FacebookMeem
 
 api = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-meme = Meem.generate(context=MemeContext.by_id('facebook'))
+meme = Meem.generate(context=MemeContext.by_id_or_create('facebook', 'Facebook'))
 preview_meme(meme)
 
 post_status = api.put_photo(open(meme.get_local_path(), 'rb'))

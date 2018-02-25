@@ -71,12 +71,20 @@ class MemeContext(models.Model):
     class Meta:
         verbose_name = "Context"
 
-    short_name = models.CharField(max_length=32, primary_key=True, verbose_name='Short name')
+    short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
 
     @classmethod
     def by_id(cls, name):
         return cls.objects.get(short_name=name)
+
+    @classmethod
+    def by_id_or_create(cls, name, friendly_name):
+        context = cls.objects.filter(short_name=name).first()
+        if context is not None:
+            return context
+        context = cls.objects.create(short_name=name, name=friendly_name)
+        return context
 
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})

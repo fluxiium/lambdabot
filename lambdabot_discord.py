@@ -6,6 +6,7 @@ import django
 import discord
 import re
 from importlib import import_module
+import time
 
 from discordbot.permissions import PERM_MURPHYBOT, PERM_CLEVERBOT
 
@@ -39,6 +40,8 @@ for file in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'commands')):
 
 # noinspection PyShadowingNames
 async def _cmd_help(client, server, member, message, **_):
+    await discord_send(client.send_typing, message.channel)
+
     helpstr = "{0} available commands:".format(message.author.mention)
 
     for cmd_name, cmd_data in COMMANDS.items():
@@ -201,4 +204,7 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 start_murphy(client)
-client.run(DISCORD_TOKEN)
+
+while True:
+    client.run(DISCORD_TOKEN)
+    time.sleep(5)
