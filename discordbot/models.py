@@ -3,7 +3,7 @@ import datetime
 from django.db import models
 from django.utils import timezone
 
-from discordbot.permissions import PERMISSIONS
+from discordbot.permissions import PERMISSIONS, PERMISSION_DEFAULTS
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -150,7 +150,7 @@ class DiscordServerUser(models.Model):
         if perm_data:
             return perm_data.allow
         else:
-            return None
+            return PERMISSION_DEFAULTS.get(permission)
 
     def update(self, nickname):
         self.nickname = nickname

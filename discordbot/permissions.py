@@ -5,3 +5,8 @@ PERMISSIONS = (
     (PERM_CLEVERBOT, "Use cleverbot"),
     (PERM_MURPHYBOT, "Use murphybot"),
 )
+
+PERMISSION_DEFAULTS = {
+    PERM_CLEVERBOT: True,
+    PERM_MURPHYBOT: True,
+}
