@@ -8,9 +8,22 @@ class DiscordCommandInline(admin.TabularInline):
     extra = 0
 
 
+class DiscordServerUserInline(admin.TabularInline):
+    model = DiscordServerUser
+    extra = 0
+    fields = ('server', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
+    readonly_fields = ('server',)
+    ordering = ('server__name',)
+    can_delete = False
+
+    def has_add_permission(self, request):
+        return False
+
+
 @admin.register(DiscordServer)
 class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context', 'server_id', )
+    list_display = ('name', 'server_id', 'context')
+    list_display_links = ('name', 'server_id')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
     readonly_fields = ('name',)
@@ -19,28 +32,15 @@ class DiscordServerAdmin(admin.ModelAdmin):
     inlines = [DiscordCommandInline]
 
 
-@admin.register(DiscordServerUser)
-class DiscordServerUserAdmin(admin.ModelAdmin):
-    list_display = ('nickname', 'server')
-    list_filter = ('server',)
-    search_fields = ('nickname', 'user__user_id', 'user__name', 'server__name', 'server__server_id',
-                     'server__context__short_name')
-    ordering = ('nickname', 'server')
-    fields = ('nickname', 'server', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
-    readonly_fields = ('user', 'nickname', 'server')
-
-    def has_add_permission(self, request):
-        return False
+@admin.register(DiscordUser)
+class DiscordUserAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user_id')
+    search_fields = ('user_id', 'name')
+    ordering = ('name',)
+    readonly_fields = ('user_id', 'name')
+    inlines = [DiscordServerUserInline]
 
 
-# @admin.register(DiscordUser)
-# class DiscordUserAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'user_id')
-#     search_fields = ('user_id', 'name')
-#     ordering = ('name',)
-#     inlines = [DiscordServerUserInline]
-#
-#
 # @admin.register(MurphyRequest)
 # class MurphyRequestAdmin(admin.ModelAdmin):
 #     list_display = ('question', 'face_pic', 'server_user', 'ask_date', 'channel_id', 'processed')

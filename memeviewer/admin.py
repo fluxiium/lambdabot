@@ -33,11 +33,27 @@ class DiscordInline(SocialLinkInline):
     verbose_name_plural = "Discord post"
 
 
+class MemeTemplateSlotInline(admin.TabularInline):
+    model = MemeTemplateSlot
+    extra = 0
+
+
 class MemeSourceImageInSlotInline(admin.TabularInline):
     model = MemeSourceImageInSlot
     extra = 0
     verbose_name_plural = "Source images"
     readonly_fields = ('slot', 'source_image')
+    can_delete = False
+
+    def has_add_permission(self, request):
+        return False
+
+
+class DiscordSourceImgSubmissionInline(admin.TabularInline):
+    model = DiscordSourceImgSubmission
+    extra = 0
+    verbose_name_plural = "Discord source image submission"
+    readonly_fields = ('server_user',)
     can_delete = False
 
     def has_add_permission(self, request):
@@ -71,17 +87,6 @@ class MeemAdmin(admin.ModelAdmin):
     thumbnail.short_description = 'Thumbnail'
 
 
-class DiscordSourceImgSubmissionInline(admin.TabularInline):
-    model = DiscordSourceImgSubmission
-    extra = 0
-    verbose_name_plural = "Discord source image submission"
-    readonly_fields = ('server_user',)
-    can_delete = False
-
-    def has_add_permission(self, request):
-        return False
-
-
 @admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date')
@@ -107,11 +112,6 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     def accept(self, request, queryset):
         queryset.update(accepted=True)
     accept.short_description = "Approve selected source images"
-
-
-class MemeTemplateSlotInline(admin.TabularInline):
-    model = MemeTemplateSlot
-    extra = 0
 
 
 @admin.register(MemeTemplate)
@@ -156,10 +156,9 @@ class MemeContextAdmin(admin.ModelAdmin):
     reset_url.short_description = 'Reset queue'
 
 
-# @admin.register(ImageInContext)
-# class ImageInContextAdmin(admin.ModelAdmin):
-#     list_display = ('image_name', 'image_type', 'context_link')
-#     list_display_links = ('image_name',)
-#     search_fields = ('image_name', 'image_type', 'context_link__short_name')
-#
-#
+@admin.register(ImageInContext)
+class ImageInContextAdmin(admin.ModelAdmin):
+    list_display = ('image_name', 'image_type', 'context_link')
+    list_display_links = ('image_name',)
+    list_filter = ('context_link', 'image_type')
+    search_fields = ('image_name', 'image_type', 'context_link__short_name')
