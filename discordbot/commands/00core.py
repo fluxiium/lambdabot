@@ -116,7 +116,7 @@ async def _cmd_meem(client, server, member, message, args, argstr, attachment, d
         "{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
     )
 
-    log('meme generated:', meme)
+    log(message.author, 'meme generated:', meme)
 
 COMMANDS['meem'] = {
     'function': _cmd_meem,
