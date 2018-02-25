@@ -8,8 +8,6 @@ import re
 from importlib import import_module
 import time
 
-from discordbot.permissions import PERM_MURPHYBOT, PERM_CLEVERBOT
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
@@ -39,14 +37,12 @@ for file in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'commands')):
 
 
 # noinspection PyShadowingNames
-async def _cmd_help(client, server, member, message, **_):
+async def _cmd_help(client, server, message, **_):
     await discord_send(client.send_typing, message.channel)
 
     helpstr = "{0} available commands:".format(message.author.mention)
 
     for cmd_name, cmd_data in COMMANDS.items():
-        if cmd_data.get('permission') and not member.check_permission(cmd_data['permission']):
-            continue
 
         helpstr += "\n`{0}{1}".format(server.prefix, cmd_name)
 
@@ -104,7 +100,7 @@ async def process_message(message):
 
         answered = False
 
-        if member.check_permission(PERM_MURPHYBOT) and is_murphy_active():
+        if is_murphy_active():
             answered = True
 
             if dl_embed_url is not None:
@@ -124,7 +120,7 @@ async def process_message(message):
             else:
                 answered = False
 
-        if not answered and member.check_permission(PERM_CLEVERBOT):
+        if not answered:
             await cb_talk(client, message.channel, member, msg)
 
         return
@@ -150,7 +146,7 @@ async def process_message(message):
 
     cmd = COMMANDS.get(COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
 
-    if cmd is None or cmd.get('permission') and not member.check_permission(cmd['permission']):
+    if cmd is None:
         return
 
     ProcessedMessage.process_id(message.id)

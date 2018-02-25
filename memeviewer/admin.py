@@ -147,8 +147,8 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context_id', 'reset_url')
-    search_fields = ('context_id', 'name')
+    list_display = ('name', 'short_name', 'reset_url')
+    search_fields = ('short_name', 'name')
     ordering = ('name',)
 
     def reset_url(self, obj):
@@ -160,6 +160,6 @@ class MemeContextAdmin(admin.ModelAdmin):
 # class ImageInContextAdmin(admin.ModelAdmin):
 #     list_display = ('image_name', 'image_type', 'context_link')
 #     list_display_links = ('image_name',)
-#     search_fields = ('image_name', 'image_type', 'context_link__context_id')
+#     search_fields = ('image_name', 'image_type', 'context_link__short_name')
 #
 #

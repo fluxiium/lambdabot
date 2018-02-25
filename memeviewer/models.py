@@ -71,23 +71,23 @@ class MemeContext(models.Model):
     class Meta:
         verbose_name = "Context"
 
-    context_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
+    short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
 
     @classmethod
     def by_id(cls, name):
-        return cls.objects.get(context_id=name)
+        return cls.objects.get(short_name=name)
 
     @classmethod
     def by_id_or_create(cls, name, friendly_name):
-        context = cls.objects.filter(context_id=name).first()
+        context = cls.objects.filter(short_name=name).first()
         if context is not None:
             return context
-        context = cls.objects.create(context_id=name, name=friendly_name)
+        context = cls.objects.create(short_name=name, name=friendly_name)
         return context
 
     def get_reset_url(self):
-        return reverse('memeviewer:context_reset_view', kwargs={'context': self.context_id})
+        return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
 
     def __str__(self):
         return self.name
@@ -116,7 +116,7 @@ class MemeSourceImage(models.Model):
             return "*"
         result = ""
         for context in contexts:
-            result += context.context_id + " "
+            result += context.short_name + " "
         return result.strip()
 
     @classmethod
@@ -240,7 +240,7 @@ class MemeTemplate(models.Model):
             return "*"
         result = ""
         for context in contexts:
-            result += "{} ".format(context.context_id)
+            result += "{} ".format(context.short_name)
         return result.strip()
 
     def __str__(self):
@@ -360,4 +360,4 @@ class ImageInContext(models.Model):
 
     def __str__(self):
         return "{0} - {1} ({2})"\
-            .format(self.image_name, self.context_link.context_id, self.IMAGE_TYPE_CHOICES[self.image_type][1])
+            .format(self.image_name, self.context_link.short_name, self.IMAGE_TYPE_CHOICES[self.image_type][1])

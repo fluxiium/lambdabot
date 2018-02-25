@@ -12,7 +12,6 @@ from telethon import TelegramClient
 from telethon.tl.types import UpdateShortMessage
 from discordbot.cleverbot import cb_talk
 from discordbot.models import MurphyRequest, MurphyFacePic
-from discordbot.permissions import PERM_CLEVERBOT
 from discordbot.util import log, discord_send, log_exc
 from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH
 
@@ -200,10 +199,7 @@ async def process_murphy(client):
 
         elif murphybot_state == "idk":
             log_murphy("idk")
-            if murphybot_request.server_user.check_permission(PERM_CLEVERBOT):
-                await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
-            else:
-                await discord_send(client.send_message, channel, "{0}\n```{1}```\n:thinking:".format(mention, murphybot_request.question))
+            await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
 
         elif murphybot_state == "error":
             log_murphy("error")
