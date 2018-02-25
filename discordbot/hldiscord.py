@@ -11,8 +11,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
 from discordbot.util import get_attachment, discord_send, save_attachment, log
-from lamdabotweb.settings import DEBUG
-from memeviewer.models import AccessToken
+from lamdabotweb.settings import DEBUG, DISCORD_TOKEN
 
 IMG_ARCHIVE_CHANNEL = '395615705048809492'
 if DEBUG:
@@ -90,5 +89,4 @@ async def on_message_delete(message):
 async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
 
-discord_token = AccessToken.objects.get(name="discord").token
-client.run(discord_token)
+client.run(DISCORD_TOKEN)

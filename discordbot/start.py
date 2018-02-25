@@ -7,15 +7,17 @@ import discord
 import re
 from importlib import import_module
 
+from discordbot.permissions import PERM_MURPHYBOT, PERM_CLEVERBOT
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import BASE_DIR
+from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
 from discordbot.cleverbot import cb_talk
 from discordbot.murphybot import start_murphy, is_murphy_active
-from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers
-from discordbot.models import ProcessedMessage, DiscordCommand, MurphyRequest
-from memeviewer.models import AccessToken
+from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
+    CMD_ERR_SYNTAX
+from discordbot.models import ProcessedMessage, MurphyRequest
 
 log("")
 log("##############################")
@@ -25,12 +27,42 @@ log("")
 
 client = discord.Client(max_messages=10000)
 
-CMD_FUN = {}
+COMMANDS = {}
+COMMAND_ALIASES = {}
 for file in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'commands')):
     if file.startswith('__') or not file.endswith('.py'):
         continue
     md = import_module('discordbot.commands.' + os.path.splitext(file)[0])
-    CMD_FUN.update(md.CMD_FUN)
+    COMMANDS.update(md.COMMANDS)
+    COMMAND_ALIASES.update(md.COMMAND_ALIASES)
+
+
+# noinspection PyShadowingNames
+async def _cmd_help(client, server, member, message, **_):
+    helpstr = "{0} available commands:".format(message.author.mention)
+
+    for cmd_name, cmd_data in COMMANDS.items():
+        if cmd_data.get('permission') and not member.check_permission(cmd_data['permission']):
+            continue
+
+        helpstr += "\n`{0}{1}".format(server.prefix, cmd_name)
+
+        if cmd_data.get('usage'):
+            helpstr += " {}`".format(cmd_data['usage'])
+        else:
+            helpstr += "`"
+
+        if cmd_data.get('help'):
+            helpstr += " - {0}".format(cmd_data['help'])
+
+    for cmd_data in server.get_commands():
+        helpstr += "\n`{0}{1}`".format(server.prefix, cmd_data.cmd)
+
+    await discord_send(client.send_message, message.channel, helpstr)
+
+COMMANDS['help'] = {
+    'function': _cmd_help,
+}
 
 
 @client.event
@@ -69,7 +101,7 @@ async def process_message(message):
 
         answered = False
 
-        if member.check_permission("murphybot") and is_murphy_active():
+        if member.check_permission(PERM_MURPHYBOT) and is_murphy_active():
             answered = True
 
             if dl_embed_url is not None:
@@ -89,7 +121,7 @@ async def process_message(message):
             else:
                 answered = False
 
-        if not answered and member.check_permission("cleverbot"):
+        if not answered and member.check_permission(PERM_CLEVERBOT):
             await cb_talk(client, message.channel, member, msg)
 
         return
@@ -105,41 +137,47 @@ async def process_message(message):
     if len(splitcmd) == 0:
         return
 
-    cmd = DiscordCommand.get_cmd(splitcmd[0])
+    cmd = server.get_cmd(splitcmd[0])
 
-    if cmd is None:
-        return
-
-    if cmd.check_permission(member):
-
+    if cmd is not None:
         ProcessedMessage.process_id(message.id)
-
-        log("{0}, {1}: {2}".format(
-            server.context, message.author.name, msg
-        ))
-
-        if cmd.message is not None and len(cmd.message) > 0:
-            await discord_send(client.send_typing, message.channel)
-            await discord_send(client.send_message, message.channel, cmd.message)
-
-        cmd_fun = CMD_FUN.get(cmd.cmd)
-        if cmd_fun is not None:
-            await cmd_fun(
-                server=server,
-                member=member,
-                message=message,
-                args=splitcmd,
-                argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
-                attachment=att,
-                dl_embed_url=dl_embed_url,
-                client=client,
-            )
-
+        await discord_send(client.send_typing, message.channel)
+        await discord_send(client.send_message, message.channel, cmd.message)
         return
 
-    if cmd.denied_message != "":
-        await discord_send(client.send_typing, message.channel)
-        await discord_send(client.send_message, message.channel, cmd.denied_message.replace("{user}", message.author.mention))
+    cmd = COMMANDS.get(COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
+
+    if cmd is None or cmd.get('permission') and not member.check_permission(cmd['permission']):
+        return
+
+    ProcessedMessage.process_id(message.id)
+
+    cmd_fun = cmd.get('function')
+    if cmd_fun is not None:
+        result = await cmd_fun(
+            server=server,
+            member=member,
+            message=message,
+            args=splitcmd,
+            argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
+            attachment=att,
+            dl_embed_url=dl_embed_url,
+            client=client,
+        )
+        if result == CMD_ERR:
+            await discord_send(client.send_typing, message.channel)
+            await discord_send(
+                client.send_message,
+                message.channel,
+                "{0} error :cry:".format(message.author.mention),
+            )
+        elif result == CMD_ERR_SYNTAX:
+            await discord_send(client.send_typing, message.channel)
+            await discord_send(
+                client.send_message,
+                message.channel,
+                "{} usage: `{}{} {}`".format(message.author.mention, server.prefix, splitcmd[0], cmd.get('usage', ''))
+            )
 
 
 @client.event
@@ -163,6 +201,4 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
 start_murphy(client)
-
-discord_token = AccessToken.objects.get(name="discord").token
-client.run(discord_token)
+client.run(DISCORD_TOKEN)

@@ -8,7 +8,7 @@ BOT_NAME_TWITTER = "LambdaBot3883"
 BOT_NAME_FACEBOOK = "LambdaBot"
 
 # bot's website url
-WEBSITE_URL = 'https://change.this.com/'
+WEBSITE_URL = 'https://example.com/'
 
 # the bot will keep all its media (source images, templates, generated memes) in this subdirectory of MEDIA_ROOT
 MEDIA_SUBDIR = 'lambdabot'
@@ -24,14 +24,33 @@ MURPHYBOT_TIMEOUT = 20
 # JPG and their size will be checked again
 MAX_SRCIMG_SIZE = 1500000
 
+# stuff for twitter api
+TWITTER_CONSUMER_KEY = ''
+TWITTER_CONSUMER_SECRET = ''
+TWITTER_ACCESS_TOKEN_KEY = ''
+TWITTER_ACCESS_TOKEN_SECRET = ''
+
+# telegram api (for murphybot)
+TELEGRAM_API_ID = 0
+TELEGRAM_API_HASH = ''
+
+# facebook page api
+FACEBOOK_PAGE_TOKEN = ''
+
+# discord api
+DISCORD_TOKEN = ''
+
+# cleverbot api
+CLEVERBOT_TOKEN = ''
+
 # django-specific settings ( more info: https://docs.djangoproject.com/en/2.0/ref/settings/ )
-SECRET_KEY = 'change this'
+SECRET_KEY = ''
 DEBUG = False
-ALLOWED_HOSTS = ['change.this.com']
-STATIC_ROOT = '/change/this'
-STATIC_URL = 'https://change.this.com/really/do/it'
-MEDIA_ROOT = '/also/change/this'
-MEDIA_URL = 'https://change.this.com/as/well'
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+STATIC_ROOT = ''
+STATIC_URL = ''
+MEDIA_ROOT = ''
+MEDIA_URL = ''
 DATABASES = {
     'default': {
         # i advise against using sqlite cause i had problems with it when

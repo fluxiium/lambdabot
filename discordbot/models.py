@@ -1,9 +1,22 @@
 import datetime
 
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
+
+from discordbot.permissions import PERMISSIONS
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
+
+
+class DiscordCommand(models.Model):
+
+    class Meta:
+        verbose_name = "Command"
+
+    cmd = models.CharField(max_length=32, primary_key=True, verbose_name='Command')
+    message = models.TextField(blank=True, default='', verbose_name='Text message')
+
+    def __str__(self):
+        return self.cmd
 
 
 class DiscordServer(models.Model):
@@ -15,6 +28,7 @@ class DiscordServer(models.Model):
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
     context = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
+    commands = models.ManyToManyField(DiscordCommand, blank=True, verbose_name='Commands')
 
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
@@ -30,6 +44,12 @@ class DiscordServer(models.Model):
     def get_all(cls):
         return cls.objects.all()
 
+    def get_commands(self):
+        return self.commands.order_by('cmd')
+
+    def get_cmd(self, cmd):
+        return self.get_commands().filter(cmd=cmd).first()
+
     def update(self, name):
         self.name = name
         self.save()
@@ -38,64 +58,14 @@ class DiscordServer(models.Model):
         return str(self.name)
 
 
-class DiscordPerm(models.Model):
-
-    class Meta:
-        verbose_name = "Permission"
-
-    name = models.CharField(max_length=64, verbose_name="Permission")
-
-    def __str__(self):
-        return str(self.name)
-
-
-class DiscordCommand(models.Model):
-
-    class Meta:
-        verbose_name = "Command"
-
-    cmd = models.CharField(max_length=32, primary_key=True, verbose_name='Command')
-    help = models.TextField(blank=True, default='', verbose_name='Help string')
-    help_params = models.CharField(max_length=256, blank=True, default='', verbose_name='Parameters')
-    message = models.TextField(blank=True, default='', verbose_name='Text message')
-    denied_message = models.TextField(blank=True, default='', verbose_name='Access denied message')
-    hidden = models.BooleanField(default=False)
-    restricted = models.BooleanField(default=False)
-    custom_perm = models.ForeignKey(DiscordPerm, default=None, blank=True, null=True, verbose_name='Permission',
-                                    on_delete=models.SET_NULL)
-
-    def check_permission(self, member):
-        if self.custom_perm:
-            perm = self.custom_perm.name
-        else:
-            perm = "cmd_{0}".format(self.cmd)
-        allow = member.check_permission(perm)
-        return allow if allow is not None else not self.restricted
-
-    @classmethod
-    def get_cmd(cls, cmd):
-        return cls.objects.filter(Q(cmd__iexact=cmd) | Q(discordcommandalias__alias__iexact=cmd)).first()
-
-    def __str__(self):
-        return self.cmd
-
-
-class DiscordCommandAlias(models.Model):
-
-    class Meta:
-        verbose_name = "Command alias"
-
-    alias = models.CharField(max_length=32, primary_key=True, verbose_name='Alias')
-    cmd = models.ForeignKey(DiscordCommand, on_delete=models.CASCADE, verbose_name='Command')
-
-
 class DiscordServerPerm(models.Model):
 
     class Meta:
         verbose_name = "Server permission"
+        unique_together = ('server', 'permission')
 
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    permission = models.ForeignKey(DiscordPerm, on_delete=models.CASCADE, verbose_name="Permission")
+    permission = models.IntegerField(choices=PERMISSIONS, default=None, blank=True, null=True, verbose_name='Permission')
     allow = models.BooleanField(default=True, verbose_name="Allow")
 
     def __str__(self):
@@ -170,16 +140,7 @@ class DiscordServerUser(models.Model):
             self.server.submit_limit_time if self.submit_limit_time is None else self.submit_limit_time,
         )
 
-    def get_commands(self):
-        cmds = DiscordCommand.objects.order_by('cmd')
-        result = []
-        for cmd in cmds:
-            if cmd.check_permission(self):
-                result.append(cmd)
-        return result
-
     def check_permission(self, permission):
-        permission = DiscordPerm.objects.filter(name__iexact=permission).first()
         if permission is None:
             return None
         perm_data = DiscordServerUserPerm.objects.filter(server_user=self, permission=permission).first()
@@ -201,7 +162,7 @@ class DiscordServerUser(models.Model):
 
 class DiscordSourceImgSubmission(models.Model):
     class Meta:
-        verbose_name = "Source image submission"
+        verbose_name = "Discord source image submission"
 
     server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.SET_NULL, verbose_name="Server user")
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE, verbose_name="Source image")
@@ -217,7 +178,7 @@ class DiscordServerUserPerm(models.Model):
         unique_together = ('server_user', 'permission')
 
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, verbose_name="Server user")
-    permission = models.ForeignKey(DiscordPerm, on_delete=models.CASCADE, verbose_name="Permission")
+    permission = models.IntegerField(choices=PERMISSIONS, default=None, blank=True, null=True, verbose_name='Permission')
     allow = models.BooleanField(default=True, verbose_name="Allow")
 
     def __str__(self):

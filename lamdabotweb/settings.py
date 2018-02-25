@@ -78,7 +78,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-RESOURCE_DIR = os.path.join(MEDIA_ROOT or os.path.join(BASE_DIR, "static"), MEDIA_SUBDIR)
+RESOURCE_DIR = os.path.join(MEDIA_ROOT, MEDIA_SUBDIR)
 MEMES_DIR = os.path.join(RESOURCE_DIR, 'memes')
 SOURCEIMG_DIR = os.path.join(RESOURCE_DIR, 'sourceimg')
 TEMPLATE_DIR = os.path.join(RESOURCE_DIR, 'templates')

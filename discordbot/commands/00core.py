@@ -6,34 +6,7 @@ from lamdabotweb.settings import MAX_SRCIMG_SIZE
 from memeviewer.models import MemeSourceImage, MemeTemplate, Meem
 from memeviewer.preview import preview_meme
 
-CMD_FUN = {}
-
-
-async def _cmd_test(**_):
-    pass
-
-CMD_FUN['test'] = _cmd_test
-
-
-async def _cmd_help(client, server, member, message, **_):
-    helpstr = "{0} available commands:".format(message.author.mention)
-    for cmd_data in member.get_commands():
-        if cmd_data.hidden:
-            continue
-
-        helpstr += "\n`{0}{1}".format(server.prefix, cmd_data.cmd)
-
-        if cmd_data.help_params:
-            helpstr += " {}`".format(cmd_data.help_params)
-        else:
-            helpstr += "`"
-
-        if cmd_data.help:
-            helpstr += " - {0}".format(cmd_data.help)
-
-    await discord_send(client.send_message, message.channel, helpstr)
-
-CMD_FUN['help'] = _cmd_help
+COMMANDS = {}
 
 
 async def _cmd_meem(client, server, member, message, args, argstr, attachment, dl_embed_url, **_):
@@ -145,4 +118,16 @@ async def _cmd_meem(client, server, member, message, args, argstr, attachment, d
 
     log('meme generated:', meme)
 
-CMD_FUN['meem'] = _cmd_meem
+COMMANDS['meem'] = {
+    'function': _cmd_meem,
+    'help': 'generate a random meme',
+    'usage': '[ [template name] | ^ | submit (url) ]'
+}
+
+COMMAND_ALIASES = {
+    'meemay': 'meem',
+    'mem': 'meem',
+    'meme': 'meem',
+    'memuch': 'meem',
+    'miejm': 'meem',
+}

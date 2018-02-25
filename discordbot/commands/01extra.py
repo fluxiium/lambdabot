@@ -6,21 +6,17 @@ import requests
 
 from bs4 import BeautifulSoup
 from discord import Embed
-from discordbot.util import discord_send, log_exc, headers
+from discordbot.util import discord_send, log_exc, headers, CMD_ERR_SYNTAX, CMD_ERR
 
-CMD_FUN = {}
+COMMANDS = {}
+COMMAND_ALIASES = {}
 
 
 async def _cmd_led(client, message, args, argstr, **_):
     await discord_send(client.send_typing, message.channel)
 
     if len(args) == 1:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} usage: `{1} (text)`".format(message.author.mention, args[0]),
-        )
-        return
+        return CMD_ERR_SYNTAX
 
     response = requests.post('http://wigflip.com/signbot/', data={
         'T': argstr,
@@ -36,25 +32,20 @@ async def _cmd_led(client, message, args, argstr, **_):
             "{0} {1}".format(message.author.mention, img['src']),
         )
     else:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
+        return CMD_ERR
 
-CMD_FUN['led'] = _cmd_led
+COMMANDS['led'] = {
+    'function': _cmd_led,
+    'help': 'generate an LED sign',
+    'usage': '(text)'
+}
 
 
 async def _cmd_mario(client, message, args, **_):
     await discord_send(client.send_typing, message.channel)
 
     if len(args) < 3 or len(args) > 4:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            '{0} usage: `{1} ["name"] "first line" "message"`'.format(message.author.mention, args[0]),
-        )
-        return
+        return CMD_ERR_SYNTAX
 
     if len(args) == 4:
         name = args[1]
@@ -81,13 +72,13 @@ async def _cmd_mario(client, message, args, **_):
             "{0} {1}".format(message.author.mention, img['src']),
         )
     else:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
+        return CMD_ERR
 
-CMD_FUN['mario'] = _cmd_mario
+COMMANDS['mario'] = {
+    'function': _cmd_mario,
+    'help': 'generate a mario thing',
+    'usage': '[name] (first line) (message)'
+}
 
 
 async def _cmd_noviews(client, message, **_):
@@ -104,11 +95,7 @@ async def _cmd_noviews(client, message, **_):
             attempt += 1
 
     if videourl is None:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} error :cry:".format(message.author.mention),
-        )
+        return CMD_ERR
     else:
         await discord_send(
             client.send_message,
@@ -116,7 +103,10 @@ async def _cmd_noviews(client, message, **_):
             "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
         )
 
-CMD_FUN['noviews'] = _cmd_noviews
+COMMANDS['noviews'] = {
+    'function': _cmd_noviews,
+    'help': 'show random youtube video with no views',
+}
 
 
 async def _cmd_wiki(client, message, args, argstr, **_):
@@ -214,4 +204,8 @@ async def _cmd_wiki(client, message, args, argstr, **_):
         embed=embed,
     )
 
-CMD_FUN['wiki'] = _cmd_wiki
+COMMANDS['wiki'] = {
+    'function': _cmd_wiki,
+    'help': 'search the half-life overwiki',
+    'usage': '[query]'
+}

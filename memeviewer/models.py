@@ -353,15 +353,3 @@ class ImageInContext(models.Model):
     def __str__(self):
         return "{0} - {1} ({2})"\
             .format(self.image_name, self.context_link.short_name, self.IMAGE_TYPE_CHOICES[self.image_type][1])
-
-
-class AccessToken(models.Model):
-
-    class Meta:
-        verbose_name = "Access token"
-
-    name = models.CharField(max_length=32, primary_key=True, verbose_name='Name')
-    token = models.TextField(verbose_name='Token')
-
-    def __str__(self):
-        return self.name

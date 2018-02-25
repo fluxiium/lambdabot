@@ -2,19 +2,20 @@ import os
 import django
 import twitter
 
+from lamdabotweb.settings import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_ACCESS_TOKEN_KEY, \
+    TWITTER_ACCESS_TOKEN_SECRET
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, AccessToken, MemeContext
+from memeviewer.models import Meem, MemeContext
 from memeviewer.preview import preview_meme
 from twitterbot.models import TwitterMeem
 
-TOKENS = AccessToken.objects.get(name="twitter").token.splitlines()
-
-api = twitter.Api(consumer_key=TOKENS[0],
-                  consumer_secret=TOKENS[1],
-                  access_token_key=TOKENS[2],
-                  access_token_secret=TOKENS[3])
+api = twitter.Api(consumer_key=TWITTER_CONSUMER_KEY,
+                  consumer_secret=TWITTER_CONSUMER_SECRET,
+                  access_token_key=TWITTER_ACCESS_TOKEN_KEY,
+                  access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
 meme = Meem.generate(context=MemeContext.by_id('twitter'))
 preview_meme(meme)
