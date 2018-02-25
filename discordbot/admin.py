@@ -53,28 +53,28 @@ class DiscordServerUserAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(DiscordServerPerm)
+class DiscordServerPermissionAdmin(admin.ModelAdmin):
+    list_display = ('server', 'permission', 'allow')
+    search_fields = ('server__server_id', 'server__name', 'server__context__short_name')
+    ordering = ('server', 'permission')
+
+
+@admin.register(DiscordServerUserPerm)
+class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
+    list_display = ('server_user', 'permission', 'allow')
+    search_fields = ('server_user__nickname', 'server_user__user__user_id', 'server_user__user__name',
+                     'server_user__server__name', 'server_user__server__server_id',
+                     'server_user__server__context__short_name')
+    ordering = ('server_user', 'permission')
+
+
 # @admin.register(DiscordUser)
 # class DiscordUserAdmin(admin.ModelAdmin):
 #     list_display = ('name', 'user_id')
 #     search_fields = ('user_id', 'name')
 #     ordering = ('name',)
 #     inlines = [DiscordServerUserInline]
-#
-#
-# @admin.register(DiscordServerPerm)
-# class DiscordServerPermissionAdmin(admin.ModelAdmin):
-#     list_display = ('server', 'permission', 'allow')
-#     search_fields = ('server__server_id', 'server__name', 'server__context__short_name')
-#     ordering = ('server', 'permission')
-#
-#
-# @admin.register(DiscordServerUserPerm)
-# class DiscordServerUserPermissionAdmin(admin.ModelAdmin):
-#     list_display = ('server_user', 'permission', 'allow')
-#     search_fields = ('server_user__nickname', 'server_user__user__user_id', 'server_user__user__name',
-#                      'server_user__server__name', 'server_user__server__server_id',
-#                      'server_user__server__context__short_name')
-#     ordering = ('server_user', 'permission')
 #
 #
 # @admin.register(MurphyRequest)
