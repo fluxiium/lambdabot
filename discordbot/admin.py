@@ -26,7 +26,6 @@ class DiscordServerAdmin(admin.ModelAdmin):
     list_display_links = ('name', 'server_id')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
-    readonly_fields = ('name',)
     fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count',
               'submit_limit_time')
     inlines = [DiscordCommandInline]
