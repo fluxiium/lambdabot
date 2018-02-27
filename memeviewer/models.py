@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from lamdabotweb.settings import MEMES_DIR, WEBSITE_URL, SOURCEIMG_DIR, TEMPLATE_DIR, TEMPLATE_URL, SOURCEIMG_URL, \
-    MEMES_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE
+    MEMES_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR
 
 
 def struuid4():
@@ -99,7 +99,7 @@ class MemeSourceImage(models.Model):
         verbose_name = "Source image"
 
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    image_file = models.ImageField(upload_to=SOURCEIMG_DIR, max_length=256, default=None, blank=True, null=True)
+    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/sourceimg/', max_length=256, default=None, blank=True, null=True)
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
@@ -163,8 +163,8 @@ class MemeTemplate(models.Model):
         verbose_name = "Template"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    image_file = models.ImageField(upload_to=TEMPLATE_DIR, max_length=256, default=None, blank=True, null=True)
-    bg_image_file = models.ImageField(upload_to=TEMPLATE_DIR, max_length=256, default=None, blank=True, null=True)
+    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, default=None, blank=True, null=True)
+    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, default=None, blank=True, null=True)
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
