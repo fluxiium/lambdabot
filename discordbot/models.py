@@ -8,7 +8,7 @@ from memeviewer.models import MemeContext, Meem, MemeSourceImage
 class DiscordServer(models.Model):
 
     class Meta:
-        verbose_name = "Server"
+        verbose_name = "Discord server"
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')

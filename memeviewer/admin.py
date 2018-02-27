@@ -149,16 +149,13 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 class MemeContextAdmin(admin.ModelAdmin):
     list_display = ('name', 'short_name', 'reset_url')
     search_fields = ('short_name', 'name')
+    fields = ('name', 'short_name', 'reset_url')
+    readonly_fields = ('reset_url',)
     ordering = ('name',)
 
     def reset_url(self, obj):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset"))
-    reset_url.short_description = 'Reset queue'
+    reset_url.short_description = 'Reset image queue'
 
-
-@admin.register(ImageInContext)
-class ImageInContextAdmin(admin.ModelAdmin):
-    list_display = ('image_name', 'image_type', 'context_link')
-    list_display_links = ('image_name',)
-    list_filter = ('context_link', 'image_type')
-    search_fields = ('image_name', 'image_type', 'context_link__short_name')
+    def get_model_perms(self, request):
+        return {}

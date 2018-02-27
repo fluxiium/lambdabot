@@ -39,6 +39,12 @@ class DiscordUserAdmin(admin.ModelAdmin):
     readonly_fields = ('user_id', 'name')
     inlines = [DiscordServerUserInline]
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
 
 # @admin.register(MurphyRequest)
 # class MurphyRequestAdmin(admin.ModelAdmin):

@@ -90,7 +90,7 @@ class MemeContext(models.Model):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
 
     def __str__(self):
-        return self.name
+        return self.short_name
 
 
 class MemeSourceImage(models.Model):
