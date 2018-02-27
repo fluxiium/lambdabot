@@ -9,10 +9,10 @@ import datetime
 from tempfile import mkdtemp
 from django.utils import timezone
 from telethon import TelegramClient, events
-from discordbot.cleverbot import cb_talk
+from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.models import MurphyRequest, MurphyFacePic
 from discordbot.util import log, discord_send, log_exc
-from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH, CLEVERBOT_TOKEN
+from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 MURPHYBOT_IGNORE_MSG = (
@@ -38,10 +38,24 @@ murphybot_last_update = timezone.now()
 channel_facepic = ''
 
 
+def murphybot_active():
+    return murphybot is not None
+
+
 def start_murphy(client):
     global murphybot
+
+    if not TELEGRAM_API_ID:
+        return
+
     murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH, update_workers=1)
-    murphybot.start()
+    # noinspection PyBroadException
+    try:
+        murphybot.start()
+    except Exception:
+        log_murphy("authentication failed")
+        murphybot = None
+        return
 
     @murphybot.on(events.NewMessage(chats="ProjectMurphy_bot", incoming=True))
     def murphybot_handler(event):
@@ -228,7 +242,7 @@ async def process_murphy(client):
 
         elif murphybot_state == "idk":
             log_murphy("idk")
-            if CLEVERBOT_TOKEN:
+            if cleverbot_active():
                 await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
             else:
                 await discord_send(client.send_message, channel, "{} :thinking:".format(mention))

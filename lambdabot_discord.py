@@ -10,9 +10,9 @@ from importlib import import_module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, TELEGRAM_API_ID, CLEVERBOT_TOKEN
-from discordbot.cleverbot import cb_talk
-from discordbot.murphybot import start_murphy
+from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
+from discordbot.cleverbot import cb_talk, cleverbot_active
+from discordbot.murphybot import start_murphy, murphybot_active
 from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
     CMD_ERR_SYNTAX, log_exc
 from discordbot.models import ProcessedMessage, MurphyRequest
@@ -103,7 +103,7 @@ async def process_message(message):
         if dl_embed_url is not None:
             msg = msg.replace(dl_embed_url, "", 1).strip()
 
-        if TELEGRAM_API_ID > 0:
+        if murphybot_active():
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
                     if att is not None else ''
@@ -118,7 +118,7 @@ async def process_message(message):
             else:
                 answered = False
 
-        if (not answered or not TELEGRAM_API_ID) and CLEVERBOT_TOKEN:
+        if (not answered or not murphybot_active()) and cleverbot_active():
             await cb_talk(client, message.channel, member, msg)
 
         return
@@ -197,7 +197,5 @@ async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
-if TELEGRAM_API_ID > 0:
-    start_murphy(client)
-
+start_murphy(client)
 client.run(DISCORD_TOKEN)
