@@ -6,7 +6,7 @@ from django.http import HttpResponseForbidden
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 
-from lamdabotweb.settings import BOT_NAME_FACEBOOK, BOT_NAME_TWITTER, BOT_NAME
+from lamdabotweb.settings import USERNAME_FACEBOOK, USERNAME_TWITTER, BOT_NAME
 from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
 from memeviewer.preview import preview_meme
 
@@ -76,8 +76,8 @@ def meme_info_view(request, meme_id):
 
     context = {
         'bot_name': BOT_NAME,
-        'bot_name_twitter': BOT_NAME_TWITTER,
-        'bot_name_facebook': BOT_NAME_FACEBOOK,
+        'bot_name_twitter': USERNAME_TWITTER,
+        'bot_name_facebook': USERNAME_FACEBOOK,
         'meme_id': meme_id,
         'meme_url': meme.get_url(),
         'meme_info_url': meme.get_info_url(),

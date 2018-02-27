@@ -11,7 +11,7 @@ import time
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
+from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, TELEGRAM_API_ID, CLEVERBOT_TOKEN
 from discordbot.cleverbot import cb_talk
 from discordbot.murphybot import start_murphy
 from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
@@ -92,7 +92,7 @@ async def process_message(message):
         else:
             return
 
-        log("{0}, {1}: {2}".format(server.context, message.author.name, msg))
+        log("{0}, {1}: {2}".format(server.name, message.author.name, msg))
         ProcessedMessage.process_id(message.id)
 
         if msg == "" and att is None:
@@ -103,21 +103,22 @@ async def process_message(message):
         if dl_embed_url is not None:
             msg = msg.replace(dl_embed_url, "", 1).strip()
 
-        if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
-            face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
-                if att is not None else ''
-            if msg == "" and att is not None:
-                MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
-            elif msg != "":
-                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+        if TELEGRAM_API_ID > 0:
+            if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
+                face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
+                    if att is not None else ''
+                if msg == "" and att is not None:
+                    MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+                elif msg != "":
+                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
 
-        elif msg.lower().startswith("what if "):
-            MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
+            elif msg.lower().startswith("what if "):
+                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
 
-        else:
-            answered = False
+            else:
+                answered = False
 
-        if not answered:
+        if (not answered or not TELEGRAM_API_ID) and CLEVERBOT_TOKEN:
             await cb_talk(client, message.channel, member, msg)
 
         return
@@ -196,7 +197,8 @@ async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
     await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
 
-start_murphy(client)
+if TELEGRAM_API_ID > 0:
+    start_murphy(client)
 
 while True:
     client.run(DISCORD_TOKEN)

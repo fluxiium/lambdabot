@@ -12,23 +12,9 @@ from telethon import TelegramClient, events
 from discordbot.cleverbot import cb_talk
 from discordbot.models import MurphyRequest, MurphyFacePic
 from discordbot.util import log, discord_send, log_exc
-from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH
+from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH, CLEVERBOT_TOKEN
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
-
-murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH, update_workers=1)
-murphybot_state = "0"
-murphybot_prevstate = "0"
-murphybot_request = None
-murphybot_media = None
-channel_facepic = ''
-murphybot_last_update = timezone.now()
-
-
-def log_murphy(*args):
-    log(*args, tag="murphy")
-
-
 MURPHYBOT_IGNORE_MSG = (
     "You asked:",
     "Here's an idea",
@@ -39,12 +25,27 @@ MURPHYBOT_IGNORE_MSG = (
 )
 
 
+def log_murphy(*args):
+    log(*args, tag="murphy")
+
+
+murphybot = None
+murphybot_state = "0"
+murphybot_prevstate = "0"
+murphybot_request = None
+murphybot_media = None
+murphybot_last_update = timezone.now()
+channel_facepic = ''
+
+
 def start_murphy(client):
+    global murphybot
+    murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH, update_workers=1)
     murphybot.start()
 
     @murphybot.on(events.NewMessage(chats="MurphyBot", incoming=True))
     def murphybot_handler(event):
-        global murphybot_state, murphybot_request, murphybot_last_update, murphybot_media
+        global murphybot_state, murphybot_last_update, murphybot_media
 
         murphybot_last_update = timezone.now()
 
@@ -227,7 +228,10 @@ async def process_murphy(client):
 
         elif murphybot_state == "idk":
             log_murphy("idk")
-            await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
+            if CLEVERBOT_TOKEN:
+                await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
+            else:
+                await discord_send(client.send_message, channel, "{} :thinking:".format(mention))
 
         elif murphybot_state == "error":
             log_murphy("error")
