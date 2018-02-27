@@ -17,6 +17,13 @@ async def _cmd_meem(client, server, member, message, args, argstr, attachment, d
 
     if len(args) > 1:
         if args[1].lower() == "submit" and attachment is not None:
+            await discord_send(
+                client.send_message,
+                message.channel,
+                "{0} meme submissions are temporarily disabled, please try again later.".format(message.author.mention)
+            )
+            return
+
             if dl_embed_url is None:
                 submitted_file = save_attachment(attachment['proxy_url'], attachment['filename'])
             else:

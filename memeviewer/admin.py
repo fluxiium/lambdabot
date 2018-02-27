@@ -97,17 +97,11 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     inlines = [DiscordSourceImgSubmissionInline]
     actions = ['accept']
 
-    readonly_fields = ['image']
-    fields = tuple([f.name for f in MemeSourceImage._meta.fields + MemeSourceImage._meta.many_to_many] + readonly_fields)
-    readonly_fields = tuple(readonly_fields)
+    fields = ('name', 'friendly_name', 'image_file', 'contexts', 'accepted', 'add_date')
 
     def thumbnail(self, obj):
         return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
     thumbnail.short_description = 'Thumbnail'
-
-    def image(self, obj):
-        return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
-    image.short_description = 'Image'
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
@@ -124,9 +118,9 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     inlines = [MemeTemplateSlotInline]
     actions = ['accept']
 
-    readonly_fields = ['image', 'preview_url']
-    fields = tuple([f.name for f in MemeTemplate._meta.fields + MemeTemplate._meta.many_to_many] + readonly_fields)
-    readonly_fields = tuple(readonly_fields)
+    readonly_fields = ['preview_url']
+    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'bg_color',
+              'contexts', 'accepted', 'add_date', 'preview_url')
 
     def preview_url(self, obj):
         return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_preview_url(), "Preview"))
@@ -135,10 +129,6 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     def thumbnail(self, obj):
         return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
     thumbnail.short_description = 'Thumbnail'
-
-    def image(self, obj):
-        return mark_safe('<a href="{0}" target="_blank"><img src="{0}" width="350"></a>'.format(obj.get_image_url()))
-    image.short_description = 'Image'
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
