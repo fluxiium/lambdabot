@@ -43,9 +43,12 @@ def start_murphy(client):
     murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH, update_workers=1)
     murphybot.start()
 
-    @murphybot.on(events.NewMessage(chats="MurphyBot", incoming=True))
+    @murphybot.on(events.NewMessage(incoming=True))
     def murphybot_handler(event):
         global murphybot_state, murphybot_last_update, murphybot_media
+
+        if event.sender.username != 'ProjectMurphy_bot':
+            return
 
         murphybot_last_update = timezone.now()
 
