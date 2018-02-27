@@ -11,7 +11,7 @@ import time
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from discordbot.util import get_attachment, discord_send, save_attachment, log
+from discordbot.util import get_attachment, discord_send, save_attachment, log, log_exc
 from lamdabotweb.settings import DEBUG, DISCORD_TOKEN
 
 IMG_ARCHIVE_CHANNEL = '395615705048809492'
@@ -91,5 +91,8 @@ async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
 
 while True:
-    client.run(DISCORD_TOKEN)
-    time.sleep(5)
+    try:
+        client.run(DISCORD_TOKEN)
+    except Exception as ex:
+        log_exc(ex)
+        time.sleep(5)

@@ -15,7 +15,7 @@ from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, TELEGRAM_API_ID, CLEVE
 from discordbot.cleverbot import cb_talk
 from discordbot.murphybot import start_murphy
 from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
-    CMD_ERR_SYNTAX
+    CMD_ERR_SYNTAX, log_exc
 from discordbot.models import ProcessedMessage, MurphyRequest
 
 log("")
@@ -201,5 +201,8 @@ if TELEGRAM_API_ID > 0:
     start_murphy(client)
 
 while True:
-    client.run(DISCORD_TOKEN)
-    time.sleep(5)
+    try:
+        client.run(DISCORD_TOKEN)
+    except Exception as ex:
+        log_exc(ex)
+        time.sleep(5)
