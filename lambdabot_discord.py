@@ -13,7 +13,7 @@ django.setup()
 
 from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
 from discordbot.cleverbot import cb_talk
-from discordbot.murphybot import start_murphy, is_murphy_active
+from discordbot.murphybot import start_murphy
 from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
     CMD_ERR_SYNTAX
 from discordbot.models import ProcessedMessage, MurphyRequest
@@ -98,27 +98,24 @@ async def process_message(message):
         if msg == "" and att is None:
             msg = "!help"
 
-        answered = False
+        answered = True
 
-        if is_murphy_active():
-            answered = True
+        if dl_embed_url is not None:
+            msg = msg.replace(dl_embed_url, "", 1).strip()
 
-            if dl_embed_url is not None:
-                msg = msg.replace(dl_embed_url, "", 1).strip()
+        if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
+            face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
+                if att is not None else ''
+            if msg == "" and att is not None:
+                MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+            elif msg != "":
+                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
 
-            if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
-                face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
-                    if att is not None else ''
-                if msg == "" and att is not None:
-                    MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
-                elif msg != "":
-                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+        elif msg.lower().startswith("what if "):
+            MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
 
-            elif msg.lower().startswith("what if "):
-                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
-
-            else:
-                answered = False
+        else:
+            answered = False
 
         if not answered:
             await cb_talk(client, message.channel, member, msg)

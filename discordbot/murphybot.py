@@ -8,8 +8,7 @@ import datetime
 
 from tempfile import mkdtemp
 from django.utils import timezone
-from telethon import TelegramClient
-from telethon.tl.types import UpdateShortMessage
+from telethon import TelegramClient, events
 from discordbot.cleverbot import cb_talk
 from discordbot.models import MurphyRequest, MurphyFacePic
 from discordbot.util import log, discord_send, log_exc
@@ -17,12 +16,11 @@ from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_AP
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 
-murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH)
+murphybot = TelegramClient('murphy', TELEGRAM_API_ID, TELEGRAM_API_HASH, update_workers=1)
 murphybot_state = "0"
 murphybot_prevstate = "0"
 murphybot_request = None
 murphybot_media = None
-murphybot_error = True
 channel_facepic = ''
 murphybot_last_update = timezone.now()
 
@@ -31,28 +29,58 @@ def log_murphy(*args):
     log(*args, tag="murphy")
 
 
+MURPHYBOT_IGNORE_MSG = (
+    "You asked:",
+    "Here's an idea",
+    "Trying another photo",
+    "Wait, I'm still learning",
+    "Attachment received",
+    "POST to MorphiBot"
+)
+
+
 def start_murphy(client):
-    global murphybot_error
-    murphybot_error = False
-    # noinspection PyBroadException
-    try:
-        murphybot.connect()
-        if not murphybot.is_user_authorized():
-            log_murphy("no telegram session file")
-            murphybot_error = True
+    murphybot.start()
 
-    except Exception as exc:
-        log_exc(exc)
-        murphybot_error = True
+    @murphybot.on(events.NewMessage(chats="MurphyBot", incoming=True))
+    def murphybot_handler(event):
+        global murphybot_state, murphybot_request, murphybot_last_update, murphybot_media
 
-    if not murphybot_error:
-        log_murphy('active')
-        murphybot.add_update_handler(murphybot_handler)
-        client.loop.create_task(process_murphy(client))
+        murphybot_last_update = timezone.now()
 
+        if event.photo is None:
+            log_murphy("received message: {}".format(textwrap.shorten(event.raw_text, width=128)))
 
-def is_murphy_active():
-    return not murphybot_error
+            if event.raw_text.startswith(MURPHYBOT_IGNORE_MSG):
+                return
+
+            if murphybot_state in ["1", "3"]:
+                if event.raw_text.startswith("Thanks, I will keep this photo"):
+                    murphybot_state = "{}.2".format(murphybot_state)
+                else:
+                    murphybot_state = "no face"
+
+            elif murphybot_state == "2":
+                if event.raw_text.startswith("Please upload a photo"):
+                    murphybot_state = "reupload face"
+                else:
+                    murphybot_state = "idk"
+
+        else:
+            log_murphy("received media")
+
+            if murphybot_state == "1":
+                murphybot_media = event.photo
+                murphybot_state = "1.2"
+
+            elif murphybot_state == "2":
+                murphybot_media = event.photo
+                murphybot_state = "2.2"
+
+            elif murphybot_state == "3":
+                murphybot_state = "3.2"
+
+    client.loop.create_task(process_murphy(client))
 
 
 async def process_murphy(client):
@@ -207,63 +235,3 @@ async def process_murphy(client):
 
         murphybot_request.mark_processed()
         murphybot_state = "0"
-
-
-def is_murphy_message(update_object):
-    return isinstance(update_object, UpdateShortMessage) and not update_object.out
-
-
-def is_murphy_media(update_object):
-    return hasattr(update_object, 'updates') and len(update_object.updates) > 0 and \
-           hasattr(update_object.updates[0], 'message') and hasattr(update_object.updates[0].message, 'media')
-
-
-MURPHYBOT_IGNORE_MSG = (
-    "You asked:",
-    "Here's an idea",
-    "Trying another photo",
-    "Wait, I'm still learning",
-    "Attachment received",
-    "POST to MorphiBot"
-)
-
-
-def murphybot_handler(msg):
-    global murphybot_state, murphybot_request, murphybot_last_update, murphybot_media
-
-    if is_murphy_message(msg) or is_murphy_media(msg):
-        murphybot_last_update = timezone.now()
-    else:
-        return
-
-    if is_murphy_message(msg):
-        log_murphy("received message: {}".format(textwrap.shorten(msg.message, width=128)))
-
-        if msg.message.startswith(MURPHYBOT_IGNORE_MSG):
-            return
-
-        if murphybot_state in ["1", "3"]:
-            if msg.message.startswith("Thanks, I will keep this photo"):
-                murphybot_state = "{}.2".format(murphybot_state)
-            else:
-                murphybot_state = "no face"
-
-        elif murphybot_state == "2":
-            if msg.message.startswith("Please upload a photo"):
-                murphybot_state = "reupload face"
-            else:
-                murphybot_state = "idk"
-
-    else:
-        log_murphy("received media")
-
-        if murphybot_state == "1":
-            murphybot_media = msg.updates[0].message.media
-            murphybot_state = "1.2"
-
-        elif murphybot_state == "2":
-            murphybot_media = msg.updates[0].message.media
-            murphybot_state = "2.2"
-
-        elif murphybot_state == "3":
-            murphybot_state = "3.2"
