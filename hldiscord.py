@@ -6,7 +6,6 @@ import os
 import django
 from discord import Embed
 from django.utils import timezone
-import time
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
@@ -90,9 +89,4 @@ async def on_message_delete(message):
 async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
 
-while True:
-    try:
-        client.run(DISCORD_TOKEN)
-    except Exception as ex:
-        log_exc(ex)
-        time.sleep(5)
+client.run(DISCORD_TOKEN)

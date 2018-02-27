@@ -6,7 +6,6 @@ import django
 import discord
 import re
 from importlib import import_module
-import time
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
@@ -25,6 +24,7 @@ log("##############################")
 log("")
 
 client = discord.Client(max_messages=10000)
+
 
 COMMANDS = {}
 COMMAND_ALIASES = {}
@@ -200,9 +200,4 @@ async def on_ready():
 if TELEGRAM_API_ID > 0:
     start_murphy(client)
 
-while True:
-    try:
-        client.run(DISCORD_TOKEN)
-    except Exception as ex:
-        log_exc(ex)
-        time.sleep(5)
+client.run(DISCORD_TOKEN)
