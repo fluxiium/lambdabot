@@ -139,8 +139,9 @@ class MeemAdmin(admin.ModelAdmin):
             'template_link__name__exact',
             'discordmeem__server_user__user__user_id__exact',
             'discordmeem__server_user__server__server_id__exact'
-        ) + self.list_filter:
+        ):
             return True
+        return super(MeemAdmin, self).lookup_allowed(key, value)
 
 
 @admin.register(MemeSourceImage)
@@ -180,8 +181,9 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     def lookup_allowed(self, key, value):
         if key in (
             'discordsourceimgsubmission__server_user__user__user_id__exact',
-        ) + self.list_filter:
+        ):
             return True
+        return super(MemeSourceImageAdmin, self).lookup_allowed(key, value)
 
 
 @admin.register(MemeTemplate)
