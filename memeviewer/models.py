@@ -3,6 +3,8 @@ import operator
 import os
 import re
 import uuid
+from django.contrib.contenttypes.models import ContentType
+from django.core.files import File
 
 from functools import reduce
 from PIL import Image
@@ -10,8 +12,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-from lamdabotweb.settings import MEMES_DIR, WEBSITE_URL, SOURCEIMG_DIR, TEMPLATE_DIR, TEMPLATE_URL, SOURCEIMG_URL, \
-    MEMES_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR
+from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT
 
 
 def struuid4():
@@ -26,7 +27,6 @@ def next_image(context, image_type):
     # read queue from db
     result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
     objects = MemeSourceImage.objects if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else MemeTemplate.objects
-    imagedir = SOURCEIMG_DIR if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else TEMPLATE_DIR
 
     # if empty, make new queue
     if result.count() == 0:
@@ -50,7 +50,7 @@ def next_image(context, image_type):
 
     if img_obj is None:
         return next_image(context, image_type)
-    elif not os.path.isfile(os.path.join(imagedir, sourceimg)):
+    elif not img_obj.image_file:
         raise FileNotFoundError("Image file not found")
     else:
         return img_obj
@@ -106,7 +106,7 @@ class MemeSourceImage(models.Model):
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
     def get_image_url(self):
-        return SOURCEIMG_URL + self.name
+        return self.image_file and self.image_file.url or''
 
     def __str__(self):
         return self.friendly_name or self.name
@@ -121,30 +121,30 @@ class MemeSourceImage(models.Model):
         return result.strip()
 
     @classmethod
-    def submit(cls, original_filename, filename=None):
+    def submit(cls, filepath, filename=None, friendly_name=None):
         try:
-            image = Image.open(original_filename)
+            image = Image.open(filepath)
         except OSError:
             return None
 
-        if filename is None:
-            filename = "{0}.{1}".format(str(uuid.uuid4()), imghdr.what(original_filename))
-        else:
-            filename = filename.replace(".", "_{}.".format(str(uuid.uuid4())))
+        imgid = struuid4()
+        saved_filename = "{0}.{1}".format(imgid, imghdr.what(filepath))
 
-        stat = os.stat(original_filename)
+        stat = os.stat(filepath)
         if stat.st_size > MAX_SRCIMG_SIZE and image.mode == "RGBA":
             image = image.convert('RGB')
-            filename += ".jpeg"
-            original_filename += ".jpeg"
-            image.save(original_filename)
-            stat = os.stat(original_filename)
+            saved_filename += ".jpeg"
+            filepath += ".jpeg"
+            image.save(filepath)
+            stat = os.stat(filepath)
 
         if stat.st_size > MAX_SRCIMG_SIZE:
             return None
 
-        image.save(os.path.join(SOURCEIMG_DIR, filename))
-        srcimg = MemeSourceImage(name=filename)
+        if friendly_name is None:
+            friendly_name = filename and os.path.splitext(filename.replace('_', ' ').rstrip())[0] or ''
+        srcimg = MemeSourceImage(name=imgid, friendly_name=friendly_name)
+        srcimg.image_file.save(saved_filename, File(open(filepath, "rb")))
         srcimg.save()
         return srcimg
 
@@ -156,6 +156,16 @@ class MemeSourceImage(models.Model):
     def by_context(cls, context):
         return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
 
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.name,))
+
+    def get_memes_admin_url(self):
+        content_type = ContentType.objects.get_for_model(Meem)
+        content_type2 = ContentType.objects.get_for_model(MemeSourceImageInSlot)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
+            ("?%s__source_image__name__exact=" % content_type2.model) + self.name
+
 
 class MemeTemplate(models.Model):
 
@@ -164,11 +174,10 @@ class MemeTemplate(models.Model):
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
     image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256)
-    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256)
+    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, default='', blank=True)
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
-    bg_img = models.CharField(max_length=64, default='', blank=True, verbose_name='Background image')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
@@ -229,13 +238,13 @@ class MemeTemplate(models.Model):
         return possible
 
     def get_preview_url(self):
-        return reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name})
+        return self.pk and reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name}) or ''
 
     def get_image_url(self):
-        return TEMPLATE_URL + self.name
+        return self.image_file and self.image_file.url or ''
 
     def get_bgimage_url(self):
-        return self.bg_img and (TEMPLATE_URL + self.bg_img) or None
+        return self.bg_image_file and self.bg_image_file.url or ''
 
     def contexts_string(self):
         contexts = self.contexts.all()
@@ -248,6 +257,15 @@ class MemeTemplate(models.Model):
 
     def __str__(self):
         return self.friendly_name or self.name
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.name,))
+
+    def get_memes_admin_url(self):
+        content_type = ContentType.objects.get_for_model(Meem)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
+            "?template_link__name__exact=" + self.name
 
 
 class MemeTemplateSlot(models.Model):
@@ -292,8 +310,10 @@ class Meem(models.Model):
 
     @classmethod
     def generate(cls, context, template=None):
-        if MemeTemplate.count(context) == 0 or MemeSourceImage.count(context) == 0:
-            raise FileNotFoundError("Not enough available source images or templates")
+        if MemeTemplate.count(context) == 0:
+            raise FileNotFoundError("Please upload some templates first")
+        if MemeSourceImage.count(context) == 0:
+            raise FileNotFoundError("Please upload some source images first")
         if template is None:
             template = next_template(context)
         source_files = {}
@@ -324,10 +344,10 @@ class Meem(models.Model):
         return MemeSourceImageInSlot.objects.filter(meme=self).order_by('slot__slot_order')
 
     def get_local_path(self):
-        return os.path.join(MEMES_DIR, self.meme_id + '.jpg')
+        return os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')
 
     def get_url(self):
-        return MEMES_URL + self.meme_id + '.jpg'
+        return MEDIA_URL + MEDIA_SUBDIR + '/memes/' + self.meme_id + '.jpg'
 
     def get_info_url(self):
         return WEBSITE_URL + 'meme/' + self.meme_id
@@ -358,7 +378,7 @@ class ImageInContext(models.Model):
         (IMAGE_TYPE_SOURCEIMG, "Source Image"),
     )
     image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES, verbose_name='Image type')
-    image_name = models.CharField(max_length=64, verbose_name='File name')
+    image_name = models.CharField(max_length=256, verbose_name='Unique ID')
     context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE, verbose_name='Context')
 
     def __str__(self):

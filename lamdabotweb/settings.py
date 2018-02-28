@@ -73,17 +73,3 @@ USE_TZ = True
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-
-RESOURCE_DIR = os.path.join(MEDIA_ROOT, MEDIA_SUBDIR)
-MEMES_DIR = os.path.join(RESOURCE_DIR, 'memes')
-SOURCEIMG_DIR = os.path.join(RESOURCE_DIR, 'sourceimg')
-TEMPLATE_DIR = os.path.join(RESOURCE_DIR, 'templates')
-
-os.makedirs(MEMES_DIR, exist_ok=True)
-os.makedirs(SOURCEIMG_DIR, exist_ok=True)
-os.makedirs(TEMPLATE_DIR, exist_ok=True)
-
-RESOURCE_URL = MEDIA_URL + MEDIA_SUBDIR + '/'
-MEMES_URL = RESOURCE_URL + 'memes/'
-SOURCEIMG_URL = RESOURCE_URL + 'sourceimg/'
-TEMPLATE_URL = RESOURCE_URL + 'templates/'

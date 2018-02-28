@@ -1,6 +1,8 @@
 import datetime
+from django.contrib.contenttypes.models import ContentType
 
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
@@ -42,6 +44,10 @@ class DiscordServer(models.Model):
     def __str__(self):
         return str(self.name)
 
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.server_id,))
+
 
 class DiscordCommand(models.Model):
 
@@ -70,6 +76,15 @@ class DiscordUser(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.user_id,))
+
+    def get_srcimg_admin_url(self):
+        content_type = ContentType.objects.get_for_model(MemeSourceImage)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
+            "?discordsourceimgsubmission__server_user__user__user_id__exact=" + self.user_id
 
 
 class DiscordServerUser(models.Model):
@@ -130,6 +145,12 @@ class DiscordServerUser(models.Model):
 
     def __str__(self):
         return "{0} ({1})".format(self.nickname, self.server)
+
+    def get_memes_admin_url(self):
+        content_type = ContentType.objects.get_for_model(Meem)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
+            "?discordmeem__server_user__user__user_id__exact=" + self.user.user_id + \
+            "&discordmeem__server_user__server__server_id__exact=" + self.server.server_id
 
 
 class DiscordSourceImgSubmission(models.Model):

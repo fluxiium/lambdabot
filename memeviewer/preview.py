@@ -3,9 +3,6 @@ import os
 from PIL import Image
 from PIL import ImageFilter
 
-from lamdabotweb.settings import TEMPLATE_DIR, SOURCEIMG_DIR
-
-
 def preview_meme(meme):
     """ return image based on meme data """
 
@@ -16,15 +13,15 @@ def preview_meme(meme):
     else:
         template = meme.template_link
 
-    foreground = Image.open(os.path.join(TEMPLATE_DIR, template.name)).convert("RGBA")
-    if template.bg_img == '':
-        background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
+    foreground = Image.open(template.image_file).convert("RGBA")
+    if template.bg_image_file:
+        background = Image.open(template.bg_image_file).convert('RGBA')
     else:
-        background = Image.open(os.path.join(TEMPLATE_DIR, template.bg_img)).convert('RGBA')
+        background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
 
     for srcimg_data in meme.get_sourceimgs():
 
-        source_image_original = Image.open(os.path.join(SOURCEIMG_DIR, srcimg_data.source_image.name)).convert("RGBA")
+        source_image_original = Image.open(srcimg_data.source_image.image_file).convert("RGBA")
         slot = srcimg_data.slot
 
         # resize, crop, and rotate source image

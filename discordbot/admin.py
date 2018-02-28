@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, MurphyRequest, MurphyFacePic
 
@@ -11,13 +12,25 @@ class DiscordCommandInline(admin.TabularInline):
 class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
-    fields = ('server', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
-    readonly_fields = ('server',)
+    verbose_name_plural = "Server settings"
+    fields = ('server_admin_url', 'memes_admin_url', 'meme_limit_count', 'meme_limit_time',
+              'submit_limit_count', 'submit_limit_time')
+    readonly_fields = ('server_admin_url', 'memes_admin_url',)
     ordering = ('server__name',)
     can_delete = False
 
     def has_add_permission(self, request):
         return False
+
+    def server_admin_url(self, obj):
+        return mark_safe('<a href="{0}">{1}</a>'.format(
+            obj.server.get_admin_url(), obj.server
+        ))
+    server_admin_url.short_description = 'Server'
+
+    def memes_admin_url(self, obj):
+        return mark_safe('<a href="{0}">Generated memes</a>'.format(obj.get_memes_admin_url()))
+    memes_admin_url.short_description = 'Memes'
 
 
 @admin.register(DiscordServer)
@@ -30,13 +43,18 @@ class DiscordServerAdmin(admin.ModelAdmin):
               'submit_limit_time')
     inlines = [DiscordCommandInline]
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('server_id', 'name')
+        return self.readonly_fields
+
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
     list_display = ('name', 'user_id')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
-    readonly_fields = ('user_id', 'name')
+    fields = readonly_fields = ('user_id', 'name', 'srcimg_admin_url',)
     inlines = [DiscordServerUserInline]
 
     def has_delete_permission(self, request, obj=None):
@@ -45,18 +63,6 @@ class DiscordUserAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-
-# @admin.register(MurphyRequest)
-# class MurphyRequestAdmin(admin.ModelAdmin):
-#     list_display = ('question', 'face_pic', 'server_user', 'ask_date', 'channel_id', 'processed')
-#     search_fields = ('question', 'face_pic', 'server_user__nickname', 'server_user__user__user_id',
-#                      'server_user__user__name', 'server_user__server__name', 'server_user__server__server_id',
-#                      'server_user__server__context__short_name')
-#     ordering = ('-ask_date',)
-#
-#
-# @admin.register(MurphyFacePic)
-# class MurphyFacePicAdmin(admin.ModelAdmin):
-#     list_display = ('channel_id', 'face_pic', 'last_used')
-#     search_fields = ('channel_id', 'face_pic')
-#     ordering = ('-last_used',)
+    def srcimg_admin_url(self, obj):
+        return mark_safe('<a href="{0}">Show submissions</a>'.format(obj.get_srcimg_admin_url()))
+    srcimg_admin_url.short_description = 'Submitted source images'
