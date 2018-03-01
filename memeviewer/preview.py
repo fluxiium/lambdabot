@@ -19,7 +19,7 @@ def preview_meme(meme):
     else:
         background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
 
-    for srcimg_data in meme.get_sourceimgs():
+    for srcimg_data in meme.get_sourceimgs_in_slots():
 
         source_image_original = Image.open(srcimg_data.source_image.image_file).convert("RGBA")
         slot = srcimg_data.slot

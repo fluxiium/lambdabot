@@ -6,20 +6,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta property="og:title" content="{{ bot_name }} meme #{{ num }}"/>
+    <meta property="og:title" content="{{ bot_name }} meme #{{ meme.number }}"/>
     <meta property="og:type" content="article"/>
-    <meta property="og:url" content="{{ meme_info_url }}"/>
-    <meta property="og:image" content="{{ meme_url }}"/>
-    <meta property="og:description" content="{{ gen_date }}"/>
+    <meta property="og:url" content="{{ meme.get_info_url }}"/>
+    <meta property="og:image" content="{{ meme.get_url }}"/>
+    <meta property="og:description" content="{{ meme.gen_date }}"/>
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@{{ bot_name_twitter }}">
     <meta name="twitter:creator" content="@{{ bot_name_twitter }}">
-    <meta name="twitter:title" content="{{ bot_name }} meme #{{ num }}">
-    <meta name="twitter:description" content="{{ gen_date }}">
-    <meta name="twitter:image" content="{{ meme_url }}">
+    <meta name="twitter:title" content="{{ bot_name }} meme #{{ meme.number }}">
+    <meta name="twitter:description" content="{{ meme.gen_date }}">
+    <meta name="twitter:image" content="{{ meme.get_url }}">
 
-    <title>{{ bot_name }} meme #{{ num }}</title>
+    <title>{{ bot_name }} meme #{{ meme.number }}</title>
     <link href="https://fonts.googleapis.com/css?family=Mukta+Malar" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'memeviewer/memeviewer.css' %}?v=10">
 </head>
@@ -49,21 +49,24 @@
 </div>
 
 <p id="date">
-    meme #{{ num }} - {{ gen_date }}
+    meme #{{ meme.number }} - {{ meme.gen_date }}
 </p>
 
 <table>
     <tr>
         <td>
-            <a href="{{ meme_url }}" target="_blank">
-                <img src="{{ meme_url }}" alt="meme">
+            <a href="{{ meme.get_url }}">
+                <img src="{{ meme.get_url }}" alt="meme">
             </a>
-            <br><a href="{{ meme_info_url }}">This page</a>
+            <br><a href="{{ meme.get_info_url }}">This page</a>
             {% if facebook_url %}
-                | <a href="https://facebook.com/{{ facebook_url }}" target="_blank">Facebook post</a>
+                | <a href="https://facebook.com/{{  facebook_url }}" target="_blank">Facebook post</a>
             {% endif %}
             {% if twitter_url %}
                 | <a href="https://twitter.com/{{ bot_name_twitter }}/status/{{ twitter_url }}" target="_blank">Twitter post</a>
+            {% endif %}
+            {% if perms.meem.change_meem %}
+                | <a href="{{  meme.get_admin_url }}">Admin</a>
             {% endif %}
         </td>
     </tr>
@@ -78,13 +81,13 @@
     </tr>
     <tr>
         <td>
-            <a href="{{ template_url }}" target="_blank">
-                <img src="{{ template_url }}" alt="template">
+            <a href="{{ meme.template_link.get_image_url }}">
+                <img src="{{ meme.template_link.get_image_url }}" alt="template fg">
             </a><br>
-            <p>{{ template_name }}</p>
+            <p>{{ meme.template_link }}</p>
         </td>
     </tr>
-    {% if template_bg_url %}
+    {% if meme.template_link.get_bgimage_url %}
         <tr>
             <th>
                 template background
@@ -92,8 +95,8 @@
         </tr>
         <tr>
             <td>
-                <a href="{{ template_bg_url }}" target="_blank">
-                    <img src="{{ template_bg_url }}" alt="template">
+                <a href="{{ meme.template_link.get_bgimage_url }}">
+                    <img src="{{ meme.template_link.get_bgimage_url }}" alt="template bg">
                 </a>
             </td>
         </tr>
@@ -101,11 +104,11 @@
     <tr>
         <th>source images</th>
     </tr>
-    {% for source_url in source_urls %}
+    {% for source_img in meme.get_sourceimgs_in_slots %}
         <tr>
             <td>
-                <a href="{{ source_url }}" target="_blank">
-                    <img src="{{ source_url }}" alt="source image">
+                <a href="{{ source_img.source_image.get_image_url }}" target="_blank">
+                    <img src="{{ source_img.source_image.get_image_url }}" alt="source image">
                 </a>
             </td>
         </tr>

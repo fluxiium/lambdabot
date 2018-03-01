@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser, MurphyRequest, MurphyFacePic
+from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser
+from memeviewer.admin import ahref
 
 
 class DiscordCommandInline(admin.TabularInline):
@@ -13,9 +14,8 @@ class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
     verbose_name_plural = "Server settings"
-    fields = ('server_admin_url', 'memes_admin_url', 'meme_limit_count', 'meme_limit_time',
-              'submit_limit_count', 'submit_limit_time')
-    readonly_fields = ('server_admin_url', 'memes_admin_url',)
+    fields = ('server_admin_url', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
+    readonly_fields = ('server_admin_url',)
     ordering = ('server__name',)
     can_delete = False
 
@@ -23,14 +23,8 @@ class DiscordServerUserInline(admin.TabularInline):
         return False
 
     def server_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.server.get_admin_url(), obj.server
-        ))
+        return ahref(obj.server.get_admin_url(), obj.server)
     server_admin_url.short_description = 'Server'
-
-    def memes_admin_url(self, obj):
-        return mark_safe('<a href="{0}">Generated memes</a>'.format(obj.get_memes_admin_url()))
-    memes_admin_url.short_description = 'Memes'
 
 
 @admin.register(DiscordServer)
@@ -64,5 +58,5 @@ class DiscordUserAdmin(admin.ModelAdmin):
         return False
 
     def srcimg_admin_url(self, obj):
-        return mark_safe('<a href="{0}">Show submissions</a>'.format(obj.get_srcimg_admin_url()))
+        return ahref(obj.get_srcimg_admin_url(), 'Show submissions')
     srcimg_admin_url.short_description = 'Submitted source images'

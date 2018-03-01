@@ -14,7 +14,7 @@ from memeviewer.preview import preview_meme
 def generate_meme_view(request):
     """ generates and displays random meme """
 
-    if not request.user.is_superuser:
+    if not request.user.has_perm('memetemplate.change_memetemplate'):
         return HttpResponseForbidden()
 
     meme = Meem.generate(context=MemeContext.by_id_or_create('default', 'Default'))
@@ -24,7 +24,7 @@ def generate_meme_view(request):
 def template_preview_view(request, template_name):
     """ generates and displays random meme with given template """
 
-    if not request.user.is_superuser:
+    if not request.user.has_perm('memetemplate.change_memetemplate'):
         return HttpResponseForbidden()
 
     try:
@@ -41,7 +41,7 @@ def template_preview_view(request, template_name):
 def context_reset_view(request, context):
     """ clears image queue of given context, displays lists of images that were in the queue """
 
-    if not request.user.is_superuser:
+    if not request.user.has_perm('memecontext.change_memecontext'):
         return HttpResponseForbidden()
 
     queue = ImageInContext.objects.filter(context_link=MemeContext.by_id(context))
@@ -78,16 +78,7 @@ def meme_info_view(request, meme_id):
         'bot_name': BOT_NAME,
         'bot_name_twitter': USERNAME_TWITTER,
         'bot_name_facebook': USERNAME_FACEBOOK,
-        'meme_id': meme_id,
-        'meme_url': meme.get_url(),
-        'meme_info_url': meme.get_info_url(),
-        'template_name': meme.template_link,
-        'template_url': meme.template_link.get_image_url(),
-        'template_bg_url': meme.template_link.get_bgimage_url(),
-        'source_urls': [sourceimg.source_image.get_image_url() for sourceimg in meme.get_sourceimgs()],
-        'context': meme.context_link.name,
-        'gen_date': meme.gen_date,
-        'num': meme.number,
+        'meme': meme,
         'facebook_url': fb_meme and fb_meme.post,
         'twitter_url': twitter_meme and twitter_meme.post,
     }

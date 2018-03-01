@@ -7,6 +7,14 @@ from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext,
 from twitterbot.models import TwitterMeem
 
 
+def htmlimg(url, mw=150, mh=150):
+    return mark_safe('<img src="{0}" style="max-width: {1}px; max-height: {2}px;">'.format(url, mw, mh))
+
+
+def ahref(url, text, newtab=False):
+    return mark_safe('<a href="{0}"{1}>{2}</a>'.format(url, newtab and ' target="_blank"' or '', text))
+
+
 class SocialLinkInline(admin.TabularInline):
     extra = 0
     can_delete = False
@@ -21,7 +29,7 @@ class FacebookInline(SocialLinkInline):
     fields = readonly_fields = ('facebook_url',)
 
     def facebook_url(self, obj):
-        return mark_safe('<a href="https://facebook.com/{0}" target="_blank">Show associated facebook post</a>'.format(obj.post))
+        return ahref('https://facebook.com/' + obj.post, 'Show associated facebook post', True)
     facebook_url.short_description = 'Facebook post'
 
 
@@ -32,9 +40,8 @@ class TwitterInline(SocialLinkInline):
     fields = readonly_fields = ('twitter_url',)
 
     def twitter_url(self, obj):
-        return mark_safe('<a href="https://twitter.com/{0}/status/{1}" target="_blank">Show associated twitter post</a>'.format(
-            USERNAME_TWITTER, obj.post
-        ))
+        return ahref('https://twitter.com/{0}/status/{1}'.format(USERNAME_TWITTER, obj.post, True),
+                     'Show associated twitter post')
     twitter_url.short_description = 'Twitter post'
 
 
@@ -44,15 +51,11 @@ class DiscordInline(SocialLinkInline):
     verbose_name_plural = "Discord"
 
     def user_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.server_user.user.get_admin_url(), obj.server_user.nickname
-        ))
+        return ahref(obj.server_user.user.get_admin_url(), obj.server_user.nickname)
     user_admin_url.short_description = 'User'
 
     def server_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.server_user.server.get_admin_url(), obj.server_user.server
-        ))
+        return ahref(obj.server_user.server.get_admin_url(), obj.server_user.server)
     server_admin_url.short_description = 'Server'
 
 
@@ -72,9 +75,7 @@ class MemeSourceImageInSlotInline(admin.TabularInline):
         return False
 
     def admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.source_image.get_admin_url(), obj.source_image.friendly_name or obj.source_image.name
-        ))
+        return ahref(obj.source_image.get_admin_url(), obj.source_image)
     admin_url.short_description = 'Source image'
 
 
@@ -89,15 +90,11 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
         return False
 
     def user_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.server_user.user.get_admin_url(), obj.server_user.nickname
-        ))
+        return ahref(obj.server_user.user.get_admin_url(), obj.server_user.nickname)
     user_admin_url.short_description = 'User'
 
     def server_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.server_user.server.get_admin_url(), obj.server_user.server
-        ))
+        return ahref(obj.server_user.server.get_admin_url(), obj.server_user.server)
     server_admin_url.short_description = 'Server'
 
 
@@ -116,29 +113,25 @@ class MeemAdmin(admin.ModelAdmin):
         return False
 
     def meme_url(self, obj):
-        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_info_url(), "Show meme page"))
+        return ahref(obj.get_info_url(), "Show meme page", True)
     meme_url.short_description = 'Meme page'
 
     def image(self, obj):
-        return mark_safe('<a href="{0}" target="_blank"><img src="{1}" width="350"></a>'.format(obj.get_info_url(), obj.get_url()))
+        return ahref(obj.get_url(), htmlimg(obj.get_url(), mw=600, mh=400), True)
     image.short_description = 'Image'
 
     def thumbnail(self, obj):
-        return mark_safe('<img src="{}" width="150">'.format(obj.get_url()))
+        return htmlimg(obj.get_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
 
     def template_admin_url(self, obj):
-        return mark_safe('<a href="{0}">{1}</a>'.format(
-            obj.template_link.get_admin_url(), obj.template_link.friendly_name or obj.template_link.name
-        ))
+        return ahref(obj.template_link.get_admin_url(), obj.template_link)
     template_admin_url.short_description = 'Template'
 
     def lookup_allowed(self, key, value):
         if key in (
             'memesourceimageinslot__source_image__name__exact',
             'template_link__name__exact',
-            'discordmeem__server_user__user__user_id__exact',
-            'discordmeem__server_user__server__server_id__exact'
         ):
             return True
         return super(MeemAdmin, self).lookup_allowed(key, value)
@@ -156,8 +149,12 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
 
     fields = ('name', 'friendly_name', 'image_file', 'contexts', 'accepted',)
 
+    def image(self, obj):
+        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400), True)
+    image.short_description = 'Preview'
+
     def thumbnail(self, obj):
-        return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
+        return htmlimg(obj.get_image_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
 
     def accept(self, request, queryset):
@@ -166,16 +163,16 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
 
     def get_fields(self, request, obj=None):
         if obj:
-            return self.fields + ('add_date', 'memes_admin_url',)
+            return self.fields + ('image', 'add_date', 'memes_admin_url',)
         return self.fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('name', 'add_date', 'memes_admin_url')
+            return self.readonly_fields + ('name', 'add_date', 'image', 'memes_admin_url')
         return self.readonly_fields
 
     def memes_admin_url(self, obj):
-        return mark_safe('<a href="{0}">Show memes using this source image</a>'.format(obj.get_memes_admin_url()))
+        return ahref(obj.get_memes_admin_url(), 'Show memes using this source image')
     memes_admin_url.short_description = 'Memes'
 
     def lookup_allowed(self, key, value):
@@ -196,16 +193,22 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     inlines = [MemeTemplateSlotInline]
     actions = ['accept']
 
-    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'bg_color', 'contexts', 'accepted',)
+    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'contexts', 'accepted',)
 
     def preview_url(self, obj):
-        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(
-            obj.get_preview_url(), "Generate meme using this template"
-        ))
+        return ahref(obj.get_preview_url(), "Generate meme using this template", True)
     preview_url.short_description = 'Preview'
 
+    def fg_image(self, obj):
+        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400), True)
+    fg_image.short_description = 'Image'
+
+    def bg_image(self, obj):
+        return ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400), True)
+    bg_image.short_description = 'Bg image'
+
     def thumbnail(self, obj):
-        return mark_safe('<img src="{}" width="150">'.format(obj.get_image_url()))
+        return htmlimg(obj.get_image_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
 
     def accept(self, request, queryset):
@@ -214,16 +217,19 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 
     def get_fields(self, request, obj=None):
         if obj:
-            return self.fields + ('add_date', 'preview_url', 'memes_admin_url',)
+            fields = self.fields + ('fg_image',)
+            if obj.get_bgimage_url():
+                fields += ('bg_image',)
+            return fields + ('add_date', 'preview_url', 'memes_admin_url',)
         return self.fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('name', 'add_date', 'preview_url', 'memes_admin_url')
+            return self.readonly_fields + ('name', 'add_date', 'preview_url', 'memes_admin_url', 'fg_image', 'bg_image')
         return self.readonly_fields
 
     def memes_admin_url(self, obj):
-        return mark_safe('<a href="{0}">Show memes using this template</a>'.format(obj.get_memes_admin_url()))
+        return ahref(obj.get_memes_admin_url(), 'Show memes using this template')
     memes_admin_url.short_description = 'Memes'
 
 
@@ -236,7 +242,7 @@ class MemeContextAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
     def reset_url(self, obj):
-        return mark_safe('<a href="{0}" target="_blank">{1}</a>'.format(obj.get_reset_url(), "Reset"))
+        return ahref(obj.get_reset_url(), "Reset", True)
     reset_url.short_description = 'Reset image queue'
 
     def get_model_perms(self, request):

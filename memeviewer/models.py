@@ -340,7 +340,7 @@ class Meem(models.Model):
             possible += template.possible_combinations(context)
         return possible
 
-    def get_sourceimgs(self):
+    def get_sourceimgs_in_slots(self):
         return MemeSourceImageInSlot.objects.filter(meme=self).order_by('slot__slot_order')
 
     def get_local_path(self):
@@ -354,6 +354,10 @@ class Meem(models.Model):
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.meme_id,))
 
 
 class MemeSourceImageInSlot(models.Model):
