@@ -91,7 +91,7 @@ class DiscordServerUser(models.Model):
 
     class Meta:
         verbose_name = "Server user"
-        unique_together = ('user', 'server')
+        # unique_together = ('user', 'server')
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
@@ -146,18 +146,12 @@ class DiscordServerUser(models.Model):
     def __str__(self):
         return "{0} ({1})".format(self.nickname, self.server)
 
-    def get_memes_admin_url(self):
-        content_type = ContentType.objects.get_for_model(Meem)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
-            "?discordmeem__server_user__user__user_id__exact=" + self.user.user_id + \
-            "&discordmeem__server_user__server__server_id__exact=" + self.server.server_id
-
 
 class DiscordSourceImgSubmission(models.Model):
     class Meta:
         verbose_name = "Discord source image submission"
 
-    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.SET_NULL, verbose_name="Server user")
+    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.CASCADE, verbose_name="Server user")
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE, verbose_name="Source image")
 
     def __str__(self):
@@ -184,16 +178,14 @@ class MurphyRequest(models.Model):
 
     question = models.CharField(max_length=256, blank=True, default='', verbose_name="Question")
     face_pic = models.CharField(max_length=256, blank=True, default='', verbose_name="Face pic")
-    server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, null=True, blank=True, default=None)
     ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
     channel_id = models.CharField(max_length=32, verbose_name="Discord channel ID")
     processed = models.BooleanField(default=False, verbose_name="Processed?")
 
     @classmethod
     def ask(cls, server_user, channel_id, question='', face_pic=''):
-        request = cls(question=question, server_user=server_user, channel_id=channel_id, face_pic=face_pic)
-        request.save()
-        return request
+        return cls.objects.create(question=question, server_user=server_user, channel_id=channel_id, face_pic=face_pic)
 
     @classmethod
     def get_next_unprocessed(cls, minutes=None):
