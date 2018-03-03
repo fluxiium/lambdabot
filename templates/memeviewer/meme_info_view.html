@@ -107,7 +107,7 @@
     {% for source_img in meme.get_sourceimgs_in_slots %}
         <tr>
             <td>
-                <a href="{{ source_img.source_image.get_image_url }}" target="_blank">
+                <a href="{{ source_img.source_image.get_image_url }}">
                     <img src="{{ source_img.source_image.get_image_url }}" alt="source image">
                 </a>
             </td>

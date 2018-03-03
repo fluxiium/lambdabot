@@ -113,11 +113,11 @@ class MeemAdmin(admin.ModelAdmin):
         return False
 
     def meme_url(self, obj):
-        return ahref(obj.get_info_url(), "Show meme page", True)
+        return ahref(obj.get_info_url(), "Show meme page")
     meme_url.short_description = 'Meme page'
 
     def image(self, obj):
-        return ahref(obj.get_url(), htmlimg(obj.get_url(), mw=600, mh=400), True)
+        return ahref(obj.get_url(), htmlimg(obj.get_url(), mw=600, mh=400))
     image.short_description = 'Image'
 
     def thumbnail(self, obj):
@@ -150,7 +150,7 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     fields = ('name', 'friendly_name', 'image_file', 'contexts', 'accepted',)
 
     def image(self, obj):
-        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400), True)
+        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
     image.short_description = 'Preview'
 
     def thumbnail(self, obj):
@@ -196,15 +196,15 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'contexts', 'accepted',)
 
     def preview_url(self, obj):
-        return ahref(obj.get_preview_url(), "Generate meme using this template", True)
+        return ahref(obj.get_preview_url(), "Generate meme using this template")
     preview_url.short_description = 'Preview'
 
     def fg_image(self, obj):
-        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400), True)
+        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
     fg_image.short_description = 'Image'
 
     def bg_image(self, obj):
-        return ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400), True)
+        return ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400))
     bg_image.short_description = 'Bg image'
 
     def thumbnail(self, obj):
@@ -242,7 +242,7 @@ class MemeContextAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
     def reset_url(self, obj):
-        return ahref(obj.get_reset_url(), "Reset", True)
+        return ahref(obj.get_reset_url(), "Reset")
     reset_url.short_description = 'Reset image queue'
 
     def get_model_perms(self, request):

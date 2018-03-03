@@ -91,7 +91,7 @@ class DiscordServerUser(models.Model):
 
     class Meta:
         verbose_name = "Server user"
-        # unique_together = ('user', 'server')
+        unique_together = ('user', 'server')
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
