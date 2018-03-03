@@ -34,8 +34,7 @@ async def cb_talk(client, channel, user, message, nodelay=False):
             retries -= 1
 
     if response is None:
-        log("authentication failed".format(response), tag="cleverbot")
-        cb_active = False
+        log("cleverbot request failed".format(response), tag="cleverbot")
         return None
 
     log("response: {}".format(response), tag="cleverbot")

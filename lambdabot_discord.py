@@ -1,6 +1,5 @@
 import os
 import asyncio
-import requests
 import shlex
 import django
 import discord
@@ -13,8 +12,8 @@ django.setup()
 from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
 from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.murphybot import start_murphy, murphybot_active
-from discordbot.util import log, get_server_and_member, get_attachment, discord_send, save_attachment, headers, CMD_ERR, \
-    CMD_ERR_SYNTAX, log_exc
+from discordbot.util import log, get_server, get_member_and_process_message, get_attachment, discord_send,\
+    save_attachment, CMD_ERR, CMD_ERR_SYNTAX
 from discordbot.models import ProcessedMessage, MurphyRequest
 
 log("")
@@ -68,7 +67,7 @@ COMMANDS['help'] = {
 async def process_message(message):
     msg = message.content.strip()
 
-    server, member = get_server_and_member(message)
+    server = get_server(message)
 
     if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
         await asyncio.sleep(2)
@@ -77,11 +76,6 @@ async def process_message(message):
         return
 
     att, dl_embed_url = get_attachment(message)
-
-    if att is not None:
-        if dl_embed_url is None:
-            requests.get(att['proxy_url'], headers=headers)
-        ProcessedMessage.process_id(message.id)
 
     if client.user in message.mentions:
 
@@ -92,18 +86,15 @@ async def process_message(message):
         else:
             return
 
-        log("{0}, {1}: {2}".format(server.name, message.author.name, msg))
-        ProcessedMessage.process_id(message.id)
-
-        if msg == "" and att is None:
-            msg = "!help"
+        log("{0}, {1} mention: {2}".format(server.name, message.author.name, msg))
 
         answered = True
 
         if dl_embed_url is not None:
             msg = msg.replace(dl_embed_url, "", 1).strip()
 
-        if murphybot_active():
+        if msg and murphybot_active():
+            member = get_member_and_process_message(message, server)
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
                     if att is not None else ''
@@ -118,10 +109,14 @@ async def process_message(message):
             else:
                 answered = False
 
-        if (not answered or not murphybot_active()) and cleverbot_active():
+        if msg and (not answered or not murphybot_active()) and cleverbot_active():
+            member = get_member_and_process_message(message, server)
             await cb_talk(client, message.channel, member, msg)
 
-        return
+        if not msg and att is None:
+            msg = server.prefix + "help"
+        else:
+            return
 
     if not msg.startswith(server.prefix):
         return
@@ -137,44 +132,44 @@ async def process_message(message):
     cmd = server.get_cmd(splitcmd[0])
 
     if cmd is not None:
-        ProcessedMessage.process_id(message.id)
+        get_member_and_process_message(message, server)
         await discord_send(client.send_typing, message.channel)
         await discord_send(client.send_message, message.channel, cmd.message)
         return
 
     cmd = COMMANDS.get(COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
-
     if cmd is None:
         return
 
-    ProcessedMessage.process_id(message.id)
-
     cmd_fun = cmd.get('function')
-    if cmd_fun is not None:
-        result = await cmd_fun(
-            server=server,
-            member=member,
-            message=message,
-            args=splitcmd,
-            argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
-            attachment=att,
-            dl_embed_url=dl_embed_url,
-            client=client,
+    if cmd_fun is None:
+        return
+
+    member = get_member_and_process_message(message, server)
+    result = await cmd_fun(
+        server=server,
+        member=member,
+        message=message,
+        args=splitcmd,
+        argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
+        attachment=att,
+        dl_embed_url=dl_embed_url,
+        client=client,
+    )
+    if result == CMD_ERR:
+        await discord_send(client.send_typing, message.channel)
+        await discord_send(
+            client.send_message,
+            message.channel,
+            "{0} error :cry:".format(message.author.mention),
         )
-        if result == CMD_ERR:
-            await discord_send(client.send_typing, message.channel)
-            await discord_send(
-                client.send_message,
-                message.channel,
-                "{0} error :cry:".format(message.author.mention),
-            )
-        elif result == CMD_ERR_SYNTAX:
-            await discord_send(client.send_typing, message.channel)
-            await discord_send(
-                client.send_message,
-                message.channel,
-                "{} usage: `{}{} {}`".format(message.author.mention, server.prefix, splitcmd[0], cmd.get('usage', ''))
-            )
+    elif result == CMD_ERR_SYNTAX:
+        await discord_send(client.send_typing, message.channel)
+        await discord_send(
+            client.send_message,
+            message.channel,
+            "{} usage: `{}{} {}`".format(message.author.mention, server.prefix, splitcmd[0], cmd.get('usage', ''))
+        )
 
 
 @client.event
