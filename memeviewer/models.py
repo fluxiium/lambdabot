@@ -50,8 +50,6 @@ def next_image(context, image_type):
 
     if img_obj is None:
         return next_image(context, image_type)
-    elif not img_obj.image_file:
-        raise FileNotFoundError("Image file not found")
     else:
         return img_obj
 
