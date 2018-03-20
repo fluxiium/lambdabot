@@ -193,7 +193,7 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     inlines = [MemeTemplateSlotInline]
     actions = ['accept']
 
-    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'contexts', 'accepted',)
+    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'bg_color', 'contexts', 'accepted',)
 
     def preview_url(self, obj):
         return ahref(obj.get_preview_url(), "Generate meme using this template")
