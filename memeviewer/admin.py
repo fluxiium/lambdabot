@@ -208,7 +208,7 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     bg_image.short_description = 'Bg image'
 
     def thumbnail(self, obj):
-        return htmlimg(obj.get_image_url(), mw=150, mh=150)
+        return htmlimg(obj.image_file and obj.get_image_url() or obj.get_bgimage_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
 
     def accept(self, request, queryset):

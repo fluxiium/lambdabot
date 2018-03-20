@@ -3,6 +3,7 @@ import os
 from PIL import Image
 from PIL import ImageFilter
 
+
 def preview_meme(meme):
     """ return image based on meme data """
 
@@ -13,11 +14,16 @@ def preview_meme(meme):
     else:
         template = meme.template_link
 
-    foreground = Image.open(template.image_file).convert("RGBA")
+    if template.image_file:
+        foreground = Image.open(template.image_file).convert("RGBA")
+
     if template.bg_image_file:
         background = Image.open(template.bg_image_file).convert('RGBA')
-    else:
+    elif template.image_file:
+        # noinspection PyUnboundLocalVariable
         background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
+    else:
+        raise AttributeError("Template has no image file")
 
     for srcimg_data in meme.get_sourceimgs_in_slots():
 
@@ -60,14 +66,12 @@ def preview_meme(meme):
         if slot.grayscale:
             source_image = source_image.convert('LA')
 
-        if slot.mask:
-            # paste on background layer
-            background.paste(source_image, paste_pos, source_alpha)
-        else:
-            # paste on foreground layer
-            foreground.paste(source_image, paste_pos, source_alpha)
+        background.paste(source_image, paste_pos, source_alpha)
 
-    meme_image = Image.alpha_composite(background, foreground)
+    if template.image_file:
+        meme_image = Image.alpha_composite(background, foreground)
+    else:
+        meme_image = background
 
     meme_image = meme_image.convert('RGB')
     meme_image.save(meme_file)

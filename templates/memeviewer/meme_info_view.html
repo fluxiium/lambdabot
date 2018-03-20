@@ -70,27 +70,10 @@
             {% endif %}
         </td>
     </tr>
-    <tr>
-        <th>
-            {% if template_bg_url %}
-                template foreground
-            {% else %}
-                template
-            {% endif %}
-        </th>
-    </tr>
-    <tr>
-        <td>
-            <a href="{{ meme.template_link.get_image_url }}">
-                <img src="{{ meme.template_link.get_image_url }}" alt="template fg">
-            </a><br>
-            <p>{{ meme.template_link }}</p>
-        </td>
-    </tr>
     {% if meme.template_link.get_bgimage_url %}
         <tr>
             <th>
-                template background
+                template
             </th>
         </tr>
         <tr>
@@ -98,6 +81,21 @@
                 <a href="{{ meme.template_link.get_bgimage_url }}">
                     <img src="{{ meme.template_link.get_bgimage_url }}" alt="template bg">
                 </a>
+                <p>{{ meme.template_link }}</p>
+            </td>
+        </tr>
+    {% endif %}
+    {% if meme.template_link.get_image_url %}
+        <tr>
+            <th>
+                template overlay
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <a href="{{ meme.template_link.get_image_url }}">
+                    <img src="{{ meme.template_link.get_image_url }}" alt="template fg">
+                </a><br>
             </td>
         </tr>
     {% endif %}
