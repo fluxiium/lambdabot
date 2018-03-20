@@ -340,6 +340,9 @@ class Meem(models.Model):
     def get_sourceimgs_in_slots(self):
         return MemeSourceImageInSlot.objects.filter(meme=self).order_by('slot__slot_order')
 
+    def get_sourceimgs(self):
+        return MemeSourceImage.objects.filter(memesourceimageinslot__meme=self).distinct()
+
     def get_local_path(self):
         return os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')
 

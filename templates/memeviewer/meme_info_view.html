@@ -102,11 +102,11 @@
     <tr>
         <th>source images</th>
     </tr>
-    {% for source_img in meme.get_sourceimgs_in_slots %}
+    {% for source_img in meme.get_sourceimgs %}
         <tr>
             <td>
-                <a href="{{ source_img.source_image.get_image_url }}">
-                    <img src="{{ source_img.source_image.get_image_url }}" alt="source image">
+                <a href="{{ source_img.get_image_url }}">
+                    <img src="{{ source_img.get_image_url }}" alt="source image">
                 </a>
             </td>
         </tr>
