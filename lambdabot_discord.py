@@ -93,7 +93,7 @@ async def process_message(message):
         if dl_embed_url is not None:
             msg = msg.replace(dl_embed_url, "", 1).strip()
 
-        if msg and murphybot_active():
+        if murphybot_active():
             member = get_member_and_process_message(message, server)
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['proxy_url'] if dl_embed_url is None else dl_embed_url)\
