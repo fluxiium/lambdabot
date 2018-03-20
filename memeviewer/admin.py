@@ -245,9 +245,6 @@ class MemeContextAdmin(admin.ModelAdmin):
         return ahref(obj.get_reset_url(), "Reset")
     reset_url.short_description = 'Reset image queue'
 
-    def get_model_perms(self, request):
-        return {}
-
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return self.readonly_fields + ('short_name',)
