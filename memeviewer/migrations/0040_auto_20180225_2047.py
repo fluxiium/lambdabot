@@ -12,9 +12,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='memecontext',
-            old_name='short_name',
-            new_name='context_id',
-        ),
+        # migrations.RenameField(
+        #     model_name='memecontext',
+        #     old_name='short_name',
+        #     new_name='context_id',
+        # ),
     ]
