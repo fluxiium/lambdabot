@@ -278,7 +278,6 @@ class MemeTemplateSlot(models.Model):
     w = models.PositiveIntegerField()
     h = models.PositiveIntegerField()
     rotate = models.IntegerField(default=0, verbose_name='Rotation')
-    mask = models.BooleanField(default=False, verbose_name='Mask')
     blur = models.BooleanField(default=False, verbose_name='Blur')
     grayscale = models.BooleanField(default=False, verbose_name='Grayscale')
     cover = models.BooleanField(default=False, verbose_name='Cover')
