@@ -5,6 +5,7 @@ import os
 import re
 import uuid
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.files import File
 
 from functools import reduce
@@ -175,13 +176,19 @@ class MemeTemplate(models.Model):
         verbose_name = "Template"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True)
-    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True)
+    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True, verbose_name="Template background")
+    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True, verbose_name="Template overlay")
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
+
+    def clean(self):
+        if not self.bg_image_file and not self.image_file:
+            raise ValidationError('Please upload a template background and/or overlay image')
+        if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
+            raise ValidationError('The background and overlay images have to have the same dimensions')
 
     @classmethod
     def count(cls, context):

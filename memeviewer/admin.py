@@ -88,7 +88,7 @@ class MeemAdmin(admin.ModelAdmin):
     list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
     list_filter = ('context_link',)
-    search_fields = ('number', 'meme_id')
+    search_fields = ('number', 'meme_id', 'template_link__name', 'source_images')
     ordering = ('-number', 'meme_id')
     inlines = [FacebookInline, TwitterInline, DiscordInline]
     readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'context_link', 'gen_date',
@@ -186,19 +186,17 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     inlines = [MemeTemplateSlotInline]
     actions = ['accept']
 
-    fields = ('name', 'friendly_name', 'image_file', 'bg_image_file', 'bg_color', 'contexts', 'accepted',)
-
     def preview_url(self, obj):
         return ahref(obj.get_preview_url(), "Generate meme using this template")
     preview_url.short_description = 'Preview'
 
     def fg_image(self, obj):
         return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
-    fg_image.short_description = 'Image'
+    fg_image.short_description = ''
 
     def bg_image(self, obj):
         return ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400))
-    bg_image.short_description = 'Bg image'
+    bg_image.short_description = ''
 
     def thumbnail(self, obj):
         return htmlimg(obj.image_file and obj.get_image_url() or obj.get_bgimage_url(), mw=150, mh=150)
@@ -209,12 +207,16 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     accept.short_description = "Approve selected templates"
 
     def get_fields(self, request, obj=None):
+        fields = ('name', 'friendly_name', 'bg_image_file',)
+        if obj and obj.get_bgimage_url():
+            fields += ('bg_image',)
+        fields += ('image_file',)
+        if obj and obj.get_image_url():
+            fields += ('fg_image',)
+        fields += ('bg_color', 'contexts', 'accepted',)
         if obj:
-            fields = self.fields + ('fg_image',)
-            if obj.get_bgimage_url():
-                fields += ('bg_image',)
-            return fields + ('add_date', 'preview_url', 'memes_admin_url',)
-        return self.fields
+            fields += ('add_date', 'preview_url', 'memes_admin_url',)
+        return fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -230,13 +232,18 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 class MemeContextAdmin(admin.ModelAdmin):
     list_display = ('name', 'short_name', 'reset_url')
     search_fields = ('short_name', 'name')
-    fields = ('name', 'short_name', 'reset_url')
+    fields = ('name', 'short_name',)
     readonly_fields = ('reset_url',)
     ordering = ('name',)
 
     def reset_url(self, obj):
         return ahref(obj.get_reset_url(), "Reset")
     reset_url.short_description = 'Reset image queue'
+
+    def get_fields(self, request, obj=None):
+        if obj:
+            return self.fields + ('reset_url',)
+        return self.fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
