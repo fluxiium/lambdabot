@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission
 from facebookbot.models import FacebookMeem
 from lamdabotweb.settings import USERNAME_TWITTER
-from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage, MemeSourceImageInSlot
+from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage
 from twitterbot.models import TwitterMeem
 
 

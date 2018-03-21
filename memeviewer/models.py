@@ -372,16 +372,6 @@ class Meem(models.Model):
         return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.meme_id,))
 
 
-class MemeSourceImageInSlot(models.Model):
-
-    class Meta:
-        verbose_name = "Source image in slot"
-
-    meme = models.ForeignKey(Meem, verbose_name="Meme", on_delete=models.CASCADE)
-    slot = models.ForeignKey(MemeTemplateSlot, verbose_name="Template slot", on_delete=models.CASCADE)
-    source_image = models.ForeignKey(MemeSourceImage, verbose_name="Source image", on_delete=models.CASCADE)
-
-
 class ImageInContext(models.Model):
 
     class Meta:
