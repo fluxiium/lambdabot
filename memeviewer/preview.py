@@ -3,6 +3,8 @@ import os
 from PIL import Image
 from PIL import ImageFilter
 
+from memeviewer.models import MemeSourceImage, MemeTemplateSlot
+
 
 def preview_meme(meme):
     """ return image based on meme data """
@@ -25,10 +27,9 @@ def preview_meme(meme):
     else:
         raise AttributeError("Template has no image file")
 
-    for srcimg_data in meme.get_sourceimgs_in_slots():
+    for slot, sourceimg in meme.get_sourceimgs_in_slots().items():
 
-        source_image_original = Image.open(srcimg_data.source_image.image_file).convert("RGBA")
-        slot = srcimg_data.slot
+        source_image_original = Image.open(sourceimg.image_file).convert("RGBA")
 
         # resize, crop, and rotate source image
         source_image = source_image_original.copy()

@@ -1,4 +1,5 @@
 import imghdr
+import json
 import operator
 import os
 import re
@@ -154,15 +155,18 @@ class MemeSourceImage(models.Model):
     def by_context(cls, context):
         return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
 
+    @classmethod
+    def by_id(cls, name):
+        return cls.objects.get(name=name)
+
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
         return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.name,))
 
     def get_memes_admin_url(self):
         content_type = ContentType.objects.get_for_model(Meem)
-        content_type2 = ContentType.objects.get_for_model(MemeSourceImageInSlot)
         return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
-            ("?%s__source_image__name__exact=" % content_type2.model) + self.name
+            "?source_images__contains=" + self.name
 
 
 class MemeTemplate(models.Model):
@@ -272,7 +276,10 @@ class MemeTemplateSlot(models.Model):
         verbose_name = "Template slot"
 
     template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE, verbose_name='Template')
-    slot_order = models.IntegerField(verbose_name='Slot order')
+    slot_order = models.IntegerField(verbose_name='Slot flavor', choices=tuple(zip(
+        range(0,12),
+        ["Black", "Brown", "Red", "Orange", "Yellow", "Lime", "Green", "Cyan", "Blue", "Purple", "Pink", "White"]
+    )))
     x = models.IntegerField()
     y = models.IntegerField()
     w = models.PositiveIntegerField()
@@ -283,7 +290,11 @@ class MemeTemplateSlot(models.Model):
     cover = models.BooleanField(default=False, verbose_name='Cover')
 
     def __str__(self):
-        return "{0} - slot #{1}".format(self.template, self.slot_order)
+        return "{0} - slot ({1}, {2})".format(self.template, self.x, self.y)
+
+    @classmethod
+    def get(cls, template, slot_order):
+        return cls.objects.get(template=template, slot_order=slot_order)
 
 
 class Meem(models.Model):
@@ -296,14 +307,11 @@ class Meem(models.Model):
     template_link = models.ForeignKey(MemeTemplate, verbose_name='Template', on_delete=models.CASCADE)
     context_link = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
     gen_date = models.DateTimeField(default=timezone.now, verbose_name='Date generated')
+    source_images = models.TextField(verbose_name='Source images')
 
     @classmethod
     def create(cls, template, sourceimgs, context):
-        meem = cls(template_link=template, context_link=context)
-        meem.save()
-        for slot, sourceimg in sourceimgs.items():
-            MemeSourceImageInSlot(meme=meem, slot=slot, source_image=sourceimg).save()
-        return meem
+        return cls.objects.create(template_link=template, context_link=context, source_images=json.dumps(sourceimgs))
 
     @classmethod
     def generate(cls, context, template=None):
@@ -325,7 +333,7 @@ class Meem(models.Model):
                 source_file = next_sourceimg(context)
                 if source_file not in source_files.values():
                     break
-            source_files[slot] = source_file
+            source_files[slot.slot_order] = source_file.name
             prev_slot_id = slot.slot_order
         meem = cls.create(template, source_files, context)
         return meem
@@ -338,10 +346,14 @@ class Meem(models.Model):
         return possible
 
     def get_sourceimgs_in_slots(self):
-        return MemeSourceImageInSlot.objects.filter(meme=self).order_by('slot__slot_order')
+        rawimgs = json.loads(self.source_images)
+        imgs = {}
+        for slot in self.template_link.memetemplateslot_set.all():
+            imgs[slot] = MemeSourceImage.by_id(rawimgs[str(slot.slot_order)])
+        return imgs
 
     def get_sourceimgs(self):
-        return MemeSourceImage.objects.filter(memesourceimageinslot__meme=self).distinct()
+        return list(map(lambda x: MemeSourceImage.by_id(x[1]), json.loads(self.source_images).items()))
 
     def get_local_path(self):
         return os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')

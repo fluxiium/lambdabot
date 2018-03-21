@@ -64,21 +64,6 @@ class MemeTemplateSlotInline(admin.TabularInline):
     extra = 0
 
 
-class MemeSourceImageInSlotInline(admin.TabularInline):
-    model = MemeSourceImageInSlot
-    extra = 0
-    verbose_name_plural = "Source images"
-    fields = readonly_fields = ('slot', 'admin_url')
-    can_delete = False
-
-    def has_add_permission(self, request):
-        return False
-
-    def admin_url(self, obj):
-        return ahref(obj.source_image.get_admin_url(), obj.source_image)
-    admin_url.short_description = 'Source image'
-
-
 class DiscordSourceImgSubmissionInline(admin.TabularInline):
     model = DiscordSourceImgSubmission
     extra = 0
@@ -103,10 +88,11 @@ class MeemAdmin(admin.ModelAdmin):
     list_display = ('thumbnail', 'number', 'meme_id', 'template_link', 'context_link', 'gen_date')
     list_display_links = ('thumbnail', 'number', 'meme_id',)
     list_filter = ('context_link',)
-    search_fields = ('number', 'meme_id', 'template_link__name')
+    search_fields = ('number', 'meme_id')
     ordering = ('-number', 'meme_id')
-    inlines = [MemeSourceImageInSlotInline, FacebookInline, TwitterInline, DiscordInline]
-    readonly_fields = ('number', 'meme_id', 'template_admin_url', 'context_link', 'gen_date', 'image', 'meme_url')
+    inlines = [FacebookInline, TwitterInline, DiscordInline]
+    readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'context_link', 'gen_date',
+                       'image', 'meme_url')
     fields = readonly_fields
 
     def has_add_permission(self, request):
@@ -128,9 +114,16 @@ class MeemAdmin(admin.ModelAdmin):
         return ahref(obj.template_link.get_admin_url(), obj.template_link)
     template_admin_url.short_description = 'Template'
 
+    def sourceimg_admin_urls(self, obj):
+        html = ""
+        for srcimg in obj.get_sourceimgs():
+            html += ahref(srcimg.get_admin_url(), srcimg) + '<br>'
+        return mark_safe(html)
+    sourceimg_admin_urls.short_description = 'Source images'
+
     def lookup_allowed(self, key, value):
         if key in (
-            'memesourceimageinslot__source_image__name__exact',
+            'source_images__contains',
             'template_link__name__exact',
         ):
             return True
