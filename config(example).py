@@ -13,7 +13,7 @@ IMG_QUEUE_LENGTH = 100
 # JPG and their size will be checked again
 MAX_SRCIMG_SIZE = 1500000
 
-# public root url of the lambdabot web app
+# public root url of the bot web app
 WEBSITE_URL = 'http://example.com/'
 
 
