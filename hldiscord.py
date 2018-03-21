@@ -10,7 +10,7 @@ from django.utils import timezone
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from discordbot.util import get_attachment, discord_send, save_attachment, log, log_exc
+from discordbot.util import get_attachments, discord_send, save_attachment, log, log_exc
 from lamdabotweb.settings import DEBUG, DISCORD_TOKEN
 
 IMG_ARCHIVE_CHANNEL = '395615705048809492'
@@ -59,30 +59,31 @@ async def on_message_delete(message):
     if message.server.id != SERVER_ID:
         return
 
-    att, dl_embed_url = get_attachment(message)
+    atts = get_attachments(message, get_embeds=False)
 
-    if att is None or dl_embed_url is not None:
+    if len(atts) == 0:
         return
 
-    att_path = save_attachment(att['proxy_url'], att['filename'])
-    msg_archived = await discord_send(client.send_file, client.get_channel(IMG_ARCHIVE_CHANNEL), att_path)
-    att, _ = get_attachment(msg_archived)
+    for att in atts:
+        att_path = save_attachment(att['real_url'], att['filename'])
+        msg_archived = await discord_send(client.send_file, client.get_channel(IMG_ARCHIVE_CHANNEL), att_path)
+        att = get_attachments(msg_archived)[0]
 
-    embed = Embed(
-        description="**Attachment sent by {0} deleted in <#{1}>**\n{2}".format(
-            message.author.mention, message.channel.id, att['proxy_url']
-        ),
-        color=0xFF470F,
-    )
-    embed.set_author(
-        name=str(message.author),
-        icon_url=message.author.avatar_url
-    )
-    embed.set_footer(
-        text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
-    )
+        embed = Embed(
+            description="**Attachment sent by {0} deleted in <#{1}>**\n{2}".format(
+                message.author.mention, message.channel.id, att['real_url']
+            ),
+            color=0xFF470F,
+        )
+        embed.set_author(
+            name=str(message.author),
+            icon_url=message.author.avatar_url
+        )
+        embed.set_footer(
+            text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
+        )
 
-    await discord_send(client.send_message, client.get_channel(LOG_CHANNEL), embed=embed)
+        await discord_send(client.send_message, client.get_channel(LOG_CHANNEL), embed=embed)
 
 
 @client.event

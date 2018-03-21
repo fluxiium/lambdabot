@@ -15,9 +15,6 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'
 }
 
-CMD_ERR = 1
-CMD_ERR_SYNTAX = 2
-
 
 class DelayedTask:
     def __init__(self, delay, callback, args=(), kwargs=None):
@@ -81,24 +78,29 @@ def get_member_and_process_message(message, server):
     return member
 
 
-def get_attachment(message):
-    att = None
-    dl_embed_url = None
+def get_attachments(message, get_embeds=True):
+    atts = []
 
-    if len(message.attachments) > 0:
-        att = message.attachments[0]
+    for att in message.attachments:
+        att['is_embed'] = False
+        att['real_url'] = att['proxy_url']
+        atts.append(att)
 
-    elif len(message.embeds) > 0:
-        emb = message.embeds[0]
+    if not get_embeds:
+        return atts
+
+    for emb in message.embeds:
         url = emb.get('url')
         if url is not None:
             att = emb.get('image')
             if att is None:
                 att = emb.get('thumbnail')
             if att is not None:
-                dl_embed_url = emb['url']
+                att['is_embed'] = True
+                att['real_url'] = emb['url']
+                atts.append(att)
 
-    return att, dl_embed_url
+    return atts
 
 
 def save_attachment(url, filename=None):
@@ -106,7 +108,7 @@ def save_attachment(url, filename=None):
         filename = str(uuid.uuid4())
     tmpdir = mkdtemp(prefix="lambdabot_attach_")
     filename = os.path.join(tmpdir, filename)
-    log('received attachment: {0} {1}'.format(url, filename))
+    log('received attachment: {0} -> {1}'.format(url, filename))
     try:
         attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
@@ -115,3 +117,11 @@ def save_attachment(url, filename=None):
     except Exception as exc:
         log_exc(exc)
         return None
+
+
+def get_timeout_str(message, limit, timeout, left):
+    if left >= 3 * 60:
+        timestr = "{0} more minutes".format(int(left / 60) + 1)
+    else:
+        timestr = "{0} more seconds".format(left)
+    return message.format(limit, timeout, timestr)

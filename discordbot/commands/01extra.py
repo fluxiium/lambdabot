@@ -6,17 +6,17 @@ import requests
 
 from bs4 import BeautifulSoup
 from discord import Embed
-from discordbot.util import discord_send, log_exc, headers, CMD_ERR_SYNTAX, CMD_ERR
+
+from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
+from discordbot.util import headers
 
 COMMANDS = {}
 COMMAND_ALIASES = {}
 
 
-async def _cmd_led(client, message, args, argstr, **_):
-    await discord_send(client.send_typing, message.channel)
-
+async def _cmd_led(args, argstr, **_):
     if len(args) == 1:
-        return CMD_ERR_SYNTAX
+        raise DiscordSyntaxException
 
     response = requests.post('http://wigflip.com/signbot/', data={
         'T': argstr,
@@ -25,14 +25,11 @@ async def _cmd_led(client, message, args, argstr, **_):
 
     soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
     img = soup.select_one('#output img')
+
     if img is not None:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} {1}".format(message.author.mention, img['src']),
-        )
+        return DiscordCommandResponse(img['src'])
     else:
-        return CMD_ERR
+        raise DiscordCommandException
 
 COMMANDS['led'] = {
     'function': _cmd_led,
@@ -41,11 +38,9 @@ COMMANDS['led'] = {
 }
 
 
-async def _cmd_mario(client, message, args, **_):
-    await discord_send(client.send_typing, message.channel)
-
+async def _cmd_mario(args, **_):
     if len(args) < 3 or len(args) > 4:
-        return CMD_ERR_SYNTAX
+        raise DiscordSyntaxException
 
     if len(args) == 4:
         name = args[1]
@@ -65,14 +60,11 @@ async def _cmd_mario(client, message, args, **_):
 
     soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
     img = soup.select_one('#output img')
+
     if img is not None:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} {1}".format(message.author.mention, img['src']),
-        )
+        return DiscordCommandResponse(img['src'])
     else:
-        return CMD_ERR
+        raise DiscordCommandException
 
 COMMANDS['mario'] = {
     'function': _cmd_mario,
@@ -81,27 +73,21 @@ COMMANDS['mario'] = {
 }
 
 
-async def _cmd_noviews(client, message, **_):
-    await discord_send(client.send_typing, message.channel)
-
+async def _cmd_noviews(**_):
     attempt = 0
     videourl = None
     while videourl is None and attempt < 5:
         try:
             response = requests.get('http://www.petittube.com', headers=headers)
             soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-            videourl = re.search('\/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
+            videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
         except Exception as e:
             attempt += 1
 
     if videourl is None:
-        return CMD_ERR
+        raise DiscordCommandException
     else:
-        await discord_send(
-            client.send_message,
-            message.channel,
-            "{0} https://youtu.be/{1}".format(message.author.mention, videourl),
-        )
+        return DiscordCommandResponse("https://youtu.be/" + videourl)
 
 COMMANDS['noviews'] = {
     'function': _cmd_noviews,
@@ -109,50 +95,36 @@ COMMANDS['noviews'] = {
 }
 
 
-async def _cmd_wiki(client, message, args, argstr, **_):
-    await discord_send(client.send_typing, message.channel)
-
+async def _cmd_wiki(args, argstr, **_):
     wiki_url = 'http://combineoverwiki.net'
     article = None
     was_random = False
 
     if len(args) == 1:
-        try:
-            was_random = True
-            response = requests.get(
-                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            article = next(iter(article_data['query']['pages'].values()))
-
-        except Exception as exc:
-            log_exc(exc)
+        was_random = True
+        response = requests.get(
+            '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+            headers=headers,
+        )
+        article_data = json.loads(response.content.decode('utf-8'))
+        article = next(iter(article_data['query']['pages'].values()))
 
     else:
-        try:
-            query = argstr
-            response = requests.get(
-                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            if article_data.get('query') is not None:
-                article = next(iter(article_data['query']['pages'].values()))
-        except Exception as exc:
-            log_exc(exc)
+        query = argstr
+        response = requests.get(
+            '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
+            headers=headers,
+        )
+        article_data = json.loads(response.content.decode('utf-8'))
+        if article_data.get('query') is not None:
+            article = next(iter(article_data['query']['pages'].values()))
 
     proceed = False
     soup = None
 
     while not proceed:
         if article is None:
-            await discord_send(
-                client.send_message,
-                message.channel,
-                "{0} article not found :cry:".format(message.author.mention)
-            )
-            return
+            return DiscordCommandResponse("article not found :cry:")
 
         response = requests.get(article['fullurl'], headers=headers)
         soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
@@ -195,14 +167,8 @@ async def _cmd_wiki(client, message, args, argstr, **_):
 
     if pic_tag is not None:
         embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
-        # embed.set_image(url="{0}{1}".format(wiki_url, pic_tag['src']))
 
-    await discord_send(
-        client.send_message,
-        message.channel,
-        "{0} {1}".format(message.author.mention, article['fullurl']),
-        embed=embed,
-    )
+    return DiscordCommandResponse(article['fullurl'], embed=embed)
 
 COMMANDS['wiki'] = {
     'function': _cmd_wiki,
