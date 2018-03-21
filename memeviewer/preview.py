@@ -14,16 +14,21 @@ def preview_meme(meme, saveme=True):
     else:
         template = meme.template_link
 
+    foreground, background = None, None
+
     if template.image_file:
         foreground = Image.open(template.image_file).convert("RGBA")
 
     if template.bg_image_file:
         background = Image.open(template.bg_image_file).convert('RGBA')
-    elif template.image_file:
-        # noinspection PyUnboundLocalVariable
-        background = Image.new(foreground.mode, foreground.size, template.bg_color or 'black')
-    else:
-        raise AttributeError("Template has no image file")
+
+    if not foreground and not background:
+        raise AttributeError("Template has no background or overlay file")
+
+    background_color = Image.new('RGBA', (foreground or background).size, template.bg_color or '#000000')
+
+    if background is None:
+        background = background_color
 
     for slot, sourceimg in meme.get_sourceimgs_in_slots().items():
 
@@ -67,10 +72,10 @@ def preview_meme(meme, saveme=True):
 
         background.paste(source_image, paste_pos, source_alpha)
 
-    if template.image_file:
-        meme_image = Image.alpha_composite(background, foreground)
+    if foreground:
+        meme_image = Image.alpha_composite(background_color, Image.alpha_composite(background, foreground))
     else:
-        meme_image = background
+        meme_image = Image.alpha_composite(background_color, background)
 
     meme_image = meme_image.convert('RGB')
     if saveme:

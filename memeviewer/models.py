@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from colorfield.fields import ColorField
 from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT
 
 
@@ -180,7 +181,7 @@ class MemeTemplate(models.Model):
     image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True, verbose_name="Template overlay")
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
-    bg_color = models.CharField(max_length=16, default='', blank=True, verbose_name='Background color')
+    bg_color = ColorField(default='', blank=True, verbose_name='Background color')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
 
