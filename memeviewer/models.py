@@ -310,11 +310,14 @@ class Meem(models.Model):
     source_images = models.TextField(verbose_name='Source images')
 
     @classmethod
-    def create(cls, template, sourceimgs, context):
-        return cls.objects.create(template_link=template, context_link=context, source_images=json.dumps(sourceimgs))
+    def create(cls, template, sourceimgs, context, saveme=True):
+        meem = cls(template_link=template, context_link=context, source_images=json.dumps(sourceimgs))
+        if saveme:
+            meem.save()
+        return meem
 
     @classmethod
-    def generate(cls, context, template=None):
+    def generate(cls, context, template=None, saveme=True):
         if MemeTemplate.count(context) == 0:
             raise FileNotFoundError("Please upload some templates first")
         if MemeSourceImage.count(context) == 0:
@@ -335,7 +338,7 @@ class Meem(models.Model):
                     break
             source_files[slot.slot_order] = source_file.name
             prev_slot_id = slot.slot_order
-        meem = cls.create(template, source_files, context)
+        meem = cls.create(template, source_files, context, saveme)
         return meem
 
     @classmethod

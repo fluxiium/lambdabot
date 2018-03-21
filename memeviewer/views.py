@@ -1,7 +1,7 @@
 import os
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -17,8 +17,11 @@ def generate_meme_view(request):
     if not request.user.has_perm('memetemplate.change_memetemplate'):
         return HttpResponseForbidden()
 
-    meme = Meem.generate(context=MemeContext.by_id_or_create('default', 'Default'))
-    return redirect(meme.get_info_url())
+    meme = Meem.generate(context=MemeContext.by_id_or_create('default', 'Default'), saveme=False)
+
+    response = HttpResponse(content_type='image/jpeg')
+    preview_meme(meme, saveme=False).save(response, "JPEG")
+    return response
 
 
 def template_preview_view(request, template_name):
@@ -31,11 +34,14 @@ def template_preview_view(request, template_name):
         meme = Meem.generate(
             context=MemeContext.by_id_or_create('default', 'Default'),
             template=MemeTemplate.find(template_name, allow_disabled=True),
+            saveme=False
         )
     except ObjectDoesNotExist:
         raise Http404("template does not exist")
 
-    return redirect(meme.get_info_url())
+    response = HttpResponse(content_type='image/jpeg')
+    preview_meme(meme, saveme=False).save(response, "JPEG")
+    return response
 
 
 def context_reset_view(request, context):

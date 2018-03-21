@@ -3,10 +3,8 @@ import os
 from PIL import Image
 from PIL import ImageFilter
 
-from memeviewer.models import MemeSourceImage, MemeTemplateSlot
 
-
-def preview_meme(meme):
+def preview_meme(meme, saveme=True):
     """ return image based on meme data """
 
     meme_file = meme.get_local_path()
@@ -75,5 +73,6 @@ def preview_meme(meme):
         meme_image = background
 
     meme_image = meme_image.convert('RGB')
-    meme_image.save(meme_file)
+    if saveme:
+        meme_image.save(meme_file)
     return meme_image
