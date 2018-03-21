@@ -278,7 +278,7 @@ class MemeTemplateSlot(models.Model):
     template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE, verbose_name='Template')
     slot_order = models.IntegerField(verbose_name='Slot flavor', choices=tuple(zip(
         range(0,12),
-        ["Black", "Brown", "Red", "Orange", "Yellow", "Lime", "Green", "Cyan", "Blue", "Purple", "Pink", "White"]
+        ["Blue", "Yellow", "Green", "Red", "Cyan", "Orange", "Lime", "Pink", "Purple", "Brown", "Black", "White"]
     )))
     x = models.IntegerField()
     y = models.IntegerField()
