@@ -1,5 +1,5 @@
 import os
-from lamdabotweb.settings_secret import *
+from config import *
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

@@ -27,8 +27,7 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 DATABASES = {
     'default': {
-        # i advise against using sqlite cause i had problems with it when
-        # many people were using the bot at the same time
+        # database info
     },
 }
 
@@ -48,6 +47,8 @@ TWITTER_ACCESS_TOKEN_SECRET = ''
 
 # ---- DISCORD SETTINGS - ignore if you're not going to use the discord bot ----
 DISCORD_TOKEN = ''
+DISCORD_STATUS = '!help | ' + WEBSITE_URL
+DISCORD_SEND_ATTACHMENTS = True  # will use embeds otherwise
 
 # ignore if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_TOKEN = ''

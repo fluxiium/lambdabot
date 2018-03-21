@@ -9,7 +9,7 @@ from importlib import import_module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN
+from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, DISCORD_STATUS
 from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.murphybot import start_murphy, murphybot_active
 from discordbot.util import log, get_server, get_member_and_process_message, get_attachment, discord_send,\
@@ -190,7 +190,7 @@ async def on_message_delete(message):
 @client.event
 async def on_ready():
     log('Logged in as', client.user.name, client.user.id)
-    await client.change_presence(game=discord.Game(name='lambdabot.morchkovalski.com'))
+    await client.change_presence(game=discord.Game(name=DISCORD_STATUS))
 
 start_murphy(client)
 client.run(DISCORD_TOKEN)

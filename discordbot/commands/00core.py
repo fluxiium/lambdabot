@@ -2,7 +2,7 @@ import datetime
 from django.utils import timezone
 from discordbot.models import DiscordSourceImgSubmission, DiscordMeem
 from discordbot.util import discord_send, save_attachment, log, CMD_ERR_SYNTAX
-from lamdabotweb.settings import MAX_SRCIMG_SIZE
+from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
 from memeviewer.models import MemeSourceImage, MemeTemplate, Meem
 from memeviewer.preview import preview_meme
 
@@ -62,14 +62,22 @@ async def _cmd_meem(client, server, member, message, args, argstr, **_):
     meme = Meem.generate(context=server.context, template=template)
     preview_meme(meme)
 
-    discord_meme = DiscordMeem(meme=meme, server_user=member, channel_id=message.channel.id)
-    discord_meme.save()
+    DiscordMeem.objects.create(meme=meme, server_user=member, channel_id=message.channel.id)
+    msgstr = "{0} here's a meme (using template `{1}`)".format(message.author.mention, meme.template_link)
 
-    await discord_send(
-        client.send_message,
-        message.channel,
-        "{0} here's a meme (using template `{2}`)\n{1}".format(message.author.mention, meme.get_info_url(), meme.template_link)
-    )
+    if DISCORD_SEND_ATTACHMENTS:
+        await discord_send(
+            client.send_file,
+            message.channel,
+            meme.get_local_path(),
+            content=msgstr + '\n<' + meme.get_info_url() + '>',
+        )
+    else:
+        await discord_send(
+            client.send_message,
+            message.channel,
+            msgstr + '\n' + meme.get_info_url(),
+        )
 
     log(message.author, 'meme generated:', meme)
 
