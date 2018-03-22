@@ -35,7 +35,7 @@ th {
 }
 
 h1 {
-    margin-bottom: 10px;
+    /*margin-bottom: 5px;*/
     font-size: 40px;
 }
 
@@ -52,8 +52,28 @@ p {
 }
 
 #social {
-    height: 30px;
+    height: 44px;
+    padding-bottom: 15px;
 }
+
+#social a {
+    display: inline-block;
+    width: 50px;
+    height: 44px;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.80;
+    cursor: pointer;
+}
+
+#social a:hover {
+    opacity: 1;
+}
+
+#fb_icon { background-image: url("img/fb.png"); }
+#tw_icon { background-image: url("img/tw.png"); }
+#gh_icon { background-image: url("img/gh.png"); }
 
 a {
     text-decoration: none;

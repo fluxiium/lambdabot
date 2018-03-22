@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {% block head_extra %}{% endblock %}
+
+    <link href="https://fonts.googleapis.com/css?family=Mukta+Malar" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'memeviewer/memeviewer.css' %}?v=11">
+</head>
+<body>
+
+<h1><a href="{{ website_url }}">{{ bot_name }}</a></h1>
+
+<div id="social">
+    <a id="fb_icon" target="_blank" href="https://fb.com/{{ bot_name_facebook }}"></a>
+    <a id="tw_icon" target="_blank" href="https://twitter.com/{{ bot_name_twitter }}"></a>
+    <a id="gh_icon" target="_blank" href="https://github.com/morchkovalski/lambdabot"></a>
+</div>
+
+{% block content %}{% endblock %}
+
+</body>
+</html>

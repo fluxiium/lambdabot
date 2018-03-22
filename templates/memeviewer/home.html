@@ -1,0 +1,23 @@
+{% extends 'memeviewer/base.html' %}
+{% load static %}
+
+{% block head_extra %}
+
+    <meta property="og:title" content="{{ bot_name }}"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="{{ website_url }}"/>
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@{{ bot_name_twitter }}">
+    <meta name="twitter:creator" content="@{{ bot_name_twitter }}">
+    <meta name="twitter:title" content="{{ bot_name }}">
+
+    <title>{{ bot_name }}</title>
+
+{% endblock %}
+
+{% block content %}
+
+    <p>(under construction)</p>
+
+{% endblock %}
