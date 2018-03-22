@@ -41,14 +41,15 @@ def next_image(context, image_type):
 
         img_queue_db = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None)).order_by('?')
         img_queue_recent = img_queue_db.filter(change_date__gte=recent_threshold)[0:(min(queue_length, objects.count()) / 2)]
-        img_queue_old = img_queue_db.filter(change_date__lt=recent_threshold)[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
+        img_queue_old = img_queue_db[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
 
         # save queue to db
         for s in img_queue_recent:
             ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
 
         for s in img_queue_old:
-            ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
+            if s not in img_queue_recent:
+                ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
 
         result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
 
