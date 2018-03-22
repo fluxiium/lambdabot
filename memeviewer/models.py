@@ -15,7 +15,9 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
-from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT
+
+from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT, \
+    RECENT_THRESHOLD
 
 
 def struuid4():
@@ -35,17 +37,22 @@ def next_image(context, image_type):
     if result.count() == 0:
 
         queue_length = IMG_QUEUE_LENGTH
-        img_queue = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None))\
-            .order_by('?')[0:(min(queue_length, objects.count()))]
+        recent_threshold = timezone.now() - timezone.timedelta(days=RECENT_THRESHOLD)
+
+        img_queue_db = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None)).order_by('?')
+        img_queue_recent = img_queue_db.filter(change_date__gte=recent_threshold)[0:(min(queue_length, objects.count()) / 2)]
+        img_queue_old = img_queue_db.filter(change_date__lt=recent_threshold)[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
 
         # save queue to db
-        for s in img_queue:
-            img_in_context = ImageInContext(image_name=s.name, image_type=image_type, context_link=context)
-            img_in_context.save()
+        for s in img_queue_recent:
+            ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
+
+        for s in img_queue_old:
+            ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
 
         result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
 
-    img_in_context = result.first()
+    img_in_context = result.order_by('?').first()
     sourceimg = img_in_context.image_name
     img_in_context.delete()
 
@@ -105,6 +112,24 @@ class MemeSourceImage(models.Model):
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
+    change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
+
+    def save(self, *args, **kwargs):
+        self.change_date = timezone.now()
+        models.Model.save(self, *args, **kwargs)
+
+    # add image to queues of all its contexts
+    def enqueue(self):
+        query = ImageInContext.objects.filter(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG)
+        for imq in query:
+            imq.delete()
+        if self.accepted:
+            contexts = self.contexts.all()
+            if len(contexts) == 0:
+                contexts = MemeContext.objects.all()
+            for c in contexts:
+                ImageInContext.objects.create(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG,
+                                              context_link=c)
 
     def get_image_url(self):
         return self.image_file and self.image_file.url or''
@@ -177,19 +202,39 @@ class MemeTemplate(models.Model):
         verbose_name = "Template"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True, verbose_name="Template background")
-    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None, blank=True, verbose_name="Template overlay")
+    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+                                      blank=True, verbose_name="Template background")
+    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+                                   blank=True, verbose_name="Template overlay")
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = ColorField(default='', blank=True, verbose_name='Background color')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
+    change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
+
+    def save(self, *args, **kwargs):
+        self.change_date = timezone.now()
+        models.Model.save(self, *args, **kwargs)
 
     def clean(self):
         if not self.bg_image_file and not self.image_file:
             raise ValidationError('Please upload a template background and/or overlay image')
         if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
             raise ValidationError('The background and overlay images have to have the same dimensions')
+
+    # add image to queues of all its contexts
+    def enqueue(self):
+        query = ImageInContext.objects.filter(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE)
+        for imq in query:
+            imq.delete()
+        if self.accepted:
+            contexts = self.contexts.all()
+            if len(contexts) == 0:
+                contexts = MemeContext.objects.all()
+            for c in contexts:
+                ImageInContext.objects.create(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE,
+                                              context_link=c)
 
     @classmethod
     def count(cls, context):
@@ -228,7 +273,7 @@ class MemeTemplate(models.Model):
         found = obj.filter(friendly_name__icontains=name).first()
         if found is not None:
             return found
-        name_words = re.split(' |\.|/', name)
+        name_words = re.split('[ ./]', name)
         found = obj.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
         if found is not None:
             return found
@@ -285,7 +330,7 @@ class MemeTemplateSlot(models.Model):
 
     template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE, verbose_name='Template')
     slot_order = models.IntegerField(verbose_name='Slot flavor', choices=tuple(zip(
-        range(0,12),
+        range(0, 12),
         ["Blue", "Yellow", "Green", "Red", "Cyan", "Orange", "Lime", "Pink", "Purple", "Brown", "Black", "White"]
     )))
     x = models.IntegerField()

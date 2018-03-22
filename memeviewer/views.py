@@ -50,7 +50,9 @@ def context_reset_view(request, context):
     if not request.user.has_perm('memecontext.change_memecontext'):
         return HttpResponseForbidden()
 
-    queue = ImageInContext.objects.filter(context_link=MemeContext.by_id(context))
+    queue = ImageInContext.objects.all()
+    if context:
+        queue = queue.filter(context_link=MemeContext.by_id(context))
     templates = []
     sourceimgs = []
 

@@ -133,12 +133,12 @@ class DiscordServerUser(models.Model):
 
     def get_limit(self, action):
         if action == self.ACTION_MEEM:
-            limit_count = self.meme_limit_count or self.server.meme_limit_count
-            limit_time = self.meme_limit_time or self.server.meme_limit_time
+            limit_count = self.meme_limit_count if self.meme_limit_count is not None else self.server.meme_limit_count
+            limit_time = self.meme_limit_time if self.meme_limit_time is not None else self.server.meme_limit_time
             submits = self.get_memes(limit=limit_count)
         else:
-            limit_count = self.submit_limit_count or self.server.submit_limit_count
-            limit_time = self.submit_limit_time or self.server.submit_limit_time
+            limit_count = self.submit_limit_count if self.submit_limit_count is not None else self.server.submit_limit_count
+            limit_time = self.submit_limit_time if self.submit_limit_time is not None else self.server.submit_limit_time
             submits = self.get_submits(limit=limit_count)
         seconds_left = 0
         if submits.count() >= limit_count:

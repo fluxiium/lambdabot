@@ -138,7 +138,7 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     search_fields = ('name', 'friendly_name')
     ordering = ('-add_date', 'name',)
     inlines = [DiscordSourceImgSubmissionInline]
-    actions = ['accept']
+    actions = ['accept', 'reject',]
 
     fields = ('name', 'friendly_name', 'image_file', 'contexts', 'accepted',)
 
@@ -152,16 +152,24 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
+        for img in queryset:
+            img.enqueue()
     accept.short_description = "Approve selected source images"
+
+    def reject(self, request, queryset):
+        queryset.update(accepted=False)
+        for img in queryset:
+            img.enqueue()
+    reject.short_description = "Reject selected source images"
 
     def get_fields(self, request, obj=None):
         if obj:
-            return self.fields + ('image', 'add_date', 'memes_admin_url',)
+            return self.fields + ('image', 'add_date', 'change_date', 'memes_admin_url',)
         return self.fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('name', 'add_date', 'image', 'memes_admin_url')
+            return self.readonly_fields + ('name', 'add_date', 'change_date', 'image', 'memes_admin_url')
         return self.readonly_fields
 
     def memes_admin_url(self, obj):
@@ -175,6 +183,10 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
             return True
         return super(MemeSourceImageAdmin, self).lookup_allowed(key, value)
 
+    def save_related(self, request, form, formsets, change):
+        admin.ModelAdmin.save_related(self, request, form, formsets, change)
+        form.instance.enqueue()
+
 
 @admin.register(MemeTemplate)
 class MemeTemplateAdmin(admin.ModelAdmin):
@@ -184,7 +196,7 @@ class MemeTemplateAdmin(admin.ModelAdmin):
     search_fields = ('name', 'friendly_name')
     ordering = ('-add_date', 'name')
     inlines = [MemeTemplateSlotInline]
-    actions = ['accept']
+    actions = ['accept', 'reject',]
 
     def preview_url(self, obj):
         return ahref(obj.get_preview_url(), "Generate meme using this template")
@@ -204,7 +216,15 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
+        for img in queryset:
+            img.enqueue()
     accept.short_description = "Approve selected templates"
+
+    def reject(self, request, queryset):
+        queryset.update(accepted=False)
+        for img in queryset:
+            img.enqueue()
+    reject.short_description = "Reject selected templates"
 
     def get_fields(self, request, obj=None):
         fields = ('name', 'friendly_name', 'bg_image_file',)
@@ -215,17 +235,22 @@ class MemeTemplateAdmin(admin.ModelAdmin):
             fields += ('fg_image',)
         fields += ('bg_color', 'contexts', 'accepted',)
         if obj:
-            fields += ('add_date', 'preview_url', 'memes_admin_url',)
+            fields += ('add_date', 'change_date', 'preview_url', 'memes_admin_url',)
         return fields
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('name', 'add_date', 'preview_url', 'memes_admin_url', 'fg_image', 'bg_image')
+            return self.readonly_fields + ('name', 'add_date', 'change_date', 'preview_url', 'memes_admin_url',
+                                           'fg_image', 'bg_image')
         return self.readonly_fields
 
     def memes_admin_url(self, obj):
         return ahref(obj.get_memes_admin_url(), 'Show memes using this template')
     memes_admin_url.short_description = 'Memes'
+
+    def save_related(self, request, form, formsets, change):
+        admin.ModelAdmin.save_related(self, request, form, formsets, change)
+        form.instance.enqueue()
 
 
 @admin.register(MemeContext)
