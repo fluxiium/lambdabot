@@ -20,9 +20,6 @@ class DiscordServer(models.Model):
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
 
-    submit_limit_count = models.IntegerField(default=10, verbose_name='Submission limit')
-    submit_limit_time = models.IntegerField(default=300, verbose_name='Submission limit cooldown')
-
     @classmethod
     def get_by_id(cls, server_id):
         return cls.objects.filter(server_id=server_id).first()
@@ -100,9 +97,6 @@ class DiscordServerUser(models.Model):
     meme_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
     meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
 
-    submit_limit_count = models.IntegerField(verbose_name='Submission limit', default=None, null=True, blank=True)
-    submit_limit_time = models.IntegerField(verbose_name='Submission limit timeout', default=None, null=True, blank=True)
-
     @classmethod
     def get_by_id(cls, user_id, server):
         server_user = DiscordServerUser.objects.filter(user__user_id=user_id, server=server).first()
@@ -115,14 +109,20 @@ class DiscordServerUser(models.Model):
             server_user.save()
         return server_user
 
-    def get_memes(self, limit=None):
-        memes = DiscordMeem.objects.filter(server_user=self).order_by('-meme__gen_date')
+    def get_memes(self, limit=None, since=None):
+        memes = DiscordMeem.objects.filter(server_user=self)
+        if since is not None:
+            memes.filter(meme__gen_date__gte=since)
+        memes = memes.order_by('-meme__gen_date')
         if limit is not None:
             memes = memes[:limit]
         return memes
 
-    def get_submits(self, limit=None):
-        memes = DiscordSourceImgSubmission.objects.filter(server_user=self).order_by('-sourceimg__add_date')
+    def get_submits(self, limit=None, since=None):
+        memes = DiscordSourceImgSubmission.objects.filter(server_user=self)
+        if since is not None:
+            memes.filter(sourceimg__add_date__gte=since)
+        memes = memes.order_by('-meme__gen_date')
         if limit is not None:
             memes = memes[:limit]
         return memes
@@ -131,25 +131,16 @@ class DiscordServerUser(models.Model):
     ACTION_SUBMIT_TEMPLATE = 2
     ACTION_MEEM = 3
 
-    def get_limit(self, action):
-        if action == self.ACTION_MEEM:
-            limit_count = self.meme_limit_count if self.meme_limit_count is not None else self.server.meme_limit_count
-            limit_time = self.meme_limit_time if self.meme_limit_time is not None else self.server.meme_limit_time
-            submits = self.get_memes(limit=limit_count)
+    def get_meme_limit(self):
+        limit_count = self.meme_limit_count if self.meme_limit_count is not None else self.server.meme_limit_count
+        limit_time = self.meme_limit_time if self.meme_limit_time is not None else self.server.meme_limit_time
+        since = timezone.now() - datetime.timedelta(minutes=limit_time)
+        memes = self.get_memes(limit=limit_count, since=since)
+        if limit_count <= memes.count():
+            seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
         else:
-            limit_count = self.submit_limit_count if self.submit_limit_count is not None else self.server.submit_limit_count
-            limit_time = self.submit_limit_time if self.submit_limit_time is not None else self.server.submit_limit_time
-            submits = self.get_submits(limit=limit_count)
-        seconds_left = 0
-        if submits.count() >= limit_count:
-            delta = datetime.timedelta(minutes=limit_time)
-            if action == self.ACTION_MEEM:
-                submit_time = submits[limit_count - 1].meme.gen_date
-            else:
-                submit_time = submits[limit_count - 1].sourceimg.add_date
-            if timezone.now() - delta <= submit_time:
-                seconds_left = int(((submit_time + delta) - timezone.now()).total_seconds()) + 1
-        return limit_count, limit_time, seconds_left
+            seconds_left = 0
+        return seconds_left, limit_count, limit_time
 
     def update(self, nickname):
         self.nickname = nickname

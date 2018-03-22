@@ -14,7 +14,7 @@ class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
     verbose_name_plural = "Server settings"
-    fields = ('server_admin_url', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count', 'submit_limit_time')
+    fields = ('server_admin_url', 'meme_limit_count', 'meme_limit_time')
     readonly_fields = ('server_admin_url',)
     ordering = ('server__name',)
     can_delete = False
@@ -33,8 +33,7 @@ class DiscordServerAdmin(admin.ModelAdmin):
     list_display_links = ('name', 'server_id')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
-    fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time', 'submit_limit_count',
-              'submit_limit_time')
+    fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time')
     inlines = [DiscordCommandInline]
 
     def get_readonly_fields(self, request, obj=None):

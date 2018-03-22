@@ -27,11 +27,11 @@ async def _cmd_meem(server, member, message, args, argstr, **_):
             if template is None:
                 return DiscordCommandResponse("template `{}` not found :cry:".format(template_name))
 
-    limit_count, limit_time, limit_left = member.get_limit(DiscordServerUser.ACTION_MEEM)
-    if limit_left > 0:
+    seconds_left, limit_count, limit_time = member.get_meme_limit()
+    if seconds_left > 0:
         return DiscordCommandResponse(get_timeout_str(
                 "you can only generate {0} memes every {1} minutes. Please wait {2}.",
-                limit_count, limit_time, limit_left
+                limit_count, limit_time, seconds_left
             ))
 
     meme = Meem.generate(context=server.context, template=template)
@@ -55,29 +55,31 @@ COMMANDS['meem'] = {
 
 
 async def _cmd_submit(member, attachments, **_):
-    if len(attachments) < 1:
+    imgcount = len(attachments)
+
+    if imgcount < 1:
         raise DiscordSyntaxException
 
-    attachment = attachments[0]
-    submitted_file = save_attachment(attachment['real_url'], attachment.get('filename'))
+    added = 0
 
-    limit_count, limit_time, limit_left = member.get_limit(DiscordServerUser.ACTION_SUBMIT_SRCIMG)
-    if limit_left > 0:
-        return DiscordCommandResponse(get_timeout_str(
-                "you can only submit {0} images every {1} minutes. Please wait {2}.",
-                limit_count, limit_time, limit_left
-            ))
+    for attachment in attachments:
+        submitted_file = save_attachment(attachment['real_url'], attachment.get('filename'))
+        submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
+        if submission is not None:
+            added += 1
+            sourceimg = DiscordSourceImgSubmission.objects.create(server_user=member, sourceimg=submission)
+            log('sourceimg submitted by {}: {}'.format(member, sourceimg))
 
-    submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
-    if submission is None:
-        return DiscordCommandResponse(
-            "the image is too big or invalid format! (supported jpeg/png < {0} KB)".format(MAX_SRCIMG_SIZE / 1000)
-        )
-
-    DiscordSourceImgSubmission.objects.create(server_user=member, sourceimg=submission)
-
-    log('sourceimg submitted by {}'.format(member))
-    return DiscordCommandResponse("thanks! The source image will be added once it's approved.")
+    if added == imgcount:
+        if imgcount == 1:
+            return DiscordCommandResponse("thanks! The source image will be added once it's approved.")
+        else:
+            return DiscordCommandResponse("thanks! The source images will be added once they're approved.")
+    else:
+        if imgcount == 1:
+            return DiscordCommandResponse("the image is too big or invalid format! (supported jpeg/png < {} KB)".format(MAX_SRCIMG_SIZE / 1000))
+        else:
+            return DiscordCommandResponse("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, MAX_SRCIMG_SIZE / 1000))
 
 COMMANDS['submit'] = {
     'function': _cmd_submit,
