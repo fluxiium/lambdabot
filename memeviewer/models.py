@@ -7,7 +7,6 @@ import uuid
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files import File
-
 from functools import reduce
 from PIL import Image
 from django.db import models
@@ -35,17 +34,15 @@ class MemeContext(models.Model):
     short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
     recent_threshold = models.IntegerField(default=14, verbose_name='Recent threshold (days)')
+    is_public = models.BooleanField(default=False, verbose_name='Is public?')
 
     @classmethod
     def by_id(cls, name):
         return cls.objects.get(short_name=name)
 
     @classmethod
-    def by_id_or_create(cls, name, friendly_name):
-        context = cls.objects.filter(short_name=name).first()
-        if context is not None:
-            return context
-        context = cls.objects.create(short_name=name, name=friendly_name)
+    def by_id_or_create(cls, name, friendly_name, is_public=False):
+        context = cls.objects.get_or_create(short_name=name, defaults={'name': friendly_name, 'is_public': is_public})
         return context
 
     def get_reset_url(self):

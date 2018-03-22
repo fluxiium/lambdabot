@@ -19,7 +19,7 @@ api = twitter.Api(consumer_key=TWITTER_CONSUMER_KEY,
                   access_token_key=TWITTER_ACCESS_TOKEN_KEY,
                   access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
-meme = Meem.generate(context=MemeContext.by_id_or_create('twitter', 'Twitter'))
+meme = Meem.generate(context=MemeContext.by_id_or_create('twitter', 'Twitter', is_public=True))
 preview_meme(meme)
 
 status = api.PostUpdate(

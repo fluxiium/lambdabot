@@ -14,7 +14,7 @@ from memeviewer.preview import preview_meme
 from facebookbot.models import FacebookMeem
 
 api = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-meme = Meem.generate(context=MemeContext.by_id_or_create('facebook', 'Facebook'))
+meme = Meem.generate(context=MemeContext.by_id_or_create('facebook', 'Facebook', is_public=True))
 preview_meme(meme)
 
 post_status = api.put_photo(open(meme.get_local_path(), 'rb'))
