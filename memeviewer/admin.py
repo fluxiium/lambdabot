@@ -132,11 +132,11 @@ class MeemAdmin(admin.ModelAdmin):
 
 @admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date')
+    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'change_date')
     list_display_links = ('thumbnail', 'name')
     list_filter = ('accepted', 'contexts',)
     search_fields = ('name', 'friendly_name')
-    ordering = ('-add_date', 'name',)
+    ordering = ('-change_date',)
     inlines = [DiscordSourceImgSubmissionInline]
     actions = ['accept', 'reject',]
 
@@ -190,11 +190,11 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
 
 @admin.register(MemeTemplate)
 class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'add_date', 'preview_url')
+    list_display = ('accepted', 'thumbnail', 'name', 'friendly_name', 'contexts_string', 'change_date')
     list_display_links = ('thumbnail', 'name')
     list_filter = ('accepted', 'contexts',)
     search_fields = ('name', 'friendly_name')
-    ordering = ('-add_date', 'name')
+    ordering = ('-change_date',)
     inlines = [MemeTemplateSlotInline]
     actions = ['accept', 'reject',]
 
