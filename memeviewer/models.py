@@ -16,8 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
 
-from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT, \
-    RECENT_THRESHOLD
+from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT
 
 
 def struuid4():
