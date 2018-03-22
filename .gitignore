@@ -100,11 +100,9 @@ ENV/
 
 .idea
 /tests
-/data
 desktop.ini
 /config.py
 /db.sqlite3*
-/static
 /media
 /fixtures
 *.session
