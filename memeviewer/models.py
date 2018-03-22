@@ -28,53 +28,6 @@ def next_meme_number():
     return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
 
 
-def next_image(context, image_type):
-    # read queue from db
-    result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
-    objects = MemeSourceImage.objects if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else MemeTemplate.objects
-
-    # if empty, make new queue
-    if result.count() == 0:
-
-        queue_length = IMG_QUEUE_LENGTH
-        recent_threshold = timezone.now() - timezone.timedelta(days=RECENT_THRESHOLD)
-
-        img_queue_db = objects.filter(accepted=True).filter(Q(contexts=context) | Q(contexts=None)).order_by('?')
-        img_queue_recent = img_queue_db.filter(change_date__gte=recent_threshold)[0:(min(queue_length, objects.count()) / 2)]
-        img_queue_old = img_queue_db[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
-
-        # save queue to db
-        for s in img_queue_recent:
-            ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
-
-        for s in img_queue_old:
-            if s not in img_queue_recent:
-                ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=context)
-
-        result = ImageInContext.objects.filter(image_type=image_type, context_link=context)
-
-    img_in_context = result.order_by('?').first()
-    sourceimg = img_in_context.image_name
-    img_in_context.delete()
-
-    img_obj = objects.filter(name=sourceimg, accepted=True).filter(Q(contexts=context) | Q(contexts=None)).first()
-
-    if img_obj is None:
-        return next_image(context, image_type)
-    else:
-        return img_obj
-
-
-def next_template(context):
-    return next_image(context, ImageInContext.IMAGE_TYPE_TEMPLATE)
-
-
-def next_sourceimg(context):
-    return next_image(context, ImageInContext.IMAGE_TYPE_SOURCEIMG)
-
-
-# MODELS --------------------------------------------------------------------------------------------------------
-
 class MemeContext(models.Model):
 
     class Meta:
@@ -82,6 +35,7 @@ class MemeContext(models.Model):
 
     short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
+    recent_threshold = models.IntegerField(default=14, verbose_name='Recent threshold (days)')
 
     @classmethod
     def by_id(cls, name):
@@ -97,6 +51,49 @@ class MemeContext(models.Model):
 
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
+
+    def next_image(self, image_type):
+        # read queue from db
+        result = ImageInContext.objects.filter(image_type=image_type, context_link=self)
+        objects = MemeSourceImage.objects if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else MemeTemplate.objects
+
+        # if empty, make new queue
+        if result.count() == 0:
+
+            queue_length = IMG_QUEUE_LENGTH
+            recent_threshold = timezone.now() - timezone.timedelta(days=self.recent_threshold)
+
+            img_queue_db = objects.filter(accepted=True).filter(Q(contexts=self) | Q(contexts=None)).order_by('?')
+            img_queue_recent = img_queue_db.filter(change_date__gte=recent_threshold)[
+                               0:(min(queue_length, objects.count()) / 2)]
+            img_queue_old = img_queue_db[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
+
+            # save queue to db
+            for s in img_queue_recent:
+                ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=self)
+
+            for s in img_queue_old:
+                if s not in img_queue_recent:
+                    ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=self)
+
+            result = ImageInContext.objects.filter(image_type=image_type, context_link=self)
+
+        img_in_context = result.order_by('?').first()
+        sourceimg = img_in_context.image_name
+        img_in_context.delete()
+
+        img_obj = objects.filter(name=sourceimg, accepted=True).filter(Q(contexts=self) | Q(contexts=None)).first()
+
+        if img_obj is None:
+            return self.next_image(image_type)
+        else:
+            return img_obj
+
+    def next_template(self):
+        return self.next_image(ImageInContext.IMAGE_TYPE_TEMPLATE)
+
+    def next_sourceimg(self):
+        return self.next_image(ImageInContext.IMAGE_TYPE_SOURCEIMG)
 
     def __str__(self):
         return self.short_name
@@ -377,7 +374,7 @@ class Meem(models.Model):
         if MemeSourceImage.count(context) == 0:
             raise FileNotFoundError("Please upload some source images first")
         if template is None:
-            template = next_template(context)
+            template = context.next_template()
         source_files = {}
         prev_slot_id = None
         source_file = None
@@ -387,7 +384,7 @@ class Meem(models.Model):
                 continue
             # pick source file that hasn't been used
             while True:
-                source_file = next_sourceimg(context)
+                source_file = context.next_sourceimg()
                 if source_file not in source_files.values():
                     break
             source_files[slot.slot_order] = source_file.name

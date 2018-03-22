@@ -257,7 +257,7 @@ class MemeTemplateAdmin(admin.ModelAdmin):
 class MemeContextAdmin(admin.ModelAdmin):
     list_display = ('name', 'short_name', 'reset_url')
     search_fields = ('short_name', 'name')
-    fields = ('name', 'short_name',)
+    fields = ('name', 'short_name', 'recent_threshold')
     readonly_fields = ('reset_url',)
     ordering = ('name',)
 

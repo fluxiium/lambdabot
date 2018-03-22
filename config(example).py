@@ -9,10 +9,6 @@ MEDIA_SUBDIR = 'lambdabot'
 # being used many times in a row)
 IMG_QUEUE_LENGTH = 100
 
-# for how many days a source image or template is considered recent after it's added. recent images are more
-# likely to be picked when generating a meme
-RECENT_THRESHOLD = 7
-
 # maximum size in bytes for submitted images. PNG images that exceed this limit will be converted to
 # JPG and their size will be checked again
 MAX_SRCIMG_SIZE = 1500000
