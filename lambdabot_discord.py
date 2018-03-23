@@ -14,7 +14,6 @@ django.setup()
 import discordbot.murphybot as murphy
 import discordbot.cleverbot as cleverboi
 from discordbot.util import log, get_server, get_member, get_attachments, save_attachment
-from discordbot.models import MurphyRequest
 from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
 
 log("")
@@ -99,12 +98,12 @@ async def process_message(message):
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['real_url']) if att is not None else ''
                 if msg == "" and att is not None:
-                    MurphyRequest.ask(server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+                    murphy.ask(user=member, channel=message.channel, face_pic=face_pic)
                 elif msg != "":
-                    MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id, face_pic=face_pic)
+                    murphy.ask(user=member, channel=message.channel, question=msg, face_pic=face_pic)
 
             elif msg.lower().startswith("what if "):
-                MurphyRequest.ask(question=msg, server_user=member, channel_id=message.channel.id)
+                murphy.ask(user=member, channel=message.channel, question=msg)
 
             else:
                 answered = False
