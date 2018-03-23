@@ -93,9 +93,7 @@ class DiscordServerUser(models.Model):
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
     nickname = models.CharField(max_length=64, verbose_name='Nickname', blank=True, default='')
-
-    meme_limit_count = models.IntegerField(verbose_name='Meme limit', default=None, null=True, blank=True)
-    meme_limit_time = models.IntegerField(verbose_name='Meme limit timeout', default=None, null=True, blank=True)
+    unlimited_memes = models.BooleanField(default=False, verbose_name='Unlimited memes')
 
     @classmethod
     def get_by_id(cls, user_id, server):
@@ -109,33 +107,15 @@ class DiscordServerUser(models.Model):
             server_user.save()
         return server_user
 
-    def get_memes(self, limit=None, since=None):
-        memes = DiscordMeem.objects.filter(server_user=self)
-        if since is not None:
-            memes.filter(meme__gen_date__gte=since)
-        memes = memes.order_by('-meme__gen_date')
-        if limit is not None:
-            memes = memes[:limit]
-        return memes
-
-    def get_submits(self, limit=None, since=None):
-        memes = DiscordSourceImgSubmission.objects.filter(server_user=self)
-        if since is not None:
-            memes.filter(sourceimg__add_date__gte=since)
-        memes = memes.order_by('-meme__gen_date')
-        if limit is not None:
-            memes = memes[:limit]
-        return memes
-
     def get_meme_limit(self):
-        limit_count = self.meme_limit_count if self.meme_limit_count is not None else self.server.meme_limit_count
-        limit_time = self.meme_limit_time if self.meme_limit_time is not None else self.server.meme_limit_time
-        since = timezone.now() - datetime.timedelta(minutes=limit_time)
-        memes = self.get_memes(limit=limit_count, since=since)
-        if limit_count <= memes.count():
-            seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
-        else:
-            seconds_left = 0
+        limit_count = self.server.meme_limit_count
+        limit_time = self.server.meme_limit_time
+        seconds_left = 0
+        if not self.unlimited_memes:
+            since = timezone.now() - datetime.timedelta(minutes=limit_time)
+            memes = DiscordMeem.objects.filter(server_user=self, meme__gen_date__gte=since).order_by('-meme__gen_date')[:limit_count]
+            if limit_count <= memes.count():
+                seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
         return seconds_left, limit_count, limit_time
 
     def update(self, nickname):
