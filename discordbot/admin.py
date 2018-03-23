@@ -13,8 +13,8 @@ class DiscordCommandInline(admin.TabularInline):
 class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
-    verbose_name_plural = "Server settings"
-    fields = ('server_admin_url', 'meme_limit_count', 'meme_limit_time')
+    verbose_name_plural = "Server-specific"
+    fields = ('server_admin_url', 'unlimited_memes')
     readonly_fields = ('server_admin_url',)
     ordering = ('server__name',)
     can_delete = False
