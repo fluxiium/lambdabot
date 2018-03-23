@@ -242,21 +242,3 @@ class MurphyFacePic(models.Model):
 
     def __str__(self):
         return self.channel_id
-
-
-class ProcessedMessage(models.Model):
-
-    class Meta:
-        verbose_name = "Processed message"
-
-    msg_id = models.CharField(max_length=32, verbose_name="Message ID")
-    process_date = models.DateTimeField(default=timezone.now, verbose_name='Date processed')
-
-    @classmethod
-    def was_id_processed(cls, msg_id):
-        return cls.objects.filter(msg_id=msg_id).first() is not None
-
-    @classmethod
-    def process_id(cls, msg_id):
-        if cls.objects.filter(msg_id=msg_id).first() is None:
-            cls(msg_id=msg_id).save()

@@ -9,7 +9,7 @@ from discord import Member
 from django.utils import timezone
 from tempfile import mkdtemp
 
-from discordbot.models import DiscordServer, DiscordServerUser, ProcessedMessage
+from discordbot.models import DiscordServer, DiscordServerUser
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'
@@ -69,12 +69,11 @@ def get_server(message):
     return server
 
 
-def get_member_and_process_message(message, server):
+def get_member(message, server):
     member = DiscordServerUser.get_by_id(message.author.id, server)
     if member is not None:
         member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
         member.user.update(name=message.author.name)
-    ProcessedMessage.process_id(message.id)
     return member
 
 

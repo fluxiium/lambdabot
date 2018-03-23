@@ -12,9 +12,9 @@ django.setup()
 from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, DISCORD_STATUS
 from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.murphybot import start_murphy, murphybot_active
-from discordbot.util import log, get_server, get_member_and_process_message, get_attachments, discord_send,\
+from discordbot.util import log, get_server, get_member, get_attachments, discord_send,\
     save_attachment
-from discordbot.models import ProcessedMessage, MurphyRequest
+from discordbot.models import MurphyRequest
 from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
 
 log("")
@@ -71,9 +71,10 @@ async def process_message(message):
     if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
         await asyncio.sleep(2)
 
-    if server is None or ProcessedMessage.was_id_processed(message.id) or message.author.id == client.user.id:
+    if server is None or message.author.id == client.user.id:
         return
 
+    member = get_member(message, server)
     atts = get_attachments(message)
 
     if client.user in message.mentions:
@@ -94,7 +95,6 @@ async def process_message(message):
                 msg = msg.replace(att['real_url'], "", 1).strip()
 
         if murphybot_active() and not message.author.bot:
-            member = get_member_and_process_message(message, server)
             att = atts[0] if len(atts) > 0 else None
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['real_url']) if att is not None else ''
@@ -110,7 +110,6 @@ async def process_message(message):
                 answered = False
 
         if msg and (not answered or not murphybot_active()) and cleverbot_active():
-            member = get_member_and_process_message(message, server)
             await cb_talk(client, message.channel, member, msg)
 
         if not msg and len(atts) == 0:
@@ -132,7 +131,6 @@ async def process_message(message):
     cmd = server.get_cmd(splitcmd[0])
 
     if cmd is not None:
-        get_member_and_process_message(message, server)
         await discord_send(client.send_typing, message.channel)
         await discord_send(client.send_message, message.channel, cmd.message)
         return
@@ -145,7 +143,6 @@ async def process_message(message):
     if cmd_fun is None:
         return
 
-    member = get_member_and_process_message(message, server)
     await discord_send(client.send_typing, message.channel)
 
     try:
@@ -173,7 +170,7 @@ async def on_message(message):
 
 @client.event
 async def on_message_edit(old_message, message):
-    await process_message(message)
+    pass
 
 
 @client.event
