@@ -11,7 +11,7 @@ from django.utils import timezone
 from telethon import TelegramClient, events
 from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.models import MurphyRequest, MurphyFacePic
-from discordbot.util import log, discord_send, log_exc
+from discordbot.util import log, log_exc
 from lamdabotweb.settings import MURPHYBOT_TIMEOUT, TELEGRAM_API_ID, TELEGRAM_API_HASH
 
 MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
@@ -114,7 +114,7 @@ async def process_murphy(client):
             channel = client.get_channel(murphybot_request.channel_id)
             mention = "<@{}>".format(murphybot_request.server_user.user.user_id)
             try:
-                await discord_send(client.send_typing, channel)
+                await client.send_typing(channel)
             except discord.Forbidden:
                 log("can't send message to channel")
 
@@ -214,7 +214,7 @@ async def process_murphy(client):
             log_murphy("face accepted")
             MurphyFacePic.set(murphybot_request.channel_id, murphybot_request.face_pic)
             if murphybot_request.question == '':
-                await discord_send(client.send_message, channel, "{} face accepted :+1:".format(mention))
+                await client.send_message(channel, "{} face accepted :+1:".format(mention))
             else:
                 murphybot_state = "2.2"
                 continue
@@ -223,7 +223,7 @@ async def process_murphy(client):
             log_murphy("sending answer")
             tmpdir = mkdtemp(prefix="lambdabot_murphy_")
             output = murphybot.download_media(murphybot_media, file=tmpdir)
-            await discord_send(client.send_file, channel, output, content=mention)
+            await client.send_file(channel, output, content=mention)
 
         elif murphybot_state == "3.2":
             log_murphy("face accepted, sending question")
@@ -234,22 +234,22 @@ async def process_murphy(client):
 
         elif murphybot_state == "upload face":
             log_murphy("no channel face pic")
-            await discord_send(client.send_message, channel, "{} please upload a face first".format(mention))
+            await client.send_message(channel, "{} please upload a face first".format(mention))
 
         elif murphybot_state == "no face":
             log_murphy("no face detected")
-            await discord_send(client.send_message, channel, "{} no face detected :cry:".format(mention))
+            await client.send_message(channel, "{} no face detected :cry:".format(mention))
 
         elif murphybot_state == "idk":
             log_murphy("idk")
             if cleverbot_active():
                 await cb_talk(client, channel, murphybot_request.server_user, murphybot_request.question, nodelay=True)
             else:
-                await discord_send(client.send_message, channel, "{} :thinking:".format(mention))
+                await client.send_message(channel, "{} :thinking:".format(mention))
 
         elif murphybot_state == "error":
             log_murphy("error")
-            await discord_send(client.send_message, channel, "{} error :cry:".format(mention))
+            await client.send_message(channel, "{} error :cry:".format(mention))
 
         murphybot_request.mark_processed()
         murphybot_state = "0"

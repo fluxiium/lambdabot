@@ -12,8 +12,7 @@ django.setup()
 from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, DISCORD_STATUS
 from discordbot.cleverbot import cb_talk, cleverbot_active
 from discordbot.murphybot import start_murphy, murphybot_active
-from discordbot.util import log, get_server, get_member, get_attachments, discord_send,\
-    save_attachment
+from discordbot.util import log, get_server, get_member, get_attachments, save_attachment
 from discordbot.models import MurphyRequest
 from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
 
@@ -131,8 +130,8 @@ async def process_message(message):
     cmd = server.get_cmd(splitcmd[0])
 
     if cmd is not None:
-        await discord_send(client.send_typing, message.channel)
-        await discord_send(client.send_message, message.channel, cmd.message)
+        await client.send_typing(message.channel)
+        await client.send_message(message.channel, cmd.message)
         return
 
     cmd = COMMANDS.get(COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
@@ -143,7 +142,7 @@ async def process_message(message):
     if cmd_fun is None:
         return
 
-    await discord_send(client.send_typing, message.channel)
+    await client.send_typing(message.channel)
 
     try:
         response = await cmd_fun(

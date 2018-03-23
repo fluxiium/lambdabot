@@ -50,17 +50,6 @@ def log_exc(exc):
     print(traceback.format_exc())
 
 
-async def discord_send(func, *args, **kwargs):
-    try:
-        return await func(*args, **kwargs)
-    except discord.Forbidden:
-        # if func != client.send_typing:
-        #     log("channel forbidden")
-        pass
-    except Exception as e:
-        log_exc(e)
-
-
 def get_server(message):
     server_id = message.server.id
     server = DiscordServer.get_by_id(server_id)

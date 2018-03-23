@@ -10,7 +10,7 @@ from django.utils import timezone
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from discordbot.util import get_attachments, discord_send, save_attachment, log, log_exc
+from discordbot.util import get_attachments, save_attachment, log
 from lamdabotweb.settings import DEBUG, DISCORD_TOKEN
 
 IMG_ARCHIVE_CHANNEL = '395615705048809492'
@@ -51,7 +51,7 @@ async def on_message_edit(old_message, message):
         inline=False,
     )
 
-    await discord_send(client.send_message, client.get_channel(LOG_CHANNEL), embed=embed)
+    await client.send_message(client.get_channel(LOG_CHANNEL), embed=embed)
 
 
 @client.event
@@ -66,7 +66,7 @@ async def on_message_delete(message):
 
     for att in atts:
         att_path = save_attachment(att['real_url'], att['filename'])
-        msg_archived = await discord_send(client.send_file, client.get_channel(IMG_ARCHIVE_CHANNEL), att_path)
+        msg_archived = await client.send_file(client.get_channel(IMG_ARCHIVE_CHANNEL), att_path)
         att = get_attachments(msg_archived)[0]
 
         embed = Embed(
@@ -83,7 +83,7 @@ async def on_message_delete(message):
             text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
         )
 
-        await discord_send(client.send_message, client.get_channel(LOG_CHANNEL), embed=embed)
+        await client.send_message(client.get_channel(LOG_CHANNEL), embed=embed)
 
 
 @client.event

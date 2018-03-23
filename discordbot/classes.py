@@ -1,6 +1,3 @@
-from discordbot.util import discord_send
-
-
 class DiscordCommandException(Exception):
     pass
 
@@ -17,15 +14,13 @@ class DiscordCommandResponse:
 
     async def send(self, client, message):
         if self.attachment:
-            await discord_send(
-                client.send_file,
+            await client.send_file(
                 message.channel,
                 self.attachment,
                 content="{} {}".format(message.author.mention, self.message)
             )
         else:
-            await discord_send(
-                client.send_message,
+            await client.send_message(
                 message.channel,
                 "{} {}".format(message.author.mention, self.message),
                 embed=self.embed

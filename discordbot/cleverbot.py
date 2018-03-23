@@ -1,6 +1,6 @@
 from cleverwrap import CleverWrap
 from json.decoder import JSONDecodeError
-from discordbot.util import DelayedTask, discord_send, log
+from discordbot.util import DelayedTask, log
 from lamdabotweb.settings import CLEVERBOT_TOKEN
 
 cb_conversations = {}
@@ -40,8 +40,8 @@ async def cb_talk(client, channel, user, message, nodelay=False):
     log("response: {}".format(response), tag="cleverbot")
     delay = 0 if nodelay else 0.2 + min(0.04 * len(message), 4)
     if delay > 0:
-        DelayedTask(delay, discord_send, (client.send_typing, channel)).run()
+        DelayedTask(delay, client.send_typing, (channel,)).run()
         delay += min(0.17 * len(response), 4)
-    DelayedTask(delay, discord_send, (client.send_message, channel, "<@{0}> {1}".format(sender_id, response))).run()
+    DelayedTask(delay, client.send_message, (channel, "<@{0}> {1}".format(sender_id, response))).run()
 
     return response
