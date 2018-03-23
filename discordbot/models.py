@@ -40,6 +40,15 @@ class DiscordServer(models.Model):
         self.name = name
         self.save()
 
+    def add_meem(self):
+        self.meme_count += 1
+        self.save()
+        self.context.add_meem()
+
+    def add_sourceimg_submission(self):
+        self.submission_count += 1
+        self.save()
+
     def __str__(self):
         return str(self.name)
 
@@ -74,6 +83,14 @@ class DiscordUser(models.Model):
 
     def update(self, name):
         self.name = name
+        self.save()
+
+    def add_meem(self):
+        self.meme_count += 1
+        self.save()
+
+    def add_sourceimg_submission(self):
+        self.submission_count += 1
         self.save()
 
     def __str__(self):
@@ -126,6 +143,26 @@ class DiscordServerUser(models.Model):
                 seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
         return seconds_left, limit_count, limit_time
 
+    def generate_meme(self, template, channel):
+        meme = Meem.generate(context=self.server.context, template=template)
+        discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, channel_id=channel.id)
+        self.meme_count += 1
+        self.save()
+        self.user.add_meem()
+        self.server.add_meem()
+        return discord_meme
+
+    def submit_sourceimg(self, path, filename=None):
+        submission = MemeSourceImage.submit(path, filename)
+        if submission is None:
+            return None
+        discord_submission = DiscordSourceImgSubmission.objects.create(server_user=self, sourceimg=submission)
+        self.submission_count += 1
+        self.save()
+        self.user.add_sourceimg_submission()
+        self.server.add_sourceimg_submission()
+        return discord_submission
+
     def update(self, nickname):
         self.nickname = nickname
         self.save()
@@ -135,22 +172,15 @@ class DiscordServerUser(models.Model):
 
 
 class DiscordSourceImgSubmission(models.Model):
-    class Meta:
-        verbose_name = "Discord source image submission"
-
-    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.CASCADE, verbose_name="Server user")
-    sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE, verbose_name="Source image")
+    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.CASCADE)
+    sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{0} ({1})".format(self.sourceimg, self.server_user)
 
 
 class DiscordMeem(models.Model):
-
-    class Meta:
-        verbose_name = "Discord meme link"
-
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE, verbose_name='Meme link')
+    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     channel_id = models.CharField(max_length=32)
 

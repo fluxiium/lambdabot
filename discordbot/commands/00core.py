@@ -1,8 +1,8 @@
 from discordbot.classes import DiscordSyntaxException, DiscordCommandResponse
-from discordbot.models import DiscordSourceImgSubmission, DiscordMeem
+from discordbot.models import DiscordSourceImgSubmission
 from discordbot.util import save_attachment, log, get_timeout_str
 from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
-from memeviewer.models import MemeSourceImage, MemeTemplate, Meem
+from memeviewer.models import MemeSourceImage, MemeTemplate
 from memeviewer.preview import preview_meme
 
 COMMANDS = {}
@@ -34,10 +34,8 @@ async def _cmd_meem(server, member, message, args, argstr, **_):
                 limit_count, limit_time, seconds_left
             ))
 
-    meme = Meem.generate(context=server.context, template=template)
+    meme = member.generate_meme(template=template, channel=message.channel).meme
     preview_meme(meme)
-
-    DiscordMeem.objects.create(meme=meme, server_user=member, channel_id=message.channel.id)
     log(message.author, 'meme generated:', meme)
 
     msgstr = "here's a meme (using template `{0}`)\n{1}".format(
@@ -64,11 +62,10 @@ async def _cmd_submit(member, attachments, **_):
 
     for attachment in attachments:
         submitted_file = save_attachment(attachment['real_url'], attachment.get('filename'))
-        submission = MemeSourceImage.submit(submitted_file, attachment.get('filename', None))
+        submission = member.submit_sourceimg(submitted_file, attachment.get('filename', None))
         if submission is not None:
             added += 1
-            sourceimg = DiscordSourceImgSubmission.objects.create(server_user=member, sourceimg=submission)
-            log('sourceimg submitted by {}: {}'.format(member, sourceimg))
+            log('sourceimg submitted by {}: {}'.format(member, submission.sourceimg))
 
     if added == imgcount:
         if imgcount == 1:

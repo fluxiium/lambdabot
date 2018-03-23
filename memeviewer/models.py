@@ -91,6 +91,10 @@ class MemeContext(models.Model):
     def next_sourceimg(self):
         return self.next_image(ImageInContext.IMAGE_TYPE_SOURCEIMG)
 
+    def add_meem(self):
+        self.meme_count += 1
+        self.save()
+
     def __str__(self):
         return self.short_name
 
