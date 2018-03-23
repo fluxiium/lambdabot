@@ -2,13 +2,11 @@ import os
 import asyncio
 import traceback
 import uuid
-import discord
 import requests
 
 from discord import Member
 from django.utils import timezone
 from tempfile import mkdtemp
-
 from discordbot.models import DiscordServer, DiscordServerUser
 
 headers = {

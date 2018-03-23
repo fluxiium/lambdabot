@@ -4,14 +4,15 @@ import shlex
 import django
 import discord
 import re
+import lamdabotweb.settings as config
+
 from importlib import import_module
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from lamdabotweb.settings import BASE_DIR, DISCORD_TOKEN, DISCORD_STATUS
-from discordbot.cleverbot import cb_talk, cleverbot_active
-from discordbot.murphybot import start_murphy, murphybot_active
+import discordbot.murphybot as murphy
+import discordbot.cleverbot as cleverboi
 from discordbot.util import log, get_server, get_member, get_attachments, save_attachment
 from discordbot.models import MurphyRequest
 from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
@@ -22,24 +23,24 @@ log("#  LambdaBot 3883 - Discord  #")
 log("##############################")
 log("")
 
-client = discord.Client(max_messages=10000)
+_client = discord.Client(max_messages=10000)
 
 
-COMMANDS = {}
-COMMAND_ALIASES = {}
-for file in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'commands')):
+_COMMANDS = {}
+_COMMAND_ALIASES = {}
+for file in os.listdir(os.path.join(config.BASE_DIR, 'discordbot', 'commands')):
     if file.startswith('__') or not file.endswith('.py'):
         continue
     md = import_module('discordbot.commands.' + os.path.splitext(file)[0])
-    COMMANDS.update(md.COMMANDS)
-    COMMAND_ALIASES.update(md.COMMAND_ALIASES)
+    _COMMANDS.update(md.COMMANDS)
+    _COMMAND_ALIASES.update(md.COMMAND_ALIASES)
 
 
 # noinspection PyShadowingNames
 async def _cmd_help(server, message, **_):
     helpstr = "available commands:".format(message.author.mention)
 
-    for cmd_name, cmd_data in COMMANDS.items():
+    for cmd_name, cmd_data in _COMMANDS.items():
 
         helpstr += "\n`{0}{1}".format(server.prefix, cmd_name)
 
@@ -56,12 +57,12 @@ async def _cmd_help(server, message, **_):
 
     return DiscordCommandResponse(helpstr)
 
-COMMANDS['help'] = {
+_COMMANDS['help'] = {
     'function': _cmd_help,
 }
 
 
-@client.event
+@_client.event
 async def process_message(message):
     msg = message.content.strip()
 
@@ -70,18 +71,18 @@ async def process_message(message):
     if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
         await asyncio.sleep(2)
 
-    if server is None or message.author.id == client.user.id:
+    if server is None or message.author.id == _client.user.id:
         return
 
     member = get_member(message, server)
     atts = get_attachments(message)
 
-    if client.user in message.mentions:
+    if _client.user in message.mentions:
 
-        if msg.startswith(client.user.mention):
-            msg = msg.replace(client.user.mention, "", 1).strip()
-        elif msg.endswith(client.user.mention):
-            msg = msg.rsplit(client.user.mention, 1)[0].strip()
+        if msg.startswith(_client.user.mention):
+            msg = msg.replace(_client.user.mention, "", 1).strip()
+        elif msg.endswith(_client.user.mention):
+            msg = msg.rsplit(_client.user.mention, 1)[0].strip()
         else:
             return
 
@@ -93,7 +94,7 @@ async def process_message(message):
             if att['is_embed']:
                 msg = msg.replace(att['real_url'], "", 1).strip()
 
-        if murphybot_active() and not message.author.bot:
+        if murphy.is_active() and not message.author.bot:
             att = atts[0] if len(atts) > 0 else None
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['real_url']) if att is not None else ''
@@ -108,8 +109,8 @@ async def process_message(message):
             else:
                 answered = False
 
-        if msg and (not answered or not murphybot_active()) and cleverbot_active():
-            await cb_talk(client, message.channel, member, msg)
+        if msg and (not answered or not murphy.is_active()) and cleverboi.is_active():
+            await cleverboi.talk(_client, message.channel, member, msg)
 
         if not msg and len(atts) == 0:
             msg = server.prefix + "help"
@@ -130,11 +131,11 @@ async def process_message(message):
     cmd = server.get_cmd(splitcmd[0])
 
     if cmd is not None:
-        await client.send_typing(message.channel)
-        await client.send_message(message.channel, cmd.message)
+        await _client.send_typing(message.channel)
+        await _client.send_message(message.channel, cmd.message)
         return
 
-    cmd = COMMANDS.get(COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
+    cmd = _COMMANDS.get(_COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
     if cmd is None:
         return
 
@@ -142,11 +143,11 @@ async def process_message(message):
     if cmd_fun is None:
         return
 
-    await client.send_typing(message.channel)
+    await _client.send_typing(message.channel)
 
     try:
         response = await cmd_fun(
-            client=client,
+            client=_client,
             server=server,
             member=member,
             message=message,
@@ -159,28 +160,28 @@ async def process_message(message):
     except DiscordCommandException:
         response = DiscordCommandResponse("error :cry:")
 
-    await response.send(client, message)
+    await response.send(_client, message)
 
 
-@client.event
+@_client.event
 async def on_message(message):
     await process_message(message)
 
 
-@client.event
+@_client.event
 async def on_message_edit(old_message, message):
     pass
 
 
-@client.event
+@_client.event
 async def on_message_delete(message):
     pass
 
 
-@client.event
+@_client.event
 async def on_ready():
-    log('Logged in as', client.user.name, client.user.id)
-    await client.change_presence(game=discord.Game(name=DISCORD_STATUS))
+    log('Logged in as', _client.user.name, _client.user.id)
+    await _client.change_presence(game=discord.Game(name=config.DISCORD_STATUS))
 
-start_murphy(client)
-client.run(DISCORD_TOKEN)
+murphy.start(_client)
+_client.run(config.DISCORD_TOKEN)

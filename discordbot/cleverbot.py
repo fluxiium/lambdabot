@@ -1,36 +1,36 @@
+import config
 from cleverwrap import CleverWrap
 from json.decoder import JSONDecodeError
 from discordbot.util import DelayedTask, log
-from lamdabotweb.settings import CLEVERBOT_TOKEN
 
-cb_conversations = {}
-cb_active = bool(CLEVERBOT_TOKEN)
-
-
-def cleverbot_active():
-    return cb_active
+_cb_conversations = {}
+_cb_active = bool(config.CLEVERBOT_TOKEN)
 
 
-async def cb_talk(client, channel, user, message, nodelay=False):
-    global cb_active
-    if not cb_active:
+def is_active():
+    return _cb_active
+
+
+async def talk(client, channel, user, message, nodelay=False):
+    global _cb_active
+    if not _cb_active:
         return None
 
     sender_id = user.user.user_id
-    if cb_conversations.get(sender_id) is None:
+    if _cb_conversations.get(sender_id) is None:
         log("creating session for {}".format(user), tag="cleverbot")
-        cb_conversations[sender_id] = CleverWrap(CLEVERBOT_TOKEN)
+        _cb_conversations[sender_id] = CleverWrap(config.CLEVERBOT_TOKEN)
 
     response = "error :cry:"
     success = False
     retries = 5
     while not success and retries > 0:
         try:
-            response = cb_conversations[sender_id].say(message)
+            response = _cb_conversations[sender_id].say(message)
             success = True
         except JSONDecodeError:
             log("error! recreating session for {}".format(user), tag="cleverbot")
-            cb_conversations[sender_id] = CleverWrap(CLEVERBOT_TOKEN)
+            _cb_conversations[sender_id] = CleverWrap(config.CLEVERBOT_TOKEN)
             retries -= 1
 
     if response is None:

@@ -1,22 +1,21 @@
 import os
+import config
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponse
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
-
-from lamdabotweb.settings import USERNAME_FACEBOOK, USERNAME_TWITTER, BOT_NAME, WEBSITE_URL
+from django.shortcuts import render
 from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
 from memeviewer.preview import preview_meme
 
 
 def home_view(request):
     context = {
-        'bot_name': BOT_NAME,
-        'bot_name_twitter': USERNAME_TWITTER,
-        'bot_name_facebook': USERNAME_FACEBOOK,
-        'website_url': WEBSITE_URL,
+        'bot_name': config.BOT_NAME,
+        'bot_name_twitter': config.USERNAME_TWITTER,
+        'bot_name_facebook': config.USERNAME_FACEBOOK,
+        'website_url': config.WEBSITE_URL,
     }
 
     return render(request, 'memeviewer/home.html', context)
@@ -94,13 +93,13 @@ def meme_info_view(request, meme_id):
     twitter_meme = meme.twittermeem_set.first()
 
     context = {
-        'bot_name': BOT_NAME,
-        'bot_name_twitter': USERNAME_TWITTER,
-        'bot_name_facebook': USERNAME_FACEBOOK,
+        'bot_name': config.BOT_NAME,
+        'bot_name_twitter': config.USERNAME_TWITTER,
+        'bot_name_facebook': config.USERNAME_FACEBOOK,
         'meme': meme,
         'facebook_url': fb_meme and fb_meme.post,
         'twitter_url': twitter_meme and twitter_meme.post,
-        'website_url': WEBSITE_URL,
+        'website_url': config.WEBSITE_URL,
     }
 
     return render(request, 'memeviewer/meme_info_view.html', context)

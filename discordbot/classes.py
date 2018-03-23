@@ -8,20 +8,20 @@ class DiscordSyntaxException(DiscordCommandException):
 
 class DiscordCommandResponse:
     def __init__(self, message='', embed=None, attachment=None):
-        self.message = message
-        self.embed = embed
-        self.attachment = attachment
+        self.__message = message
+        self.__embed = embed
+        self.__attachment = attachment
 
     async def send(self, client, message):
-        if self.attachment:
+        if self.__attachment:
             await client.send_file(
                 message.channel,
-                self.attachment,
-                content="{} {}".format(message.author.mention, self.message)
+                self.__attachment,
+                content="{} {}".format(message.author.mention, self.__message)
             )
         else:
             await client.send_message(
                 message.channel,
-                "{} {}".format(message.author.mention, self.message),
-                embed=self.embed
+                "{} {}".format(message.author.mention, self.__message),
+                embed=self.__embed
             )

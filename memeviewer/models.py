@@ -4,6 +4,7 @@ import operator
 import os
 import re
 import uuid
+import config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -14,8 +15,6 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
-
-from lamdabotweb.settings import WEBSITE_URL, IMG_QUEUE_LENGTH, MAX_SRCIMG_SIZE, MEDIA_SUBDIR, MEDIA_URL, MEDIA_ROOT
 
 
 def struuid4():
@@ -57,7 +56,7 @@ class MemeContext(models.Model):
         # if empty, make new queue
         if result.count() == 0:
 
-            queue_length = IMG_QUEUE_LENGTH
+            queue_length = config.IMG_QUEUE_LENGTH
             recent_threshold = timezone.now() - timezone.timedelta(days=self.recent_threshold)
 
             img_queue_db = objects.filter(accepted=True).filter(Q(contexts=self) | Q(contexts=None)).order_by('?')
@@ -102,7 +101,7 @@ class MemeSourceImage(models.Model):
         verbose_name = "Source image"
 
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/sourceimg/', max_length=256)
+    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/sourceimg/', max_length=256)
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
@@ -152,14 +151,14 @@ class MemeSourceImage(models.Model):
         saved_filename = "{0}.{1}".format(imgid, imghdr.what(filepath))
 
         stat = os.stat(filepath)
-        if stat.st_size > MAX_SRCIMG_SIZE and image.mode == "RGBA":
+        if stat.st_size > config.MAX_SRCIMG_SIZE and image.mode == "RGBA":
             image = image.convert('RGB')
             saved_filename += ".jpeg"
             filepath += ".jpeg"
             image.save(filepath)
             stat = os.stat(filepath)
 
-        if stat.st_size > MAX_SRCIMG_SIZE:
+        if stat.st_size > config.MAX_SRCIMG_SIZE:
             return None
 
         if friendly_name is None:
@@ -197,9 +196,9 @@ class MemeTemplate(models.Model):
         verbose_name = "Template"
 
     name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    bg_image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+    bg_image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
                                       blank=True, verbose_name="Template background")
-    image_file = models.ImageField(upload_to=MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
                                    blank=True, verbose_name="Template overlay")
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
@@ -378,13 +377,13 @@ class Meem(models.Model):
         return list(map(lambda x: MemeSourceImage.by_id(x[1]), json.loads(self.source_images).items()))
 
     def get_local_path(self):
-        return os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')
+        return os.path.join(config.MEDIA_ROOT, config.MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')
 
     def get_url(self):
-        return MEDIA_URL + MEDIA_SUBDIR + '/memes/' + self.meme_id + '.jpg'
+        return config.MEDIA_URL + config.MEDIA_SUBDIR + '/memes/' + self.meme_id + '.jpg'
 
     def get_info_url(self):
-        return WEBSITE_URL + 'meme/' + self.meme_id
+        return config.WEBSITE_URL + 'meme/' + self.meme_id
 
     def __str__(self):
         return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)

@@ -1,9 +1,8 @@
-import datetime
+from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -121,7 +120,7 @@ class DiscordServerUser(models.Model):
         limit_time = self.server.meme_limit_time
         seconds_left = 0
         if not self.unlimited_memes:
-            since = timezone.now() - datetime.timedelta(minutes=limit_time)
+            since = timezone.now() - timedelta(minutes=limit_time)
             memes = DiscordMeem.objects.filter(server_user=self, meme__gen_date__gte=since).order_by('-meme__gen_date')[:limit_count]
             if limit_count <= memes.count():
                 seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
@@ -161,15 +160,12 @@ class DiscordMeem(models.Model):
 
 class MurphyRequest(models.Model):
 
-    class Meta:
-        verbose_name = "Murphy bot request"
-
-    question = models.CharField(max_length=256, blank=True, default='', verbose_name="Question")
-    face_pic = models.CharField(max_length=256, blank=True, default='', verbose_name="Face pic")
+    question = models.CharField(max_length=256, blank=True, default='')
+    face_pic = models.CharField(max_length=256, blank=True, default='')
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.CASCADE, null=True, blank=True, default=None)
-    ask_date = models.DateTimeField(default=timezone.now, verbose_name='Date asked')
-    channel_id = models.CharField(max_length=32, verbose_name="Discord channel ID")
-    processed = models.BooleanField(default=False, verbose_name="Processed?")
+    ask_date = models.DateTimeField(default=timezone.now)
+    channel_id = models.CharField(max_length=32)
+    processed = models.BooleanField(default=False)
 
     @classmethod
     def ask(cls, server_user, channel_id, question='', face_pic=''):
@@ -179,7 +175,7 @@ class MurphyRequest(models.Model):
     def get_next_unprocessed(cls, minutes=None):
         requests = cls.objects.filter(processed=False)
         if minutes is not None:
-            requests = requests.filter(ask_date__gte=(timezone.now() - datetime.timedelta(minutes=minutes)))
+            requests = requests.filter(ask_date__gte=(timezone.now() - timedelta(minutes=minutes)))
         return requests.order_by('ask_date').first()
 
     def mark_processed(self):
@@ -198,12 +194,9 @@ class MurphyRequest(models.Model):
 
 class MurphyFacePic(models.Model):
 
-    class Meta:
-        verbose_name = "Murphy bot face pic"
-
-    channel_id = models.CharField(max_length=32, primary_key=True, verbose_name="Discord channel ID")
-    face_pic = models.CharField(max_length=256, blank=True, default='', verbose_name="Face pic")
-    last_used = models.DateTimeField(default=timezone.now, verbose_name='Last used')
+    channel_id = models.CharField(max_length=32, primary_key=True)
+    face_pic = models.CharField(max_length=256, blank=True, default='')
+    last_used = models.DateTimeField(default=timezone.now)
 
     @classmethod
     def set(cls, channel_id, face_pic=None):

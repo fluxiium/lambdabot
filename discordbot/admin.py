@@ -1,6 +1,4 @@
 from django.contrib import admin
-from django.utils.safestring import mark_safe
-
 from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser
 from memeviewer.admin import ahref
 
