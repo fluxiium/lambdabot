@@ -249,42 +249,20 @@ class MemeTemplate(models.Model):
         obj = cls.objects
         if not allow_disabled:
             obj = obj.filter(accepted=True)
-        found = obj.filter(name__iexact=name).first()
-        if found is not None:
-            return found
-        found = obj.filter(friendly_name__iexact=name).first()
-        if found is not None:
-            return found
-        found = obj.filter(name__istartswith=name).first()
-        if found is not None:
-            return found
-        found = obj.filter(friendly_name__istartswith=name).first()
-        if found is not None:
-            return found
-        found = obj.filter(name__icontains=name).first()
-        if found is not None:
-            return found
-        found = obj.filter(friendly_name__icontains=name).first()
+        found = \
+            obj.filter(name__iexact=name).first() or \
+            obj.filter(friendly_name__iexact=name).first() or \
+            obj.filter(name__istartswith=name).first() or \
+            obj.filter(friendly_name__istartswith=name).first() or \
+            obj.filter(name__icontains=name).first() or \
+            obj.filter(friendly_name__icontains=name).first()
         if found is not None:
             return found
         name_words = re.split('[ ./]', name)
-        found = obj.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first()
-        if found is not None:
-            return found
-        found = obj.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
+        found = \
+            obj.filter(reduce(operator.and_, (Q(name__icontains=x) for x in name_words))).first() or \
+            obj.filter(reduce(operator.and_, (Q(friendly_name__icontains=x) for x in name_words))).first()
         return found
-
-    def possible_combinations(self, context):
-        possible = 1
-        slots = MemeTemplateSlot.objects.filter(template=self)
-        srcimgs = MemeSourceImage.count(context)
-        prev_slot_id = None
-        for slot in slots:
-            if slot.slot_order == prev_slot_id:
-                continue
-            possible *= srcimgs
-            srcimgs -= 1
-        return possible
 
     def get_preview_url(self):
         return self.pk and reverse('memeviewer:template_preview_view', kwargs={'template_name': self.name}) or ''
@@ -387,13 +365,6 @@ class Meem(models.Model):
             prev_slot_id = slot.slot_order
         meem = cls.create(template, source_files, context, saveme)
         return meem
-
-    @classmethod
-    def possible_combinations(cls, context):
-        possible = 0
-        for template in MemeTemplate.by_context(context):
-            possible += template.possible_combinations(context)
-        return possible
 
     def get_sourceimgs_in_slots(self):
         rawimgs = json.loads(self.source_images)

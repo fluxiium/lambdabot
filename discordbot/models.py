@@ -127,10 +127,6 @@ class DiscordServerUser(models.Model):
             memes = memes[:limit]
         return memes
 
-    ACTION_SUBMIT_SRCIMG = 1
-    ACTION_SUBMIT_TEMPLATE = 2
-    ACTION_MEEM = 3
-
     def get_meme_limit(self):
         limit_count = self.meme_limit_count if self.meme_limit_count is not None else self.server.meme_limit_count
         limit_time = self.meme_limit_time if self.meme_limit_time is not None else self.server.meme_limit_time
