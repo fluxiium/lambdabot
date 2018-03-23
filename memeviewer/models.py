@@ -35,6 +35,7 @@ class MemeContext(models.Model):
     name = models.CharField(max_length=64, verbose_name='Name')
     recent_threshold = models.IntegerField(default=14, verbose_name='Recent threshold (days)')
     is_public = models.BooleanField(default=False, verbose_name='Is public?')
+    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
     @classmethod
     def by_id(cls, name):

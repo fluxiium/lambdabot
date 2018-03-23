@@ -20,6 +20,9 @@ class DiscordServer(models.Model):
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
     meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
 
+    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
+    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
+
     @classmethod
     def get_by_id(cls, server_id):
         return cls.objects.filter(server_id=server_id).first()
@@ -67,6 +70,9 @@ class DiscordUser(models.Model):
     user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
     name = models.CharField(max_length=64, verbose_name='Username')
 
+    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
+    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
+
     def update(self, name):
         self.name = name
         self.save()
@@ -94,6 +100,9 @@ class DiscordServerUser(models.Model):
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
     nickname = models.CharField(max_length=64, verbose_name='Nickname', blank=True, default='')
     unlimited_memes = models.BooleanField(default=False, verbose_name='Unlimited memes')
+
+    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
+    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
     @classmethod
     def get_by_id(cls, user_id, server):
