@@ -44,7 +44,7 @@ class MemeContext(models.Model):
     @classmethod
     def by_id_or_create(cls, name, friendly_name, is_public=False):
         context = cls.objects.get_or_create(short_name=name, defaults={'name': friendly_name, 'is_public': is_public})
-        return context
+        return context[0]
 
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
