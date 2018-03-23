@@ -1,7 +1,6 @@
 from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.urls import reverse
 from django.utils import timezone
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
@@ -14,7 +13,7 @@ class DiscordServer(models.Model):
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
-    context = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
+    context = models.ForeignKey(MemeContext, verbose_name='Context', default='default', on_delete=models.SET_DEFAULT)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
 
     meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
@@ -56,11 +55,7 @@ class DiscordServer(models.Model):
         self.save()
 
     def __str__(self):
-        return str(self.name)
-
-    def get_admin_url(self):
-        content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.server_id,))
+        return self.name or "?"
 
 
 class DiscordCommand(models.Model):
@@ -73,7 +68,7 @@ class DiscordCommand(models.Model):
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
 
     def __str__(self):
-        return self.cmd
+        return "{0} ({1})".format(self.cmd, self.server)
 
 
 class DiscordUser(models.Model):
@@ -105,16 +100,7 @@ class DiscordUser(models.Model):
         self.save()
 
     def __str__(self):
-        return str(self.name)
-
-    def get_admin_url(self):
-        content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.user_id,))
-
-    def get_srcimg_admin_url(self):
-        content_type = ContentType.objects.get_for_model(MemeSourceImage)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
-            "?discordsourceimgsubmission__server_user__user__user_id__exact=" + self.user_id
+        return self.name or "?"
 
 
 # noinspection PyProtectedMember
@@ -173,20 +159,6 @@ class DiscordServerUser(models.Model):
         self.user._add_sourceimg_submission()
         self.server._add_sourceimg_submission()
         return discord_submission
-
-    def get_adminurl_submissions(self):
-        content_type = ContentType.objects.get_for_model(MemeSourceImage)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + (
-            "?discordsourceimgsubmission__server_user__user__user_id=%s" +
-            "&discordsourceimgsubmission__server_user__server__server_id=%s"
-        ) % (self.user_id, self.server_id)
-
-    def get_adminurl_memes(self):
-        content_type = ContentType.objects.get_for_model(Meem)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + (
-            "?discordmeem__server_user__user__user_id=%s" +
-            "&discordmeem__server_user__server__server_id=%s"
-        ) % (self.user_id, self.server_id)
 
     def __str__(self):
         return "{0} ({1})".format(self.user, self.server)

@@ -16,6 +16,8 @@ from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
 
+from util.admin_utils import object_url
+
 
 def struuid4():
     return str(uuid.uuid4())
@@ -111,10 +113,11 @@ class MemeSourceImage(models.Model):
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
+    meme_count = models.IntegerField(default=0, verbose_name='Memes')
 
-    def save(self, *args, **kwargs):
+    def clean(self):
         self.change_date = timezone.now()
-        models.Model.save(self, *args, **kwargs)
+        self.save()
 
     # add image to queues of all its contexts
     def enqueue(self):
@@ -143,6 +146,10 @@ class MemeSourceImage(models.Model):
         for context in contexts:
             result += context.short_name + " "
         return result.strip()
+
+    def _add_meem(self):
+        self.meme_count += 1
+        self.save()
 
     @classmethod
     def submit(cls, filepath, filename=None, friendly_name=None):
@@ -184,15 +191,6 @@ class MemeSourceImage(models.Model):
     def by_id(cls, name):
         return cls.objects.get(name=name)
 
-    def get_admin_url(self):
-        content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.name,))
-
-    def get_memes_admin_url(self):
-        content_type = ContentType.objects.get_for_model(Meem)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
-            "?source_images__contains=" + self.name
-
 
 class MemeTemplate(models.Model):
 
@@ -210,16 +208,15 @@ class MemeTemplate(models.Model):
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
-
-    def save(self, *args, **kwargs):
-        self.change_date = timezone.now()
-        models.Model.save(self, *args, **kwargs)
+    meme_count = models.IntegerField(default=0, verbose_name='Memes')
 
     def clean(self):
         if not self.bg_image_file and not self.image_file:
             raise ValidationError('Please upload a template background and/or overlay image')
         if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
             raise ValidationError('The background and overlay images have to have the same dimensions')
+        self.change_date = timezone.now()
+        self.save()
 
     # add image to queues of all its contexts
     def enqueue(self):
@@ -233,6 +230,10 @@ class MemeTemplate(models.Model):
             for c in contexts:
                 ImageInContext.objects.create(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE,
                                               context_link=c)
+
+    def _add_meem(self):
+        self.meme_count += 1
+        self.save()
 
     @classmethod
     def count(cls, context):
@@ -289,15 +290,6 @@ class MemeTemplate(models.Model):
     def __str__(self):
         return self.friendly_name or self.name
 
-    def get_admin_url(self):
-        content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.name,))
-
-    def get_memes_admin_url(self):
-        content_type = ContentType.objects.get_for_model(Meem)
-        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + \
-            "?template_link__name__exact=" + self.name
-
 
 class MemeTemplateSlot(models.Model):
 
@@ -326,33 +318,28 @@ class MemeTemplateSlot(models.Model):
         return cls.objects.get(template=template, slot_order=slot_order)
 
 
+# noinspection PyProtectedMember
 class Meem(models.Model):
 
     class Meta:
         verbose_name = "Meme"
 
-    number = models.IntegerField(default=next_meme_number, verbose_name='Number')
+    number = models.IntegerField(default=next_meme_number, unique=True, verbose_name='Number')
     meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4, verbose_name='ID')
-    template_link = models.ForeignKey(MemeTemplate, verbose_name='Template', on_delete=models.CASCADE)
-    context_link = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.CASCADE)
+    template_link = models.ForeignKey(MemeTemplate, verbose_name='Template', on_delete=models.SET_NULL, null=True)
+    context_link = models.ForeignKey(MemeContext, verbose_name='Context', on_delete=models.SET_DEFAULT, default='default')
     gen_date = models.DateTimeField(default=timezone.now, verbose_name='Date generated')
     source_images = models.TextField(verbose_name='Source images')
 
     @classmethod
-    def create(cls, template, sourceimgs, context, saveme=True):
-        meem = cls(template_link=template, context_link=context, source_images=json.dumps(sourceimgs))
-        if saveme:
-            meem.save()
-        return meem
-
-    @classmethod
     def generate(cls, context, template=None, saveme=True):
         if MemeTemplate.count(context) == 0:
-            raise FileNotFoundError("Please upload some templates first")
+            raise FileNotFoundError("No templates")
         if MemeSourceImage.count(context) == 0:
-            raise FileNotFoundError("Please upload some source images first")
+            raise FileNotFoundError("No source images")
         if template is None:
             template = context.next_template()
+        template._add_meem()
         source_files = {}
         prev_slot_id = None
         source_file = None
@@ -366,8 +353,11 @@ class Meem(models.Model):
                 if source_file not in source_files.values():
                     break
             source_files[slot.slot_order] = source_file.name
+            source_file._add_meem()
             prev_slot_id = slot.slot_order
-        meem = cls.create(template, source_files, context, saveme)
+        meem = cls(template_link=template, context_link=context, source_images=json.dumps(source_files))
+        if saveme:
+            meem.save()
         return meem
 
     def get_sourceimgs_in_slots(self):
@@ -389,12 +379,11 @@ class Meem(models.Model):
     def get_info_url(self):
         return config.WEBSITE_URL + 'meme/' + self.meme_id
 
-    def __str__(self):
-        return "{0} - #{1}, {2}".format(self.meme_id, self.number, self.gen_date)
+    def get_admin_link(self):
+        return object_url(Meem, self.meme_id, 'Admin')
 
-    def get_admin_url(self):
-        content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.meme_id,))
+    def __str__(self):
+        return str(self.number)
 
 
 class ImageInContext(models.Model):

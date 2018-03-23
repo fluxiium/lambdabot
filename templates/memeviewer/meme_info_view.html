@@ -41,7 +41,7 @@
                     | <a href="https://twitter.com/{{ bot_name_twitter }}/status/{{ twitter_url }}" target="_blank">Twitter post</a>
                 {% endif %}
                 {% if perms.meem.change_meem %}
-                    | <a href="{{  meme.get_admin_url }}">Admin</a>
+                    | {{ meme.get_admin_link }}
                 {% endif %}
             </td>
         </tr>

@@ -4,19 +4,16 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import MemeContext, Meem
-from discordbot.models import DiscordServer, DiscordUser, DiscordServerUser, DiscordMeem, DiscordSourceImgSubmission
+from memeviewer.models import MemeContext, Meem, MemeTemplate, MemeSourceImage
+from discordbot.models import DiscordServer, DiscordUser, DiscordServerUser
 
 for c in MemeContext.objects.all():
-    memes = Meem.objects.filter(context_link=c)
-    c.meme_count = memes.count()
+    c.meme_count = c.meem_set.count()
     c.save()
 
 for u in DiscordServerUser.objects.all():
-    memes = DiscordMeem.objects.filter(server_user=u)
-    u.meme_count = memes.count()
-    subs = DiscordSourceImgSubmission.objects.filter(server_user=u)
-    u.submission_count = subs.count()
+    u.meme_count = u.discordmeem_set.count()
+    u.submission_count = u.discordsourceimgsubmission_set.count()
     u.save()
 
 for u in DiscordUser.objects.all():
@@ -36,3 +33,11 @@ for s in DiscordServer.objects.all():
         s.meme_count += su.meme_count
         s.submission_count += su.submission_count
     s.save()
+
+for m in MemeTemplate.objects.all():
+    m.meme_count = m.meem_set.count()
+    m.save()
+
+for i in MemeSourceImage.objects.all():
+    i.meme_count = Meem.objects.filter(source_images__contains='"%s"' % i.name).count()
+    i.save()
