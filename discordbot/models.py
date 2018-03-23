@@ -6,6 +6,7 @@ from django.utils import timezone
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
+# noinspection PyProtectedMember
 class DiscordServer(models.Model):
 
     class Meta:
@@ -21,10 +22,15 @@ class DiscordServer(models.Model):
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
+    user_count = models.IntegerField(default=0, verbose_name='Users')
 
     @classmethod
-    def get_by_id(cls, server_id):
-        return cls.objects.filter(server_id=server_id).first()
+    def update(cls, server_id, name=None):
+        server = cls.objects.filter(server_id=server_id).first()
+        if name is not None:
+            server.name = name
+            server.save()
+        return server
 
     @classmethod
     def get_all(cls):
@@ -36,17 +42,17 @@ class DiscordServer(models.Model):
     def get_cmd(self, cmd):
         return self.get_commands().filter(cmd=cmd).first()
 
-    def update(self, name):
-        self.name = name
-        self.save()
-
-    def add_meem(self):
+    def _add_meem(self):
         self.meme_count += 1
         self.save()
-        self.context.add_meem()
+        self.context._add_meem()
 
-    def add_sourceimg_submission(self):
+    def _add_sourceimg_submission(self):
         self.submission_count += 1
+        self.save()
+
+    def _add_user(self):
+        self.user_count += 1
         self.save()
 
     def __str__(self):
@@ -80,17 +86,22 @@ class DiscordUser(models.Model):
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
+    server_count = models.IntegerField(default=0, verbose_name='Servers')
 
     def update(self, name):
         self.name = name
         self.save()
 
-    def add_meem(self):
+    def _add_meem(self):
         self.meme_count += 1
         self.save()
 
-    def add_sourceimg_submission(self):
+    def _add_sourceimg_submission(self):
         self.submission_count += 1
+        self.save()
+
+    def _add_server(self):
+        self.server_count += 1
         self.save()
 
     def __str__(self):
@@ -106,6 +117,7 @@ class DiscordUser(models.Model):
             "?discordsourceimgsubmission__server_user__user__user_id__exact=" + self.user_id
 
 
+# noinspection PyProtectedMember
 class DiscordServerUser(models.Model):
 
     class Meta:
@@ -114,22 +126,21 @@ class DiscordServerUser(models.Model):
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    nickname = models.CharField(max_length=64, verbose_name='Nickname', blank=True, default='')
     unlimited_memes = models.BooleanField(default=False, verbose_name='Unlimited memes')
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
     @classmethod
-    def get_by_id(cls, user_id, server):
-        server_user = DiscordServerUser.objects.filter(user__user_id=user_id, server=server).first()
-        if server_user is None:
-            user = DiscordUser.objects.filter(user_id=user_id).first()
-            if user is None:
-                user = DiscordUser(user_id=user_id)
-                user.save()
-            server_user = DiscordServerUser(user=user, server=server)
-            server_user.save()
+    def update(cls, user_id, server, name=None):
+        user, _ = DiscordUser.objects.get_or_create(user_id=user_id)
+        if name is not None:
+            user.name = name
+            user.save()
+        server_user, created = DiscordServerUser.objects.get_or_create(user=user, server=server)
+        if created:
+            server._add_user()
+            user._add_server()
         return server_user
 
     def get_meme_limit(self):
@@ -148,8 +159,8 @@ class DiscordServerUser(models.Model):
         discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, channel_id=channel.id)
         self.meme_count += 1
         self.save()
-        self.user.add_meem()
-        self.server.add_meem()
+        self.user._add_meem()
+        self.server._add_meem()
         return discord_meme
 
     def submit_sourceimg(self, path, filename=None):
@@ -159,16 +170,26 @@ class DiscordServerUser(models.Model):
         discord_submission = DiscordSourceImgSubmission.objects.create(server_user=self, sourceimg=submission)
         self.submission_count += 1
         self.save()
-        self.user.add_sourceimg_submission()
-        self.server.add_sourceimg_submission()
+        self.user._add_sourceimg_submission()
+        self.server._add_sourceimg_submission()
         return discord_submission
 
-    def update(self, nickname):
-        self.nickname = nickname
-        self.save()
+    def get_adminurl_submissions(self):
+        content_type = ContentType.objects.get_for_model(MemeSourceImage)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + (
+            "?discordsourceimgsubmission__server_user__user__user_id=%s" +
+            "&discordsourceimgsubmission__server_user__server__server_id=%s"
+        ) % (self.user_id, self.server_id)
+
+    def get_adminurl_memes(self):
+        content_type = ContentType.objects.get_for_model(Meem)
+        return reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)) + (
+            "?discordmeem__server_user__user__user_id=%s" +
+            "&discordmeem__server_user__server__server_id=%s"
+        ) % (self.user_id, self.server_id)
 
     def __str__(self):
-        return "{0} ({1})".format(self.nickname, self.server)
+        return "{0} ({1})".format(self.user, self.server)
 
 
 class DiscordSourceImgSubmission(models.Model):

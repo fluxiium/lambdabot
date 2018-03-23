@@ -12,8 +12,8 @@ class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
     verbose_name_plural = "Server-specific"
-    fields = ('server_admin_url', 'unlimited_memes', 'submission_count', 'meme_count')
-    readonly_fields = ('server_admin_url', 'submission_count', 'meme_count')
+    fields = ('server_admin_url', 'unlimited_memes', 'submissions_link', 'memes_link')
+    readonly_fields = ('server_admin_url', 'submissions_link', 'memes_link')
     ordering = ('server__name',)
     can_delete = False
 
@@ -24,13 +24,13 @@ class DiscordServerUserInline(admin.TabularInline):
         return ahref(obj.server.get_admin_url(), obj.server)
     server_admin_url.short_description = 'Server'
 
-    def submission_count(self, obj):
-        return obj.get_submissions().count()
-    submission_count.short_description = 'Submitted images'
+    def submissions_link(self, obj):
+        return ahref(obj.get_adminurl_submissions(), obj.submission_count)
+    submissions_link.short_description = 'Submitted images'
 
-    def meme_count(self, obj):
-        return obj.get_memes().count()
-    meme_count.short_description = 'Generated memes'
+    def memes_link(self, obj):
+        return ahref(obj.get_adminurl_memes(), obj.meme_count)
+    memes_link.short_description = 'Generated memes'
 
 
 @admin.register(DiscordServer)
@@ -51,14 +51,11 @@ class DiscordServerAdmin(admin.ModelAdmin):
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user_id', 'submission_count', 'meme_count')
+    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
     fields = readonly_fields = ('user_id', 'name', 'srcimg_admin_url', 'meme_count')
     inlines = [DiscordServerUserInline]
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
     def has_add_permission(self, request):
         return False

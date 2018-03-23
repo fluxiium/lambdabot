@@ -125,6 +125,8 @@ class MeemAdmin(admin.ModelAdmin):
         if key in (
             'source_images__contains',
             'template_link__name__exact',
+            'discordmeem__server_user__user__user_id',
+            'discordmeem__server_user__server__server_id'
         ):
             return True
         return super(MeemAdmin, self).lookup_allowed(key, value)
@@ -178,7 +180,8 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
 
     def lookup_allowed(self, key, value):
         if key in (
-            'discordsourceimgsubmission__server_user__user__user_id__exact',
+            'discordsourceimgsubmission__server_user__user__user_id',
+            'discordsourceimgsubmission__server_user__server__server_id',
         ):
             return True
         return super(MemeSourceImageAdmin, self).lookup_allowed(key, value)

@@ -49,19 +49,11 @@ def log_exc(exc):
 
 
 def get_server(message):
-    server_id = message.server.id
-    server = DiscordServer.get_by_id(server_id)
-    if server is not None:
-        server.update(name=message.server.name)
-    return server
+    return DiscordServer.update(message.server.id, name=message.server.name)
 
 
-def get_member(message, server):
-    member = DiscordServerUser.get_by_id(message.author.id, server)
-    if member is not None:
-        member.update(nickname=(message.author.nick if message.author is Member else message.author.name))
-        member.user.update(name=message.author.name)
-    return member
+def get_member(message):
+    return DiscordServerUser.update(message.author.id, get_server(message), name=message.author.name)
 
 
 def get_attachments(message, get_embeds=True):

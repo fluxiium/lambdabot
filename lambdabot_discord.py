@@ -73,7 +73,7 @@ async def process_message(message):
     if server is None or message.author.id == _client.user.id:
         return
 
-    member = get_member(message, server)
+    member = get_member(message)
     atts = get_attachments(message)
 
     if _client.user in message.mentions:
