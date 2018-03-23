@@ -398,20 +398,8 @@ class Meem(models.Model):
 
 
 class ImageInContext(models.Model):
-
-    class Meta:
-        verbose_name = "Queued image"
-
     IMAGE_TYPE_TEMPLATE = 0
     IMAGE_TYPE_SOURCEIMG = 1
-    IMAGE_TYPE_CHOICES = (
-        (IMAGE_TYPE_TEMPLATE, "Template"),
-        (IMAGE_TYPE_SOURCEIMG, "Source Image"),
-    )
-    image_type = models.IntegerField(choices=IMAGE_TYPE_CHOICES, verbose_name='Image type')
-    image_name = models.CharField(max_length=256, verbose_name='Unique ID')
-    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE, verbose_name='Context')
-
-    def __str__(self):
-        return "{0} - {1} ({2})"\
-            .format(self.image_name, self.context_link.short_name, self.IMAGE_TYPE_CHOICES[self.image_type][1])
+    image_type = models.IntegerField()
+    image_name = models.CharField(max_length=256)
+    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
