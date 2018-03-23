@@ -207,23 +207,24 @@ class MurphyFacePic(models.Model):
 
     @classmethod
     def set(cls, channel_id, face_pic=None):
-        face_pic_data = cls.objects.filter(channel_id=channel_id).first()
-        if face_pic_data is None:
-            face_pic_data = cls(channel_id=channel_id, face_pic=face_pic)
-        elif face_pic is not None:
+        face_pic_data, created = cls.objects.get_or_create(channel_id=channel_id, defaults={
+            'face_pic': face_pic,
+            'last_used': timezone.now()
+        })
+        if not created:
             face_pic_data.face_pic = face_pic
-        face_pic_data.last_used = timezone.now()
-        face_pic_data.save()
+            face_pic_data.last_used = timezone.now()
+            face_pic_data.save()
 
     @classmethod
     def get(cls, channel_id):
         face_pic_data = cls.objects.filter(channel_id=channel_id).first()
-        return face_pic_data.face_pic if face_pic_data is not None else None
+        return face_pic_data and face_pic_data.face_pic
 
     @classmethod
     def get_last_used(cls):
         face_pic_data = cls.objects.order_by('-last_used').first()
-        return face_pic_data.face_pic if face_pic_data is not None else None
+        return face_pic_data and face_pic_data.face_pic
 
     def __str__(self):
         return self.channel_id
