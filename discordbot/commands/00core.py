@@ -1,5 +1,5 @@
 from discordbot.classes import DiscordSyntaxException, DiscordCommandResponse
-from discordbot.models import DiscordSourceImgSubmission, DiscordMeem, DiscordServerUser
+from discordbot.models import DiscordSourceImgSubmission, DiscordMeem
 from discordbot.util import save_attachment, log, get_timeout_str
 from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
 from memeviewer.models import MemeSourceImage, MemeTemplate, Meem
