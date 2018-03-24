@@ -59,7 +59,7 @@ class MeemAdmin(admin.ModelAdmin):
     list_display_links = ('thumbnail', 'number')
     list_filter = ('context_link',)
     search_fields = ('number', 'meme_id', 'template_link__name', 'source_images')
-    ordering = ('-number', 'meme_id')
+    ordering = ('-number',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
     readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'context_admin_url', 'gen_date',
                        'image', 'meme_url')
@@ -266,11 +266,11 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('name', 'short_name', 'is_public', 'memes_link', 'reset_url')
+    list_display = ('short_name', 'name', 'is_public', 'memes_link', 'recent_threshold', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public', 'memes_link')
     readonly_fields = ('memes_link', 'reset_url',)
-    ordering = ('name',)
+    ordering = ('short_name',)
 
     def reset_url(self, obj):
         return ahref(obj.get_reset_url(), "Reset")

@@ -10,6 +10,12 @@ class DiscordServer(models.Model):
 
     class Meta:
         verbose_name = "Discord server"
+        indexes = [
+            models.Index(fields=['context'], name='idx_ds_context'),
+            models.Index(fields=['name'], name='idx_ds_name'),
+            models.Index(fields=['submission_count'], name='idx_ds_scount'),
+            models.Index(fields=['meme_count'], name='idx_ds_mcount'),
+        ]
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
@@ -62,8 +68,12 @@ class DiscordCommand(models.Model):
 
     class Meta:
         verbose_name = "Command"
+        unique_together = ('server', 'cmd')
+        indexes = [
+            models.Index(fields=['server', 'cmd'], name='idx_discordcmd')
+        ]
 
-    cmd = models.CharField(max_length=32, primary_key=True, verbose_name='Command')
+    cmd = models.CharField(max_length=32, verbose_name='Command')
     message = models.TextField(blank=True, default='', verbose_name='Text message')
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
 
@@ -75,6 +85,11 @@ class DiscordUser(models.Model):
 
     class Meta:
         verbose_name = "Discord user"
+        indexes = [
+            models.Index(fields=['name'], name='idx_du_name'),
+            models.Index(fields=['submission_count'], name='idx_du_scount'),
+            models.Index(fields=['meme_count'], name='idx_du_mcount'),
+        ]
 
     user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
     name = models.CharField(max_length=64, verbose_name='Username')
@@ -109,6 +124,9 @@ class DiscordServerUser(models.Model):
     class Meta:
         verbose_name = "Server user"
         unique_together = ('user', 'server')
+        indexes = [
+            models.Index(fields=['user', 'server'], name='idx_ds_user'),
+        ]
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")

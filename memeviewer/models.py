@@ -31,6 +31,9 @@ class MemeContext(models.Model):
 
     class Meta:
         verbose_name = "Context"
+        indexes = [
+            models.Index(fields=['meme_count'], name='idx_context_mcount')
+        ]
 
     short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
@@ -122,6 +125,12 @@ class MemeImage(models.Model):
 
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=['friendly_name']),
+            models.Index(fields=['add_date']),
+            models.Index(fields=['change_date']),
+            models.Index(fields=['meme_count']),
+        ]
 
     in_context_class = None
 
@@ -166,6 +175,11 @@ class MemeImage(models.Model):
 class MemeImageInContext(models.Model):
     class Meta:
         abstract = True
+        unique_together = ('image', 'context')
+        indexes = [
+            models.Index(fields=['context', 'random_usages'])
+        ]
+
     image = None
     context = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
     queued = models.BooleanField(default=False)
@@ -219,8 +233,6 @@ class MemeSourceImage(MemeImage):
 
 
 class MemeSourceImageInContext(MemeImageInContext):
-    class Meta:
-        unique_together = ('image', 'context')
     image = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
 
 
@@ -282,8 +294,6 @@ class MemeTemplate(MemeImage):
 
 
 class MemeTemplateInContext(MemeImageInContext):
-    class Meta:
-        unique_together = ('image', 'context')
     image = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE)
 
 
@@ -294,6 +304,9 @@ class MemeTemplateSlot(models.Model):
 
     class Meta:
         verbose_name = "Template slot"
+        indexes = [
+            models.Index(fields=['template', 'slot_order'], name='idx_template_slot')
+        ]
 
     template = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE, verbose_name='Template')
     slot_order = models.IntegerField(verbose_name='Slot flavor', choices=tuple(zip(
@@ -322,6 +335,11 @@ class Meem(models.Model):
 
     class Meta:
         verbose_name = "Meme"
+        ordering = ['-number']
+        indexes = [
+            models.Index(fields=['number'], name='idx_meme_number'),
+            models.Index(fields=['gen_date'], name='idx_meme_gendate'),
+        ]
 
     number = models.IntegerField(default=next_meme_number, unique=True, verbose_name='Number')
     meme_id = models.CharField(primary_key=True, max_length=36, default=struuid4, verbose_name='ID')
