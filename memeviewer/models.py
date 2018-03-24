@@ -125,12 +125,6 @@ class MemeImage(models.Model):
 
     class Meta:
         abstract = True
-        indexes = [
-            models.Index(fields=['friendly_name']),
-            models.Index(fields=['add_date']),
-            models.Index(fields=['change_date']),
-            models.Index(fields=['meme_count']),
-        ]
 
     in_context_class = None
 
@@ -197,6 +191,12 @@ class MemeSourceImage(MemeImage):
 
     class Meta:
         verbose_name = "Source image"
+        indexes = [
+            models.Index(fields=['friendly_name'], name='idx_srcimg_fname'),
+            models.Index(fields=['add_date'], name='idx_srcimg_adddate'),
+            models.Index(fields=['change_date'], name='idx_srcimg_chdate'),
+            models.Index(fields=['meme_count'], name='idx_srcimg_mcount'),
+        ]
 
     image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/sourceimg/', max_length=256)
 
@@ -243,6 +243,12 @@ class MemeTemplate(MemeImage):
 
     class Meta:
         verbose_name = "Template"
+        indexes = [
+            models.Index(fields=['friendly_name'], name='idx_template_fname'),
+            models.Index(fields=['add_date'], name='idx_template_adddate'),
+            models.Index(fields=['change_date'], name='idx_template_chdate'),
+            models.Index(fields=['meme_count'], name='idx_template_mcount'),
+        ]
 
     bg_image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
                                       blank=True, verbose_name="Template background")
