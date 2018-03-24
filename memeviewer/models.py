@@ -154,15 +154,6 @@ class MemeImage(models.Model):
     def __str__(self):
         return self.friendly_name or self.name
 
-    def contexts_string(self):
-        contexts = self.contexts.all()
-        if contexts.count() == 0:
-            return "*"
-        result = ""
-        for context in contexts:
-            result += context.short_name + " "
-        return result.strip()
-
     def _add_meem(self):
         self.meme_count += 1
         self.save()

@@ -42,7 +42,7 @@ class DiscordServerUserInline(admin.TabularInline):
 
 @admin.register(DiscordServer)
 class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context', 'user_count', 'submission_count', 'meme_count')
+    list_display = ('name', 'context', 'users_link', 'submissions_link', 'memes_link')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
     fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time')
@@ -80,7 +80,7 @@ class DiscordServerAdmin(admin.ModelAdmin):
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count')
+    list_display = ('name', 'user_id', 'server_count', 'submissions_link', 'memes_link')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
     fields = readonly_fields = ('user_id', 'name', 'submissions_link', 'memes_link')

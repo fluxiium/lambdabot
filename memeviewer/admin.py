@@ -55,12 +55,13 @@ class DiscordInline(SocialLinkInline):
 
 @admin.register(Meem)
 class MeemAdmin(admin.ModelAdmin):
-    list_display = ('number', 'meme_id', 'template_link', 'context_link', 'gen_date')
+    list_display = ('thumbnail', 'number', 'template_admin_url', 'sourceimg_admin_urls', 'context_admin_url', 'gen_date')
+    list_display_links = ('thumbnail', 'number')
     list_filter = ('context_link',)
     search_fields = ('number', 'meme_id', 'template_link__name', 'source_images')
     ordering = ('-number', 'meme_id')
     inlines = [FacebookInline, TwitterInline, DiscordInline]
-    readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'context_link', 'gen_date',
+    readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'context_admin_url', 'gen_date',
                        'image', 'meme_url')
     fields = readonly_fields
 
@@ -75,6 +76,10 @@ class MeemAdmin(admin.ModelAdmin):
         return ahref(obj.get_url(), htmlimg(obj.get_url(), mw=600, mh=400))
     image.short_description = 'Image'
 
+    def thumbnail(self, obj):
+        return htmlimg(obj.get_url(), mw=150, mh=150)
+    thumbnail.short_description = 'Thumbnail'
+
     def template_admin_url(self, obj):
         return object_url(MemeTemplate, obj.template_link.name, obj.template_link)
     template_admin_url.short_description = 'Template'
@@ -85,6 +90,10 @@ class MeemAdmin(admin.ModelAdmin):
             html += object_url(MemeSourceImage, srcimg.name, srcimg) + "<br>"
         return mark_safe(html)
     sourceimg_admin_urls.short_description = 'Source images'
+
+    def context_admin_url(self, obj):
+        return object_url(MemeContext, obj.context_link.short_name, obj.context_link)
+    context_admin_url.short_description = 'Context'
 
     def lookup_allowed(self, key, value):
         if key in (
@@ -98,15 +107,33 @@ class MeemAdmin(admin.ModelAdmin):
 
 
 class MemeImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', '__str__', 'contexts_string', 'meme_count', 'change_date')
+    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'memes_link', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'contexts',)
+    fields = ('name', 'friendly_name', 'image', 'contexts', 'accepted', 'add_date', 'change_date', 'memes_link',
+              'preview_url',)
+    readonly_fields = ('name', 'add_date', 'change_date', 'image', 'memes_link', 'preview_url')
     search_fields = ('name', 'friendly_name')
     ordering = ('-change_date',)
     actions = ['accept', 'reject']
 
     def has_add_permission(self, request):
         return False
+
+    def context_links(self, obj):
+        cs = obj.contexts.all()
+        if cs.count() > 0:
+            html = ""
+            for c in obj.contexts.all():
+                html += object_url(MemeContext, c.short_name, c) + "<br>"
+            return mark_safe(html)
+        else:
+            return list_url(MemeContext, {}, "(all)")
+    context_links.short_description = 'Contexts'
+
+    def preview_url(self, obj):
+        return ahref(obj.get_preview_url(), "Generate meme using this image")
+    preview_url.short_description = 'Preview'
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
@@ -130,12 +157,23 @@ class MemeImageAdmin(admin.ModelAdmin):
 class MemeImageInContextInline(admin.TabularInline):
     extra = 0
     verbose_name_plural = "In context"
-    fields = ('context', 'random_usages', 'queued')
-    readonly_fields = ('context', 'random_usages')
+    fields = ('context_link', 'memes_link', 'queued')
+    readonly_fields = ('context_link', 'memes_link')
     can_delete = False
 
     def has_add_permission(self, request):
         return False
+
+    def context_link(self, obj):
+        return object_url(MemeContext, obj.context.short_name, obj.context)
+    context_link.short_description = 'Context'
+
+    def memes_link(self, obj):
+        return list_url(Meem, {
+            'source_images__contains': '%22' + obj.image.name + '%22',
+            'context_link__short_name__exact': obj.context.short_name,
+        }, obj.random_usages)
+    memes_link.short_description = 'Memes'
 
 
 class MemeSourceImageInContextInline(MemeImageInContextInline):
@@ -164,13 +202,10 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
 @admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(MemeImageAdmin):
     inlines = [MemeSourceImageInContextInline, DiscordSourceImgSubmissionInline]
-    fields = ('name', 'friendly_name', 'image_file', 'image', 'contexts', 'accepted', 'add_date', 'change_date',
-              'memes_link',)
-    readonly_fields = ('name', 'add_date', 'change_date', 'image', 'memes_link')
 
     def image(self, obj):
         return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
-    image.short_description = 'Preview'
+    image.short_description = 'Image'
 
     def thumbnail(self, obj):
         return htmlimg(obj.get_image_url(), mw=150, mh=150)
@@ -202,22 +237,14 @@ class MemeTemplateInContextInline(MemeImageInContextInline):
 
 @admin.register(MemeTemplate)
 class MemeTemplateAdmin(MemeImageAdmin):
-    inlines = [MemeTemplateSlotInline, MemeTemplateInContextInline]
-    fields = ('name', 'friendly_name', 'bg_image_file', 'bg_image', 'image_file', 'fg_image', 'bg_color', 'contexts',
-              'accepted', 'add_date', 'change_date', 'memes_link', 'preview_url',)
-    readonly_fields = ('name', 'add_date', 'change_date', 'preview_url', 'memes_link', 'fg_image', 'bg_image')
+    inlines = [MemeTemplateInContextInline]
 
-    def preview_url(self, obj):
-        return ahref(obj.get_preview_url(), "Generate meme using this template")
-    preview_url.short_description = 'Preview'
-
-    def fg_image(self, obj):
-        return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
-    fg_image.short_description = ''
-
-    def bg_image(self, obj):
-        return ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400))
-    bg_image.short_description = ''
+    def image(self, obj):
+        return mark_safe(
+            ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400)) + " " +
+            ahref(obj.get_bgimage_url(), htmlimg(obj.get_bgimage_url(), mw=600, mh=400))
+        )
+    image.short_description = 'Image(s)'
 
     def thumbnail(self, obj):
         return htmlimg(obj.image_file and obj.get_image_url() or obj.get_bgimage_url(), mw=150, mh=150)
@@ -232,7 +259,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('name', 'short_name', 'is_public', 'meme_count', 'reset_url')
+    list_display = ('name', 'short_name', 'is_public', 'memes_link', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public', 'memes_link')
     readonly_fields = ('memes_link', 'reset_url',)
@@ -254,7 +281,6 @@ class MemeContextAdmin(admin.ModelAdmin):
 
     def memes_link(self, obj):
         return list_url(Meem, {
-            'context_link__short_name': obj.short_name
+            'context_link__short_name__exact': obj.short_name
         }, obj.meme_count)
     memes_link.short_description = 'Memes'
-
