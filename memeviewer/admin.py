@@ -168,16 +168,16 @@ class MemeImageInContextInline(admin.TabularInline):
         return object_url(MemeContext, obj.context.short_name, obj.context)
     context_link.short_description = 'Context'
 
+
+class MemeSourceImageInContextInline(MemeImageInContextInline):
+    model = MemeSourceImageInContext
+
     def memes_link(self, obj):
         return list_url(Meem, {
             'source_images__contains': '%22' + obj.image.name + '%22',
             'context_link__short_name__exact': obj.context.short_name,
         }, obj.random_usages)
     memes_link.short_description = 'Memes'
-
-
-class MemeSourceImageInContextInline(MemeImageInContextInline):
-    model = MemeSourceImageInContext
 
 
 class DiscordSourceImgSubmissionInline(admin.TabularInline):
@@ -233,6 +233,13 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 class MemeTemplateInContextInline(MemeImageInContextInline):
     model = MemeTemplateInContext
+
+    def memes_link(self, obj):
+        return list_url(Meem, {
+            'template_link__name': obj.image.name,
+            'context_link__short_name__exact': obj.context.short_name,
+        }, obj.random_usages)
+    memes_link.short_description = 'Memes'
 
 
 @admin.register(MemeTemplate)
