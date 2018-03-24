@@ -141,7 +141,7 @@ class DiscordServerUser(models.Model):
         return seconds_left, limit_count, limit_time
 
     def generate_meme(self, template, channel):
-        meme = Meem.generate(context=self.server.context, template=template)
+        meme = self.server.context.generate(template=template)
         discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, channel_id=channel.id)
         self.meme_count += 1
         self.save()
@@ -168,8 +168,14 @@ class DiscordSourceImgSubmission(models.Model):
     server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.CASCADE)
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return "{} ({})".format(self.sourceimg, self.server_user)
+
 
 class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     channel_id = models.CharField(max_length=32)
+
+    def __str__(self):
+        return "{} ({})".format(self.meme, self.server_user)

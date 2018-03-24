@@ -4,9 +4,8 @@ import config
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponse
 from django.http import HttpResponseForbidden
-from django.http import JsonResponse
 from django.shortcuts import render
-from memeviewer.models import Meem, MemeContext, MemeTemplate, ImageInContext
+from memeviewer.models import Meem, MemeContext, MemeTemplate, MemeSourceImageInContext, MemeTemplateInContext
 from memeviewer.preview import preview_meme
 
 
@@ -27,7 +26,7 @@ def generate_meme_view(request):
     if not request.user.has_perm('memetemplate.change_memetemplate'):
         return HttpResponseForbidden()
 
-    meme = Meem.generate(context=MemeContext.by_id_or_create('default', 'Default'), saveme=False)
+    meme = MemeContext.by_id_or_create('default', 'Default').generate(saveme=False)
 
     response = HttpResponse(content_type='image/jpeg')
     preview_meme(meme, saveme=False).save(response, "JPEG")
@@ -41,8 +40,7 @@ def template_preview_view(request, template_name):
         return HttpResponseForbidden()
 
     try:
-        meme = Meem.generate(
-            context=MemeContext.by_id_or_create('default', 'Default'),
+        meme = MemeContext.by_id_or_create('default', 'Default').generate(
             template=MemeTemplate.find(template_name, allow_disabled=True),
             saveme=False
         )
@@ -60,23 +58,19 @@ def context_reset_view(request, context):
     if not request.user.has_perm('memecontext.change_memecontext'):
         return HttpResponseForbidden()
 
-    queue = ImageInContext.objects.all()
+    siq = MemeSourceImageInContext.objects.filter(queued=True)
     if context:
-        queue = queue.filter(context_link=MemeContext.by_id(context))
-    templates = []
-    sourceimgs = []
+        siq = siq.filter(context=MemeContext.by_id(context))
 
-    for item in queue:
-        if item.image_type == ImageInContext.IMAGE_TYPE_TEMPLATE:
-            templates.append(item.image_name)
-        else:
-            sourceimgs.append(item.image_name)
-        item.delete()
+    tq = MemeTemplateInContext.objects.filter(queued=True)
+    if context:
+        tq = siq.filter(context=MemeContext.by_id(context))
 
-    return JsonResponse({
-        'templates': templates,
-        'sourceimgs': sourceimgs,
-    })
+    for i in list(siq) + list(tq):
+        i.queued = False
+        i.save()
+
+    return HttpResponse('ok')
 
 
 def meme_info_view(request, meme_id):

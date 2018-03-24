@@ -3,7 +3,8 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission, DiscordUser, DiscordServer
 from facebookbot.models import FacebookMeem
 from lamdabotweb.settings import USERNAME_TWITTER
-from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage
+from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage, \
+    MemeSourceImageInContext, MemeTemplateInContext
 from twitterbot.models import TwitterMeem
 from util.admin_utils import ahref, htmlimg, object_url, list_url
 
@@ -42,30 +43,6 @@ class DiscordInline(SocialLinkInline):
     model = DiscordMeem
     fields = readonly_fields = ('user_link', 'server_link', 'channel_id')
     verbose_name_plural = "Discord"
-
-    def user_link(self, obj):
-        return object_url(DiscordUser, obj.server_user.user_id, obj.server_user.user)
-    user_link.short_description = 'User'
-
-    def server_link(self, obj):
-        return object_url(DiscordServer, obj.server_user.server_id, obj.server_user.server)
-    server_link.short_description = 'Server'
-
-
-class MemeTemplateSlotInline(admin.TabularInline):
-    model = MemeTemplateSlot
-    extra = 0
-
-
-class DiscordSourceImgSubmissionInline(admin.TabularInline):
-    model = DiscordSourceImgSubmission
-    extra = 0
-    verbose_name_plural = "Discord source image submission"
-    fields = readonly_fields = ('user_link', 'server_link')
-    can_delete = False
-
-    def has_add_permission(self, request):
-        return False
 
     def user_link(self, obj):
         return object_url(DiscordUser, obj.server_user.user_id, obj.server_user.user)
@@ -120,22 +97,76 @@ class MeemAdmin(admin.ModelAdmin):
         return super(MeemAdmin, self).lookup_allowed(key, value)
 
 
-@admin.register(MemeSourceImage)
-class MemeSourceImageAdmin(admin.ModelAdmin):
+class MemeImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', '__str__', 'contexts_string', 'meme_count', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'contexts',)
     search_fields = ('name', 'friendly_name')
     ordering = ('-change_date',)
-    inlines = [DiscordSourceImgSubmissionInline]
     actions = ['accept', 'reject']
-
-    fields = ('name', 'friendly_name', 'image_file', 'image', 'contexts', 'accepted', 'add_date', 'change_date',
-              'memes_link',)
-    readonly_fields = ('name', 'add_date', 'change_date', 'image', 'memes_link')
 
     def has_add_permission(self, request):
         return False
+
+    def accept(self, request, queryset):
+        queryset.update(accepted=True)
+        for img in queryset:
+            img.clean()
+            img.enqueue()
+    accept.short_description = "Approve selected images"
+
+    def reject(self, request, queryset):
+        queryset.update(accepted=False)
+        for img in queryset:
+            img.clean()
+            img.enqueue()
+    reject.short_description = "Reject selected images"
+
+    def save_related(self, request, form, formsets, change):
+        admin.ModelAdmin.save_related(self, request, form, formsets, change)
+        form.instance.enqueue()
+
+
+class MemeImageInContextInline(admin.TabularInline):
+    extra = 0
+    verbose_name_plural = "In context"
+    fields = ('context', 'random_usages', 'queued')
+    readonly_fields = ('context', 'random_usages')
+    can_delete = False
+
+    def has_add_permission(self, request):
+        return False
+
+
+class MemeSourceImageInContextInline(MemeImageInContextInline):
+    model = MemeSourceImageInContext
+
+
+class DiscordSourceImgSubmissionInline(admin.TabularInline):
+    model = DiscordSourceImgSubmission
+    extra = 0
+    verbose_name_plural = "Discord source image submission"
+    fields = readonly_fields = ('user_link', 'server_link')
+    can_delete = False
+
+    def has_add_permission(self, request):
+        return False
+
+    def user_link(self, obj):
+        return object_url(DiscordUser, obj.server_user.user_id, obj.server_user.user)
+    user_link.short_description = 'User'
+
+    def server_link(self, obj):
+        return object_url(DiscordServer, obj.server_user.server_id, obj.server_user.server)
+    server_link.short_description = 'Server'
+
+
+@admin.register(MemeSourceImage)
+class MemeSourceImageAdmin(MemeImageAdmin):
+    inlines = [MemeSourceImageInContextInline, DiscordSourceImgSubmissionInline]
+    fields = ('name', 'friendly_name', 'image_file', 'image', 'contexts', 'accepted', 'add_date', 'change_date',
+              'memes_link',)
+    readonly_fields = ('name', 'add_date', 'change_date', 'image', 'memes_link')
 
     def image(self, obj):
         return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
@@ -144,20 +175,6 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
     def thumbnail(self, obj):
         return htmlimg(obj.get_image_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
-
-    def accept(self, request, queryset):
-        queryset.update(accepted=True)
-        for img in queryset:
-            img.clean()
-            img.enqueue()
-    accept.short_description = "Approve selected source images"
-
-    def reject(self, request, queryset):
-        queryset.update(accepted=False)
-        for img in queryset:
-            img.clean()
-            img.enqueue()
-    reject.short_description = "Reject selected source images"
 
     def memes_link(self, obj):
         return list_url(Meem, {
@@ -173,26 +190,22 @@ class MemeSourceImageAdmin(admin.ModelAdmin):
             return True
         return super(MemeSourceImageAdmin, self).lookup_allowed(key, value)
 
-    def save_related(self, request, form, formsets, change):
-        admin.ModelAdmin.save_related(self, request, form, formsets, change)
-        form.instance.enqueue()
+
+class MemeTemplateSlotInline(admin.TabularInline):
+    model = MemeTemplateSlot
+    extra = 0
+
+
+class MemeTemplateInContextInline(MemeImageInContextInline):
+    model = MemeTemplateInContext
 
 
 @admin.register(MemeTemplate)
-class MemeTemplateAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', '__str__', 'contexts_string', 'meme_count', 'change_date')
-    list_display_links = ('thumbnail', '__str__')
-    list_filter = ('accepted', 'contexts',)
-    search_fields = ('name', 'friendly_name')
-    ordering = ('-change_date',)
-    inlines = [MemeTemplateSlotInline]
-    actions = ['accept', 'reject']
+class MemeTemplateAdmin(MemeImageAdmin):
+    inlines = [MemeTemplateSlotInline, MemeTemplateInContextInline]
     fields = ('name', 'friendly_name', 'bg_image_file', 'bg_image', 'image_file', 'fg_image', 'bg_color', 'contexts',
               'accepted', 'add_date', 'change_date', 'memes_link', 'preview_url',)
     readonly_fields = ('name', 'add_date', 'change_date', 'preview_url', 'memes_link', 'fg_image', 'bg_image')
-
-    def has_add_permission(self, request):
-        return False
 
     def preview_url(self, obj):
         return ahref(obj.get_preview_url(), "Generate meme using this template")
@@ -210,29 +223,11 @@ class MemeTemplateAdmin(admin.ModelAdmin):
         return htmlimg(obj.image_file and obj.get_image_url() or obj.get_bgimage_url(), mw=150, mh=150)
     thumbnail.short_description = 'Thumbnail'
 
-    def accept(self, request, queryset):
-        queryset.update(accepted=True)
-        for img in queryset:
-            img.clean()
-            img.enqueue()
-    accept.short_description = "Approve selected templates"
-
-    def reject(self, request, queryset):
-        queryset.update(accepted=False)
-        for img in queryset:
-            img.clean()
-            img.enqueue()
-    reject.short_description = "Reject selected templates"
-
     def memes_link(self, obj):
         return list_url(Meem, {
             'template_link__name': obj.name
         }, obj.meme_count)
     memes_link.short_description = 'Memes'
-
-    def save_related(self, request, form, formsets, change):
-        admin.ModelAdmin.save_related(self, request, form, formsets, change)
-        form.instance.enqueue()
 
 
 @admin.register(MemeContext)

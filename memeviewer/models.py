@@ -34,7 +34,7 @@ class MemeContext(models.Model):
 
     short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, verbose_name='Name')
-    recent_threshold = models.IntegerField(default=14, verbose_name='Recent threshold (days)')
+    recent_threshold = models.IntegerField(default=10, verbose_name='Recent threshold')
     is_public = models.BooleanField(default=False, verbose_name='Is public?')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
@@ -44,54 +44,70 @@ class MemeContext(models.Model):
 
     @classmethod
     def by_id_or_create(cls, name, friendly_name, is_public=False):
-        context = cls.objects.get_or_create(short_name=name, defaults={'name': friendly_name, 'is_public': is_public})
-        return context[0]
+        context, _ = cls.objects.get_or_create(short_name=name, defaults={'name': friendly_name, 'is_public': is_public})
+        return context
 
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
 
-    def next_image(self, image_type):
+    def next_image(self, image_class):
         # read queue from db
-        result = ImageInContext.objects.filter(image_type=image_type, context_link=self)
-        objects = MemeSourceImage.objects if image_type == ImageInContext.IMAGE_TYPE_SOURCEIMG else MemeTemplate.objects
+        result = image_class.objects.filter(context=self, queued=True)
 
         # if empty, make new queue
         if result.count() == 0:
 
             queue_length = config.IMG_QUEUE_LENGTH
-            recent_threshold = timezone.now() - timezone.timedelta(days=self.recent_threshold)
+            recent_threshold = self.recent_threshold
 
-            img_queue_db = objects.filter(accepted=True).filter(Q(contexts=self) | Q(contexts=None)).order_by('?')
-            img_queue_recent = img_queue_db.filter(change_date__gte=recent_threshold)[
-                               0:(min(queue_length, objects.count()) / 2)]
-            img_queue_old = img_queue_db[0:(min(queue_length, objects.count()) - img_queue_recent.count())]
+            img_queue_db = image_class.objects.filter(context=self, image__accepted=True).order_by('?')
+            img_queue_recent = img_queue_db.filter(random_usages__lte=recent_threshold)[
+                               0:(min(queue_length, img_queue_db.count()) / 2)]
+            img_queue_old = img_queue_db[0:(min(queue_length, img_queue_db.count()) - img_queue_recent.count())]
 
             # save queue to db
-            for s in img_queue_recent:
-                ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=self)
+            for s in list(img_queue_recent) + list(img_queue_old):
+                s.queued = True
+                s.save()
 
-            for s in img_queue_old:
-                if s not in img_queue_recent:
-                    ImageInContext.objects.create(image_name=s.name, image_type=image_type, context_link=self)
-
-            result = ImageInContext.objects.filter(image_type=image_type, context_link=self)
+            result = image_class.objects.filter(context=self, queued=True)
 
         img_in_context = result.order_by('?').first()
-        sourceimg = img_in_context.image_name
-        img_in_context.delete()
+        img_in_context.random_usages += 1
+        img_in_context.queued = False
+        img_in_context.save()
 
-        img_obj = objects.filter(name=sourceimg, accepted=True).filter(Q(contexts=self) | Q(contexts=None)).first()
+        return img_in_context.image
 
-        if img_obj is None:
-            return self.next_image(image_type)
-        else:
-            return img_obj
-
-    def next_template(self):
-        return self.next_image(ImageInContext.IMAGE_TYPE_TEMPLATE)
-
-    def next_sourceimg(self):
-        return self.next_image(ImageInContext.IMAGE_TYPE_SOURCEIMG)
+    # noinspection PyProtectedMember
+    def generate(self, template=None, saveme=True):
+        if MemeTemplateInContext.count(self) == 0:
+            raise FileNotFoundError("No templates")
+        if MemeSourceImageInContext.count(self) == 0:
+            raise FileNotFoundError("No source images")
+        if template is None:
+            template = self.next_image(MemeTemplateInContext)
+        source_files = {}
+        prev_slot_id = None
+        source_file = None
+        for slot in template.memetemplateslot_set.order_by('slot_order').all():
+            if slot.slot_order == prev_slot_id:
+                source_files[slot] = source_file
+                continue
+            # pick source file that hasn't been used
+            while True:
+                source_file = self.next_image(MemeSourceImageInContext)
+                if source_file not in source_files.values():
+                    break
+            source_files[slot.slot_order] = source_file.name
+            if saveme:
+                source_file._add_meem()
+            prev_slot_id = slot.slot_order
+        meem = Meem(template_link=template, context_link=self, source_images=json.dumps(source_files))
+        if saveme:
+            template._add_meem()
+            meem.save()
+        return meem
 
     def _add_meem(self):
         self.meme_count += 1
@@ -99,15 +115,17 @@ class MemeContext(models.Model):
 
     def __str__(self):
         return self.short_name
+    
 
-
-class MemeSourceImage(models.Model):
+# noinspection PyTypeChecker
+class MemeImage(models.Model):
 
     class Meta:
-        verbose_name = "Source image"
+        abstract = True
+
+    in_context_class = None
 
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/sourceimg/', max_length=256)
     friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
     contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
@@ -121,19 +139,17 @@ class MemeSourceImage(models.Model):
 
     # add image to queues of all its contexts
     def enqueue(self):
-        query = ImageInContext.objects.filter(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG)
-        for imq in query:
-            imq.delete()
+        for im in self.in_context_class.objects.filter(image=self, queued=True):
+            im.queued = False
+            im.save()
         if self.accepted:
             contexts = self.contexts.all()
             if len(contexts) == 0:
                 contexts = MemeContext.objects.all()
             for c in contexts:
-                ImageInContext.objects.create(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_SOURCEIMG,
-                                              context_link=c)
-
-    def get_image_url(self):
-        return self.image_file and self.image_file.url or''
+                im, _ = self.in_context_class.objects.get_or_create(context=c, image=self)
+                im.queued = True
+                im.save()
 
     def __str__(self):
         return self.friendly_name or self.name
@@ -150,6 +166,37 @@ class MemeSourceImage(models.Model):
     def _add_meem(self):
         self.meme_count += 1
         self.save()
+
+    @classmethod
+    def by_id(cls, name):
+        return cls.objects.get(name=name)
+
+
+class MemeImageInContext(models.Model):
+    class Meta:
+        abstract = True
+    image = None
+    context = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
+    queued = models.BooleanField(default=False)
+    random_usages = models.IntegerField(default=0)
+
+    @classmethod
+    def count(cls, context):
+        return cls.objects.filter(context=context).count()
+
+    def __str__(self):
+        return "{} ({})".format(self.image, self.context)
+
+
+class MemeSourceImage(MemeImage):
+
+    class Meta:
+        verbose_name = "Source image"
+
+    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/sourceimg/', max_length=256)
+
+    def get_image_url(self):
+        return self.image_file and self.image_file.url or''
 
     @classmethod
     def submit(cls, filepath, filename=None, friendly_name=None):
@@ -179,69 +226,33 @@ class MemeSourceImage(models.Model):
         srcimg.save()
         return srcimg
 
-    @classmethod
-    def count(cls, context):
-        return cls.by_context(context).count()
 
-    @classmethod
-    def by_context(cls, context):
-        return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
-
-    @classmethod
-    def by_id(cls, name):
-        return cls.objects.get(name=name)
+class MemeSourceImageInContext(MemeImageInContext):
+    class Meta:
+        unique_together = ('image', 'context')
+    image = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
 
 
-class MemeTemplate(models.Model):
+MemeSourceImage.in_context_class = MemeSourceImageInContext
+
+
+class MemeTemplate(MemeImage):
 
     class Meta:
         verbose_name = "Template"
 
-    name = models.CharField(max_length=64, primary_key=True, verbose_name='Unique ID', default=struuid4)
     bg_image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
                                       blank=True, verbose_name="Template background")
     image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
                                    blank=True, verbose_name="Template overlay")
-    friendly_name = models.CharField(max_length=64, default='', blank=True, verbose_name='Friendly name')
-    contexts = models.ManyToManyField(MemeContext, blank=True, verbose_name='Contexts')
     bg_color = ColorField(default='', blank=True, verbose_name='Background color')
-    accepted = models.BooleanField(default=False, verbose_name='Accepted')
-    add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
-    change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
-    meme_count = models.IntegerField(default=0, verbose_name='Memes')
 
     def clean(self):
         if not self.bg_image_file and not self.image_file:
             raise ValidationError('Please upload a template background and/or overlay image')
         if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
             raise ValidationError('The background and overlay images have to have the same dimensions')
-        self.change_date = timezone.now()
-        self.save()
-
-    # add image to queues of all its contexts
-    def enqueue(self):
-        query = ImageInContext.objects.filter(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE)
-        for imq in query:
-            imq.delete()
-        if self.accepted:
-            contexts = self.contexts.all()
-            if len(contexts) == 0:
-                contexts = MemeContext.objects.all()
-            for c in contexts:
-                ImageInContext.objects.create(image_name=self.name, image_type=ImageInContext.IMAGE_TYPE_TEMPLATE,
-                                              context_link=c)
-
-    def _add_meem(self):
-        self.meme_count += 1
-        self.save()
-
-    @classmethod
-    def count(cls, context):
-        return cls.by_context(context).count()
-
-    @classmethod
-    def by_context(cls, context):
-        return cls.objects.filter(Q(contexts=context) | Q(contexts=None)).filter(accepted=True)
+        super(MemeTemplate, self).clean()
 
     @classmethod
     def find(cls, name, allow_disabled=False):
@@ -278,17 +289,14 @@ class MemeTemplate(models.Model):
     def get_bgimage_url(self):
         return self.bg_image_file and self.bg_image_file.url or ''
 
-    def contexts_string(self):
-        contexts = self.contexts.all()
-        if contexts.count() == 0:
-            return "*"
-        result = ""
-        for context in contexts:
-            result += "{} ".format(context.short_name)
-        return result.strip()
 
-    def __str__(self):
-        return self.friendly_name or self.name
+class MemeTemplateInContext(MemeImageInContext):
+    class Meta:
+        unique_together = ('image', 'context')
+    image = models.ForeignKey(MemeTemplate, on_delete=models.CASCADE)
+
+
+MemeTemplate.in_context_class = MemeTemplateInContext
 
 
 class MemeTemplateSlot(models.Model):
@@ -331,35 +339,6 @@ class Meem(models.Model):
     gen_date = models.DateTimeField(default=timezone.now, verbose_name='Date generated')
     source_images = models.TextField(verbose_name='Source images')
 
-    @classmethod
-    def generate(cls, context, template=None, saveme=True):
-        if MemeTemplate.count(context) == 0:
-            raise FileNotFoundError("No templates")
-        if MemeSourceImage.count(context) == 0:
-            raise FileNotFoundError("No source images")
-        if template is None:
-            template = context.next_template()
-        template._add_meem()
-        source_files = {}
-        prev_slot_id = None
-        source_file = None
-        for slot in template.memetemplateslot_set.order_by('slot_order').all():
-            if slot.slot_order == prev_slot_id:
-                source_files[slot] = source_file
-                continue
-            # pick source file that hasn't been used
-            while True:
-                source_file = context.next_sourceimg()
-                if source_file not in source_files.values():
-                    break
-            source_files[slot.slot_order] = source_file.name
-            source_file._add_meem()
-            prev_slot_id = slot.slot_order
-        meem = cls(template_link=template, context_link=context, source_images=json.dumps(source_files))
-        if saveme:
-            meem.save()
-        return meem
-
     def get_sourceimgs_in_slots(self):
         rawimgs = json.loads(self.source_images)
         imgs = {}
@@ -384,11 +363,3 @@ class Meem(models.Model):
 
     def __str__(self):
         return str(self.number)
-
-
-class ImageInContext(models.Model):
-    IMAGE_TYPE_TEMPLATE = 0
-    IMAGE_TYPE_SOURCEIMG = 1
-    image_type = models.IntegerField()
-    image_name = models.CharField(max_length=256)
-    context_link = models.ForeignKey(MemeContext, on_delete=models.CASCADE)

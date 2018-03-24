@@ -10,7 +10,7 @@ from lamdabotweb.settings import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, MemeContext
+from memeviewer.models import MemeContext
 from memeviewer.preview import preview_meme
 from twitterbot.models import TwitterMeem
 
@@ -19,7 +19,7 @@ api = twitter.Api(consumer_key=TWITTER_CONSUMER_KEY,
                   access_token_key=TWITTER_ACCESS_TOKEN_KEY,
                   access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
-meme = Meem.generate(context=MemeContext.by_id_or_create('twitter', 'Twitter', is_public=True))
+meme = MemeContext.by_id_or_create('twitter', 'Twitter', is_public=True).generate()
 preview_meme(meme)
 
 status = api.PostUpdate(

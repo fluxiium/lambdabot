@@ -9,12 +9,12 @@ from lamdabotweb.settings import FACEBOOK_PAGE_TOKEN
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from memeviewer.models import Meem, MemeContext
+from memeviewer.models import MemeContext
 from memeviewer.preview import preview_meme
 from facebookbot.models import FacebookMeem
 
 api = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-meme = Meem.generate(context=MemeContext.by_id_or_create('facebook', 'Facebook', is_public=True))
+meme = MemeContext.by_id_or_create('facebook', 'Facebook', is_public=True).generate()
 preview_meme(meme)
 
 post_status = api.put_photo(open(meme.get_local_path(), 'rb'))
