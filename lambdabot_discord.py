@@ -87,13 +87,14 @@ async def process_message(message):
 
         log("{0}, {1} mention: {2}".format(server.name, message.author.name, msg))
 
-        answered = True
+        answered = False
 
         for att in atts:
             if att['is_embed']:
                 msg = msg.replace(att['real_url'], "", 1).strip()
 
         if murphy.is_active() and not message.author.bot:
+            answered = True
             att = atts[0] if len(atts) > 0 else None
             if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
                 face_pic = save_attachment(att['real_url']) if att is not None else ''
