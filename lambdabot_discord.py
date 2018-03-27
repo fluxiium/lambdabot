@@ -76,12 +76,12 @@ async def process_message(message):
     member = get_member(message)
     atts = get_attachments(message)
 
-    if _client.user in message.mentions:
+    if _client.user.mentioned_in(message):
 
-        if msg.startswith(_client.user.mention):
-            msg = msg.replace(_client.user.mention, "", 1).strip()
-        elif msg.endswith(_client.user.mention):
-            msg = msg.rsplit(_client.user.mention, 1)[0].strip()
+        if msg.startswith(message.server.me.mention):
+            msg = msg.replace(message.server.me.mention, "", 1).strip()
+        elif msg.endswith(message.server.me.mention):
+            msg = msg.rsplit(message.server.me.mention, 1)[0].strip()
         else:
             return
 

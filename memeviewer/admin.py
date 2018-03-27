@@ -266,7 +266,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('short_name', 'name', 'is_public', 'memes_link', 'recent_threshold', 'reset_url')
+    list_display = ('__str__', 'name', 'is_public', 'memes_link', 'recent_threshold', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public', 'memes_link')
     readonly_fields = ('memes_link', 'reset_url',)
