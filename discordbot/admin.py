@@ -49,6 +49,9 @@ class DiscordServerAdmin(admin.ModelAdmin):
     readonly_fields = ('users_link', 'submissions_link', 'memes_link')
     inlines = [DiscordCommandInline]
 
+    def has_add_permission(self, request):
+        return False
+
     def get_fields(self, request, obj=None):
         if obj:
             return self.fields + ('users_link', 'submissions_link', 'memes_link')

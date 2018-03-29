@@ -50,16 +50,16 @@ class CustomHelpFormatter(HelpFormatter):
             for category, commands in itertools.groupby(data, key=category):
                 # there simply is no prettier way of doing this.
                 commands = sorted(commands)
-                if len(commands) > 0:
-                    self._paginator.add_line()
-                    self._paginator.add_line("**{}**".format(category))
-                    self._paginator.add_line()
+                # if len(commands) > 0:
+                #     self._paginator.add_line()
+                #     self._paginator.add_line("**{}**".format(category))
+                #     self._paginator.add_line()
                 self._add_subcommands_to_page(0, commands)
             server_commands = server_data.get_commands()
             if len(server_commands) > 0:
-                self._paginator.add_line()
-                self._paginator.add_line("**{} server**".format(self.context.guild.name))
-                self._paginator.add_line()
+                # self._paginator.add_line()
+                # self._paginator.add_line("**{} server**".format(self.context.guild.name))
+                # self._paginator.add_line()
                 for cmd_data in server_commands:
                     entry = '• `{0}{1}`'.format(self.context.prefix, cmd_data.cmd)
                     self._paginator.add_line(entry)

@@ -106,6 +106,7 @@ class MemeContext(models.Model):
             if saveme:
                 source_file._add_meem()
             prev_slot_id = slot.slot_order
+        print(source_files)
         meem = Meem(template_link=template, context_link=self, source_images=json.dumps(source_files))
         if saveme:
             template._add_meem()

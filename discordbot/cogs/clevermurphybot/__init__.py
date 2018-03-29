@@ -1,11 +1,11 @@
 import discord
 from django.core.exceptions import ObjectDoesNotExist
 
-import discordbot.cogs._clevermurphybot.murphybot as murphy
-import discordbot.cogs._clevermurphybot.cleverbot as cleverboi
 from discord.ext.commands import Bot
 from discordbot.models import DiscordServer
 from discordbot.util import log, DiscordImage
+from discordbot.cogs.clevermurphybot import murphybot as murphy
+from discordbot.cogs.clevermurphybot import cleverbot as cleverboi
 
 
 class CleverMurphyBot:
@@ -38,7 +38,7 @@ class CleverMurphyBot:
 
         for img in images:
             if img.is_embed:
-                msg_text = msg_text.replace(img.get_url(), "", 1).strip()
+                msg_text = msg_text.replace(img.url, "", 1).strip()
 
         if murphy.is_active() and not msg.author.bot:
             answered = True

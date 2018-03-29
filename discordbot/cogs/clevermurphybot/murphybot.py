@@ -5,15 +5,14 @@ import asyncio
 import textwrap
 import discord
 import datetime
-
 import discordbot.util
-import discordbot.cogs._clevermurphybot.cleverbot as cleverbot
 import config
 
 from collections import deque
 from tempfile import mkdtemp
 from django.utils import timezone
 from telethon import TelegramClient, events
+from discordbot.cogs.clevermurphybot import cleverbot
 
 _MURPHYBOT_HANDLE = "@ProjectMurphy_bot"
 _MURPHYBOT_IGNORE_MSG = (

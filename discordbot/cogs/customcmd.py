@@ -1,7 +1,6 @@
-from discord.ext.commands import Bot, Context, HelpFormatter, CommandNotFound
+from discord.ext.commands import Bot, Context
 from django.core.exceptions import ObjectDoesNotExist
 from discordbot.models import DiscordServer
-from discordbot.util import log_exc
 
 
 class CustomCmds:
@@ -10,9 +9,6 @@ class CustomCmds:
 
     # noinspection PyMethodMayBeStatic
     async def on_command_error(self, ctx: Context, exc):
-        if not isinstance(exc, CommandNotFound):
-            log_exc(exc)
-
         try:
             server_data = DiscordServer.get(ctx.guild)
         except ObjectDoesNotExist:
@@ -20,7 +16,7 @@ class CustomCmds:
 
         msg_text = ctx.message.content.strip()
 
-        if not msg_text.startswith(ctx.prefix) or ctx.message.author.bot:
+        if not msg_text.startswith(ctx.prefix) or ctx.author.bot:
             return
 
         cmd = server_data.get_cmd(ctx.invoked_with)

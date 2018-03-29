@@ -1,6 +1,11 @@
 import os
 import django
 import discord
+
+import re
+
+import asyncio
+
 import lamdabotweb.settings as config
 from discord.ext import commands
 from django.core.exceptions import ObjectDoesNotExist
@@ -9,20 +14,23 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
 from discordbot.models import DiscordServer
-from discordbot.util import log
+from discordbot.util import log, DiscordContext
 
 log("")
-log("#####################")
-log("#  LambdaBot 3883   #")
-log("#####################")
+log("####################")
+log("#  LambdaBot 3883  #")
+log("####################")
 log("")
 
 _bot = commands.Bot(command_prefix=config.DISCORD_CMD_PREFIX, description='I make memes.')
 
-for file in os.listdir(os.path.join(config.BASE_DIR, 'discordbot', 'cogs')):
-    if file.startswith('__') or not file.endswith('.py'):
-        continue
-    _bot.load_extension('discordbot.cogs.' + os.path.splitext(file)[0])
+for cog_name in config.DISCORD_COGS:
+    _bot.load_extension('discordbot.cogs.' + cog_name)
+
+
+@_bot.event
+async def on_guild_join(server: discord.Guild):
+    DiscordServer.get(server, create=True)
 
 
 @_bot.event
@@ -50,13 +58,14 @@ async def on_ready():
     await _bot.change_presence(activity=discord.Game(name=config.DISCORD_STATUS))
 
 
-@_bot.check
-def check_server_whitelisted(ctx):
-    try:
-        DiscordServer.get(ctx.message.guild)
-        return True
-    except ObjectDoesNotExist:
-        return False
+@_bot.event
+async def on_message(msg: discord.Message):
+    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg.content) is not None:
+        await asyncio.sleep(2)
+
+    ctx = await _bot.get_context(msg, cls=DiscordContext)
+    if ctx.valid:
+        await _bot.invoke(ctx)
 
 
 @_bot.check

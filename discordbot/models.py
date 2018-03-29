@@ -37,8 +37,11 @@ class DiscordServer(models.Model):
         self.save()
 
     @classmethod
-    def get(cls, discord_server: discord.Guild):
-        return cls.objects.get(server_id=discord_server.id)
+    def get(cls, discord_server: discord.Guild, create=False):
+        if not create:
+            return cls.objects.get(server_id=discord_server.id)
+        else:
+            return cls.objects.get_or_create(server_id=discord_server.id, defaults={'name': discord_server.name})[0]
 
     def get_commands(self):
         return DiscordCommand.objects.filter(server=self).order_by('cmd')
@@ -55,6 +58,7 @@ class DiscordServer(models.Model):
             if created:
                 self._add_user()
                 user._add_server()
+            return member
 
     def _add_meem(self):
         self.meme_count += 1
