@@ -1,7 +1,10 @@
+import discord
 from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
+from typing import Union
+
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -29,23 +32,29 @@ class DiscordServer(models.Model):
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
     user_count = models.IntegerField(default=0, verbose_name='Users')
 
-    @classmethod
-    def update(cls, server_id, name=None):
-        server = cls.objects.filter(server_id=server_id).first()
-        if name is not None:
-            server.name = name
-            server.save()
-        return server
+    def update(self, name=None):
+        self.name = name
+        self.save()
 
     @classmethod
-    def get_all(cls):
-        return cls.objects.all()
+    def get(cls, discord_server: discord.Guild):
+        return cls.objects.get(server_id=discord_server.id)
 
     def get_commands(self):
         return DiscordCommand.objects.filter(server=self).order_by('cmd')
 
     def get_cmd(self, cmd):
         return self.get_commands().filter(cmd=cmd).first()
+
+    def get_member(self, discord_user: Union[discord.Member, discord.User], create=False):
+        if not create:
+            return DiscordServerUser.objects.get(user_id=discord_user.id, server=self)
+        else:
+            user, _ = DiscordUser.objects.get_or_create(user_id=discord_user.id, defaults={'name': discord_user.name})
+            member, created = DiscordServerUser.objects.get_or_create(user=user, server=self)
+            if created:
+                self._add_user()
+                user._add_server()
 
     def _add_meem(self):
         self.meme_count += 1
@@ -135,17 +144,9 @@ class DiscordServerUser(models.Model):
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
-    @classmethod
-    def update(cls, user_id, server, name=None):
-        user, _ = DiscordUser.objects.get_or_create(user_id=user_id)
-        if name is not None:
-            user.name = name
-            user.save()
-        server_user, created = DiscordServerUser.objects.get_or_create(user=user, server=server)
-        if created:
-            server._add_user()
-            user._add_server()
-        return server_user
+    def update(self, discord_user: Union[discord.Member, discord.User]):
+        self.user.name = discord_user.name
+        self.user.save()
 
     def get_meme_limit(self):
         limit_count = self.server.meme_limit_count
