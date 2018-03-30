@@ -10,7 +10,7 @@ django.setup()
 from lamdabotweb.settings import MEDIA_ROOT, MEDIA_SUBDIR
 from memeviewer.models import MemeSourceImage
 
-ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png'
+ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png|.*\.webp|.*\.gif'
 SOURCEIMG_DIR = os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'sourceimg')
 
 imgdir = os.path.join(SOURCEIMG_DIR, "manual")
