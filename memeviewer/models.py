@@ -237,7 +237,7 @@ class MemeSourceImage(MemeImage):
             return None
 
         if friendly_name is None:
-            friendly_name = filename and os.path.splitext(filename.replace('_', ' ').rstrip())[0] or ''
+            friendly_name = filename and os.path.splitext(filename.replace('_', ' ').rstrip())[0][:32] or ''
         srcimg = MemeSourceImage(name=imgid, friendly_name=friendly_name)
         srcimg.image_file.save(saved_filename, File(open(filepath, "rb")))
         srcimg.save()
