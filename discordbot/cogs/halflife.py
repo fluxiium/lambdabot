@@ -41,78 +41,77 @@ class HalfLifeCog:
         article = None
         was_random = False
 
-        async with ctx.typing():
-            if query:
-                was_random = True
-                response = requests.get(
-                    '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
-                    headers=headers,
-                )
-                article_data = json.loads(response.content.decode('utf-8'))
+        if not query:
+            was_random = True
+            response = requests.get(
+                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+                headers=headers,
+            )
+            article_data = json.loads(response.content.decode('utf-8'))
+            article = next(iter(article_data['query']['pages'].values()))
+
+        else:
+            response = requests.get(
+                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
+                headers=headers,
+            )
+            article_data = json.loads(response.content.decode('utf-8'))
+            if article_data.get('query') is not None:
                 article = next(iter(article_data['query']['pages'].values()))
 
+        proceed = False
+        soup = None
+
+        while not proceed:
+            if article is None:
+                raise CommandError("article not found :cry:")
+
+            response = requests.get(article['fullurl'], headers=headers)
+            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+
+            heading = soup.select_one('#firstHeading')
+            if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
+                proceed = True
             else:
-                response = requests.get(
-                    '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
-                    headers=headers,
-                )
-                article_data = json.loads(response.content.decode('utf-8'))
-                if article_data.get('query') is not None:
-                    article = next(iter(article_data['query']['pages'].values()))
-
-            proceed = False
-            soup = None
-
-            while not proceed:
-                if article is None:
-                    raise CommandError("article not found :cry:")
-
-                response = requests.get(article['fullurl'], headers=headers)
-                soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-
-                heading = soup.select_one('#firstHeading')
-                if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
-                    proceed = True
+                page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
+                random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
+                if random_page is None:
+                    article = None
                 else:
-                    page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
-                    random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
-                    if random_page is None:
-                        article = None
-                    else:
-                        response = requests.get(
-                            '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
-                                wiki_url, random_page),
-                            headers=headers,
-                        )
-                        article_data = json.loads(response.content.decode('utf-8'))
-                        if article_data.get('query') is not None:
-                            article = next(iter(article_data['query']['pages'].values()))
+                    response = requests.get(
+                        '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
+                            wiki_url, random_page),
+                        headers=headers,
+                    )
+                    article_data = json.loads(response.content.decode('utf-8'))
+                    if article_data.get('query') is not None:
+                        article = next(iter(article_data['query']['pages'].values()))
 
-            pic_tag = soup.select_one('td.infoboximage > a > img')
-            if pic_tag is None:
-                pic_tag = soup.select_one('img.thumbimage')
+        pic_tag = soup.select_one('td.infoboximage > a > img')
+        if pic_tag is None:
+            pic_tag = soup.select_one('img.thumbimage')
 
-            desc_tag = soup.select_one('div#mw-content-text > p:nth-of-type(2)')
-            desc = textwrap.shorten(desc_tag.getText(), width=250) if desc_tag is not None else None
+        desc_tag = soup.select_one('div#mw-content-text > p:nth-of-type(2)')
+        desc = textwrap.shorten(desc_tag.getText(), width=250) if desc_tag is not None else None
 
-            embed = Embed(
-                title=article['title'],
-                url=article['fullurl'],
-                color=0xF7923A,
-                description=desc,
-            )
-            embed.set_footer(
-                text="Combine Overwiki",
-                icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png".format(wiki_url)
-            )
+        embed = Embed(
+            title=article['title'],
+            url=article['fullurl'],
+            color=0xF7923A,
+            description=desc,
+        )
+        embed.set_footer(
+            text="Combine Overwiki",
+            icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png".format(wiki_url)
+        )
 
-            if pic_tag is not None:
-                embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
+        if pic_tag is not None:
+            embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
 
-            await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
+        await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
 
     @_cmd_wiki.error
-    async def _meem_error(self, ctx: Context, error):
+    async def _wiki_error(self, ctx: Context, error):
         if isinstance(error, CommandError):
             await ctx.send("{} {}".format(ctx.author.mention, str(error)))
 
