@@ -105,10 +105,15 @@ class MemeContext(models.Model):
                 source_files[slot.slot_order] = source_file.name
                 continue
             # pick source file that hasn't been used
+            attempts = 0
             while True:
                 source_file = self.next_image(MemeSourceImage, saveme)
-                if source_file not in source_files.values():
+                if source_file.name not in source_files.values():
                     break
+                else:
+                    attempts += 1
+                if attempts > 5:
+                    raise FileNotFoundError("Not enough source images")
             source_files[slot.slot_order] = source_file.name
             if saveme:
                 source_file._add_meem()
