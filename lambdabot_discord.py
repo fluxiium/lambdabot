@@ -1,187 +1,74 @@
 import os
-import asyncio
-import shlex
 import django
 import discord
 import re
-import lamdabotweb.settings as config
+import asyncio
 
-from importlib import import_module
+import lamdabotweb.settings as config
+from discord.ext import commands
+from django.core.exceptions import ObjectDoesNotExist
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-import discordbot.murphybot as murphy
-import discordbot.cleverbot as cleverboi
-from discordbot.util import log, get_server, get_member, get_attachments, save_attachment
-from discordbot.classes import DiscordSyntaxException, DiscordCommandException, DiscordCommandResponse
+from discordbot.models import DiscordServer, DiscordContext
+from discordbot.util import log
 
 log("")
-log("##############################")
-log("#  LambdaBot 3883 - Discord  #")
-log("##############################")
+log("####################")
+log("#  LambdaBot 3883  #")
+log("####################")
 log("")
 
-_client = discord.Client(max_messages=10000)
+_bot = commands.Bot(command_prefix=config.DISCORD_CMD_PREFIX, description='I make memes.')
+
+for cog_name in config.DISCORD_COGS:
+    _bot.load_extension('discordbot.cogs.' + cog_name)
 
 
-_COMMANDS = {}
-_COMMAND_ALIASES = {}
-for file in os.listdir(os.path.join(config.BASE_DIR, 'discordbot', 'commands')):
-    if file.startswith('__') or not file.endswith('.py'):
-        continue
-    md = import_module('discordbot.commands.' + os.path.splitext(file)[0])
-    _COMMANDS.update(md.COMMANDS)
-    _COMMAND_ALIASES.update(md.COMMAND_ALIASES)
+@_bot.event
+async def on_guild_join(server: discord.Guild):
+    DiscordServer.get(server, create=True)
 
 
-# noinspection PyShadowingNames
-async def _cmd_help(server, message, **_):
-    helpstr = "available commands:".format(message.author.mention)
-
-    for cmd_name, cmd_data in _COMMANDS.items():
-
-        helpstr += "\n`{0}{1}".format(server.prefix, cmd_name)
-
-        if cmd_data.get('usage'):
-            helpstr += " {}`".format(cmd_data['usage'])
-        else:
-            helpstr += "`"
-
-        if cmd_data.get('help'):
-            helpstr += " - {0}".format(cmd_data['help'])
-
-    for cmd_data in server.get_commands():
-        helpstr += "\n`{0}{1}`".format(server.prefix, cmd_data.cmd)
-
-    return DiscordCommandResponse(helpstr)
-
-_COMMANDS['help'] = {
-    'function': _cmd_help,
-}
+@_bot.event
+async def on_member_update(_, member: discord.Member):
+    try:
+        server_data = DiscordServer.get(member.guild)
+        member_data = server_data.get_member(member)
+        member_data.update(member)
+    except ObjectDoesNotExist:
+        pass
 
 
-@_client.event
-async def process_message(message):
-    msg = message.content.strip()
+@_bot.event
+async def on_guild_update(_, server: discord.Guild):
+    try:
+        server_data = DiscordServer.get(server)
+        server_data.update(server.name)
+    except ObjectDoesNotExist:
+        pass
 
-    server = get_server(message)
 
-    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) is not None:
+@_bot.event
+async def on_ready():
+    log('Logged in as', _bot.user.name, _bot.user.id)
+    await _bot.change_presence(activity=discord.Game(name=config.DISCORD_STATUS))
+
+
+@_bot.event
+async def on_message(msg: discord.Message):
+    if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg.content) is not None:
         await asyncio.sleep(2)
 
-    if server is None or message.author.id == _client.user.id:
-        return
-
-    member = get_member(message)
-    atts = get_attachments(message)
-
-    if _client.user.mentioned_in(message):
-
-        if msg.startswith(message.server.me.mention):
-            msg = msg.replace(message.server.me.mention, "", 1).strip()
-        elif msg.endswith(message.server.me.mention):
-            msg = msg.rsplit(message.server.me.mention, 1)[0].strip()
-        else:
-            return
-
-        log("{0}, {1} mention: {2}".format(server.name, message.author.name, msg))
-
-        answered = False
-
-        for att in atts:
-            if att['is_embed']:
-                msg = msg.replace(att['real_url'], "", 1).strip()
-
-        if murphy.is_active() and not message.author.bot:
-            answered = True
-            att = atts[0] if len(atts) > 0 else None
-            if msg.lower().startswith("what if i ") or (msg == "" and att is not None):
-                face_pic = save_attachment(att['real_url']) if att is not None else ''
-                if msg == "" and att is not None:
-                    murphy.ask(user=member, channel=message.channel, face_pic=face_pic)
-                elif msg != "":
-                    murphy.ask(user=member, channel=message.channel, question=msg, face_pic=face_pic)
-
-            elif msg.lower().startswith("what if "):
-                murphy.ask(user=member, channel=message.channel, question=msg)
-
-            else:
-                answered = False
-
-        if msg and (not answered or not murphy.is_active()) and cleverboi.is_active():
-            await cleverboi.talk(_client, message.channel, member, msg)
-
-        if not msg and len(atts) == 0:
-            msg = server.prefix + "help"
-        else:
-            return
-
-    if not msg.startswith(server.prefix) or message.author.bot:
-        return
-
-    try:
-        splitcmd = shlex.split(msg[len(server.prefix):])
-    except ValueError:
-        splitcmd = msg[len(server.prefix):].split(' ')
-
-    if len(splitcmd) == 0:
-        return
-
-    cmd = server.get_cmd(splitcmd[0])
-
-    if cmd is not None:
-        await _client.send_typing(message.channel)
-        await _client.send_message(message.channel, cmd.message)
-        return
-
-    cmd = _COMMANDS.get(_COMMAND_ALIASES.get(splitcmd[0]) or splitcmd[0])
-    if cmd is None:
-        return
-
-    cmd_fun = cmd.get('function')
-    if cmd_fun is None:
-        return
-
-    await _client.send_typing(message.channel)
-
-    try:
-        response = await cmd_fun(
-            client=_client,
-            server=server,
-            member=member,
-            message=message,
-            args=splitcmd,
-            argstr=msg[(len(server.prefix) + len(splitcmd[0])):].strip(),
-            attachments=atts,
-        )
-    except DiscordSyntaxException:
-        response = DiscordCommandResponse("usage: `{}{} {}`".format(server.prefix, splitcmd[0], cmd.get('usage', '')))
-    except DiscordCommandException:
-        response = DiscordCommandResponse("error :cry:")
-
-    await response.send(_client, message)
+    ctx = await _bot.get_context(msg, cls=DiscordContext)
+    if ctx.valid:
+        await _bot.invoke(ctx)
 
 
-@_client.event
-async def on_message(message):
-    await process_message(message)
+@_bot.check
+def check_mans_not_bot(ctx):
+    return not ctx.author.bot
 
 
-@_client.event
-async def on_message_edit(old_message, message):
-    pass
-
-
-@_client.event
-async def on_message_delete(message):
-    pass
-
-
-@_client.event
-async def on_ready():
-    log('Logged in as', _client.user.name, _client.user.id)
-    await _client.change_presence(game=discord.Game(name=config.DISCORD_STATUS))
-
-murphy.start(_client)
-_client.run(config.DISCORD_TOKEN)
+_bot.run(config.DISCORD_TOKEN)

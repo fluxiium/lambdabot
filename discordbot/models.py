@@ -1,7 +1,17 @@
+import discord
+import requests
+import uuid
 from datetime import timedelta
+from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
+from tempfile import mkdtemp
+from typing import Union
+
+import os
+
+from discordbot.util import log, headers
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -29,23 +39,37 @@ class DiscordServer(models.Model):
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
     user_count = models.IntegerField(default=0, verbose_name='Users')
 
-    @classmethod
-    def update(cls, server_id, name=None):
-        server = cls.objects.filter(server_id=server_id).first()
-        if name is not None:
-            server.name = name
-            server.save()
-        return server
+    def update(self, name=None):
+        self.name = name
+        self.save()
 
     @classmethod
-    def get_all(cls):
-        return cls.objects.all()
+    def get(cls, discord_server: discord.Guild, create=False):
+        if not create:
+            return cls.objects.get(server_id=discord_server.id)
+        else:
+            context = MemeContext.by_id_or_create('default', 'Default')
+            return cls.objects.get_or_create(server_id=discord_server.id, defaults={
+                'name': discord_server.name,
+                'context': context,
+            })[0]
 
     def get_commands(self):
         return DiscordCommand.objects.filter(server=self).order_by('cmd')
 
     def get_cmd(self, cmd):
         return self.get_commands().filter(cmd=cmd).first()
+
+    def get_member(self, discord_user: Union[discord.Member, discord.User], create=False):
+        if not create:
+            return DiscordServerUser.objects.get(user_id=discord_user.id, server=self)
+        else:
+            user, _ = DiscordUser.objects.get_or_create(user_id=discord_user.id, defaults={'name': discord_user.name})
+            member, created = DiscordServerUser.objects.get_or_create(user=user, server=self)
+            if created:
+                self._add_user()
+                user._add_server()
+            return member
 
     def _add_meem(self):
         self.meme_count += 1
@@ -135,17 +159,9 @@ class DiscordServerUser(models.Model):
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
 
-    @classmethod
-    def update(cls, user_id, server, name=None):
-        user, _ = DiscordUser.objects.get_or_create(user_id=user_id)
-        if name is not None:
-            user.name = name
-            user.save()
-        server_user, created = DiscordServerUser.objects.get_or_create(user=user, server=server)
-        if created:
-            server._add_user()
-            user._add_server()
-        return server_user
+    def update(self, discord_user: Union[discord.Member, discord.User]):
+        self.user.name = discord_user.name
+        self.user.save()
 
     def get_meme_limit(self):
         limit_count = self.server.meme_limit_count
@@ -197,3 +213,62 @@ class DiscordMeem(models.Model):
 
     def __str__(self):
         return "{} ({})".format(self.meme, self.server_user)
+
+
+class DiscordContext(commands.Context):
+    @property
+    def server_data(self):
+        return DiscordServer.get(self.guild, create=True)
+
+    @property
+    def member_data(self):
+        return self.server_data.get_member(self.message.author, create=True)
+
+
+class DiscordImage:
+    def __init__(self, att, is_embed):
+        self.__att = att
+        self.is_embed = is_embed
+        if self.is_embed:
+            self.filename = str(uuid.uuid4())
+            self.url = self.__att
+        else:
+            self.filename = self.__att.filename
+            self.url = self.__att.proxy_url
+
+    @classmethod
+    def get_from_message(cls, msg: discord.Message, get_embeds=True):
+        images = []
+        for att in msg.attachments:
+            images.append(cls.__from_attachment(att))
+        if not get_embeds:
+            return images
+        for emb in msg.embeds:
+            try:
+                images.append(cls.__from_embed(emb))
+            except AttributeError:
+                pass
+        return images
+
+    @classmethod
+    def __from_embed(cls, embed: discord.Embed):
+        if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:
+            return cls(embed.image.url, True)
+        elif embed.thumbnail != discord.Embed.Empty and embed.thumbnail.url != discord.Embed.Empty:
+            return cls(embed.thumbnail.url, True)
+        else:
+            raise AttributeError
+
+    @classmethod
+    def __from_attachment(cls, attachment: discord.Attachment):
+        return cls(attachment, False)
+
+    def save(self):
+        tmpdir = mkdtemp(prefix="lambdabot_attach_")
+        filename = os.path.join(tmpdir, self.filename)
+        url = self.url
+        log('saving image: {0} -> {1}'.format(url, filename))
+        attachment = requests.get(url, headers=headers)
+        with open(filename, 'wb') as attachment_file:
+            attachment_file.write(attachment.content)
+        return filename

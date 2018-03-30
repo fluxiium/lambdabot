@@ -50,6 +50,14 @@ TWITTER_ACCESS_TOKEN_SECRET = ''
 DISCORD_TOKEN = ''
 DISCORD_STATUS = '!help | ' + WEBSITE_URL
 DISCORD_SEND_ATTACHMENTS = True  # will use embeds otherwise
+DISCORD_CMD_PREFIX = '!'
+DISCORD_COGS = [
+    'help',
+    'meem',
+    'clevermurphybot',
+    'customcmd',
+    'extra',
+]
 
 # ignore if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_TOKEN = ''
