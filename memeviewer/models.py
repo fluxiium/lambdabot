@@ -123,11 +123,9 @@ class MemeContext(models.Model):
         if saveme:
             template._add_meem()
             meem.save()
+            self.meme_count += 1
+            self.save()
         return meem
-
-    def _add_meem(self):
-        self.meme_count += 1
-        self.save()
 
     def __str__(self):
         return self.short_name
