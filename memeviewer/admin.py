@@ -214,7 +214,7 @@ class MemeSourceImageAdmin(MemeImageAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'source_images__contains': '%22' + obj.name + '%22'
-        }, obj.meme_count)
+        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     memes_link.short_description = 'Memes'
 
     def lookup_allowed(self, key, value):
@@ -260,7 +260,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'template_link__name': obj.name
-        }, obj.meme_count)
+        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     memes_link.short_description = 'Memes'
 
 
@@ -289,5 +289,5 @@ class MemeContextAdmin(admin.ModelAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'context_link__short_name__exact': obj.short_name
-        }, obj.meme_count)
+        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     memes_link.short_description = 'Memes'

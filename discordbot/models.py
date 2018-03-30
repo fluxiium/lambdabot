@@ -74,7 +74,6 @@ class DiscordServer(models.Model):
     def _add_meem(self):
         self.meme_count += 1
         self.save()
-        self.context._add_meem()
 
     def _add_sourceimg_submission(self):
         self.submission_count += 1
