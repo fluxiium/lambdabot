@@ -107,7 +107,7 @@ class MeemAdmin(admin.ModelAdmin):
 
 
 class MemeImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'change_date')
+    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'memes_link', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'contexts',)
     fields = ('name', 'friendly_name', 'image', 'contexts', 'accepted', 'add_date', 'change_date', 'memes_link',
@@ -214,7 +214,7 @@ class MemeSourceImageAdmin(MemeImageAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'source_images__contains': '%22' + obj.name + '%22'
-        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }, obj.meme_count)
     memes_link.short_description = 'Memes'
 
     def lookup_allowed(self, key, value):
@@ -260,13 +260,13 @@ class MemeTemplateAdmin(MemeImageAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'template_link__name': obj.name
-        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }, obj.meme_count)
     memes_link.short_description = 'Memes'
 
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'name', 'is_public', 'recent_threshold', 'reset_url')
+    list_display = ('__str__', 'name', 'is_public', 'recent_threshold', 'memes_link', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public')
     readonly_fields = ('memes_link', 'reset_url',)
@@ -289,5 +289,5 @@ class MemeContextAdmin(admin.ModelAdmin):
     def memes_link(self, obj):
         return list_url(Meem, {
             'context_link__short_name__exact': obj.short_name
-        }, "show")  # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }, obj.meme_count)
     memes_link.short_description = 'Memes'

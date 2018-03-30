@@ -39,6 +39,7 @@ class MemeContext(models.Model):
     name = models.CharField(max_length=64, verbose_name='Name')
     recent_threshold = models.IntegerField(default=10, verbose_name='Recent threshold')
     is_public = models.BooleanField(default=False, verbose_name='Is public?')
+    meme_count = models.IntegerField(default=0, verbose_name='Memes')
 
     @classmethod
     def by_id(cls, name):
@@ -88,7 +89,6 @@ class MemeContext(models.Model):
         img_in_context.queued = False
         if increment_counter:
             img_in_context.random_usages += 1
-            img_in_context.all_usages += 1
         img_in_context.save()
 
         return img_in_context.image
@@ -102,7 +102,7 @@ class MemeContext(models.Model):
         source_file = None
         for slot in template.memetemplateslot_set.order_by('slot_order').all():
             if slot.slot_order == prev_slot_id:
-                source_files[slot] = source_file
+                source_files[slot.slot_order] = source_file.name
                 continue
             # pick source file that hasn't been used
             while True:
@@ -110,12 +110,19 @@ class MemeContext(models.Model):
                 if source_file not in source_files.values():
                     break
             source_files[slot.slot_order] = source_file.name
+            if saveme:
+                source_file._add_meem()
             prev_slot_id = slot.slot_order
         print(source_files)
         meem = Meem(template_link=template, context_link=self, source_images=json.dumps(source_files))
         if saveme:
+            template._add_meem()
             meem.save()
         return meem
+
+    def _add_meem(self):
+        self.meme_count += 1
+        self.save()
 
     def __str__(self):
         return self.short_name
@@ -135,6 +142,7 @@ class MemeImage(models.Model):
     accepted = models.BooleanField(default=False, verbose_name='Accepted')
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
+    meme_count = models.IntegerField(default=0, verbose_name='Memes')
 
     def clean(self):
         self.change_date = timezone.now()
@@ -155,6 +163,10 @@ class MemeImage(models.Model):
 
     def __str__(self):
         return self.friendly_name or self.name
+
+    def _add_meem(self):
+        self.meme_count += 1
+        self.save()
 
     @classmethod
     def by_id(cls, name):
