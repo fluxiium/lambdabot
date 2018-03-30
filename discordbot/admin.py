@@ -13,7 +13,7 @@ class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
     verbose_name_plural = "Server-specific"
-    fields = ('server_link', 'unlimited_memes', 'submissions_link', 'memes_link')
+    fields = ('server_link', 'submissions_link', 'memes_link')
     readonly_fields = ('server_link', 'submissions_link', 'memes_link')
     ordering = ('server__name',)
     can_delete = False
@@ -45,7 +45,7 @@ class DiscordServerAdmin(admin.ModelAdmin):
     list_display = ('name', 'context', 'users_link', 'submissions_link', 'memes_link')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
-    fields = ('server_id', 'name', 'context', 'prefix', 'meme_limit_count', 'meme_limit_time')
+    fields = ('server_id', 'name', 'context', 'prefix')
     readonly_fields = ('users_link', 'submissions_link', 'memes_link')
     inlines = [DiscordCommandInline]
 

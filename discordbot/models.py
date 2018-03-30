@@ -32,9 +32,6 @@ class DiscordServer(models.Model):
     context = models.ForeignKey(MemeContext, verbose_name='Context', default='default', on_delete=models.SET_DEFAULT)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
 
-    meme_limit_count = models.IntegerField(default=3, verbose_name='Meme limit')
-    meme_limit_time = models.IntegerField(default=10, verbose_name='Meme limit cooldown')
-
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
     user_count = models.IntegerField(default=0, verbose_name='Users')
@@ -153,7 +150,6 @@ class DiscordServerUser(models.Model):
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    unlimited_memes = models.BooleanField(default=False, verbose_name='Unlimited memes')
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
@@ -161,17 +157,6 @@ class DiscordServerUser(models.Model):
     def update(self, discord_user: Union[discord.Member, discord.User]):
         self.user.name = discord_user.name
         self.user.save()
-
-    def get_meme_limit(self):
-        limit_count = self.server.meme_limit_count
-        limit_time = self.server.meme_limit_time
-        seconds_left = 0
-        if not self.unlimited_memes:
-            since = timezone.now() - timedelta(minutes=limit_time)
-            memes = DiscordMeem.objects.filter(server_user=self, meme__gen_date__gte=since).order_by('-meme__gen_date')[:limit_count]
-            if limit_count <= memes.count():
-                seconds_left = int((memes[limit_count - 1].meme.gen_date - since).total_seconds()) + 1
-        return seconds_left, limit_count, limit_time
 
     def generate_meme(self, template, channel):
         meme = self.server.context.generate(template=template)
