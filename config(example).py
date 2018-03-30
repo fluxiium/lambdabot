@@ -58,6 +58,8 @@ DISCORD_COGS = [
     'customcmd',
     'extra',
 ]
+DISCORD_MEME_LIMIT = 5
+DISCORD_MEME_COOLDOWN = 60
 
 # ignore if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_TOKEN = ''
