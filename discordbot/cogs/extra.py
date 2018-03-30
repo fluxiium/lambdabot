@@ -15,19 +15,18 @@ class ExtraCmdCog:
 
     @commands.command(name='led', help='generate an LED sign')
     async def _cmd_led(self, ctx: Context, *, text):
-        async with ctx.typing():
-            response = requests.post('http://wigflip.com/signbot/', data={
-                'T': text,
-                'S': 'L',
-            }, headers=headers)
+        response = requests.post('http://wigflip.com/signbot/', data={
+            'T': text,
+            'S': 'L',
+        }, headers=headers)
 
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-            img = soup.select_one('#output img')
+        soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+        img = soup.select_one('#output img')
 
-            if img is not None:
-                await ctx.send("{} {}".format(ctx.author.mention, img['src']))
-            else:
-                raise CommandError("couldn't generate LED sign :cry:")
+        if img is not None:
+            await ctx.send("{} {}".format(ctx.author.mention, img['src']))
+        else:
+            raise CommandError("couldn't generate LED sign :cry:")
 
     @commands.command(name='mario', help='generate a mario thing', usage='[name] <first line> <message>')
     async def _cmd_mario(self, ctx, first_line, message, arg3=''):
@@ -40,41 +39,39 @@ class ExtraCmdCog:
             title = first_line
             msgtext = message
 
-        async with ctx.typing():
-            response = requests.post('http://wigflip.com/thankyoumario/', data={
-                'name': name,
-                'title': title,
-                'lines': msgtext,
-                'double': 'y',
-            }, headers=headers)
+        response = requests.post('http://wigflip.com/thankyoumario/', data={
+            'name': name,
+            'title': title,
+            'lines': msgtext,
+            'double': 'y',
+        }, headers=headers)
 
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-            img = soup.select_one('#output img')
+        soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+        img = soup.select_one('#output img')
 
-            if img is not None:
-                await ctx.send("{} {}".format(ctx.author.mention, img['src']))
-            else:
-                raise CommandError("error :cry:")
+        if img is not None:
+            await ctx.send("{} {}".format(ctx.author.mention, img['src']))
+        else:
+            raise CommandError("error :cry:")
 
     @commands.command(name='noviews', help='show random video with no views')
     async def _cmd_noviews(self, ctx):
         attempt = 0
         videourl = None
 
-        async with ctx.typing():
-            while videourl is None and attempt < 5:
-                # noinspection PyBroadException
-                try:
-                    response = requests.get('http://www.petittube.com', headers=headers)
-                    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
-                    videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
-                except Exception:
-                    attempt += 1
+        while videourl is None and attempt < 5:
+            # noinspection PyBroadException
+            try:
+                response = requests.get('http://www.petittube.com', headers=headers)
+                soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+                videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
+            except Exception:
+                attempt += 1
 
-            if videourl is not None:
-                await ctx.send("{} https://youtu.be/{}".format(ctx.author.mention, videourl))
-            else:
-                raise CommandError("error :cry:")
+        if videourl is not None:
+            await ctx.send("{} https://youtu.be/{}".format(ctx.author.mention, videourl))
+        else:
+            raise CommandError("error :cry:")
 
     @_cmd_led.error
     @_cmd_mario.error
