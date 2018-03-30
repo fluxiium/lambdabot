@@ -40,7 +40,7 @@ class MemeGeneratorCog:
 
             msgstr = "{2} here's a meme (using template `{0}`){1}".format(
                 meme.template_link,
-                DISCORD_SEND_ATTACHMENTS and '' or ('\n' + meme.get_info_url()),
+                DISCORD_SEND_ATTACHMENTS and ' ' or ('\n' + meme.get_info_url()),
                 ctx.author.mention
             )
 
