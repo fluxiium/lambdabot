@@ -139,19 +139,19 @@ class MemeImageAdmin(admin.ModelAdmin):
         queryset.update(accepted=True)
         for img in queryset:
             img.clean()
-            img.enqueue()
+            img.reindex()
     accept.short_description = "Approve selected images"
 
     def reject(self, request, queryset):
         queryset.update(accepted=False)
         for img in queryset:
             img.clean()
-            img.enqueue()
+            img.reindex()
     reject.short_description = "Reject selected images"
 
     def save_related(self, request, form, formsets, change):
         admin.ModelAdmin.save_related(self, request, form, formsets, change)
-        form.instance.enqueue()
+        form.instance.reindex()
 
 
 class MemeImageInContextInline(admin.TabularInline):
