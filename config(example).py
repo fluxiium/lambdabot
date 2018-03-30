@@ -56,6 +56,7 @@ DISCORD_COGS = [
     'meem',
     'clevermurphybot',
     'customcmd',
+    'extra',
 ]
 
 # ignore if you don't want the discord bot to have cleverbot functionality

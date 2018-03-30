@@ -48,10 +48,12 @@ class DiscordImage:
             self.url = self.__att.proxy_url
 
     @classmethod
-    def get_from_message(cls, msg: discord.Message):
+    def get_from_message(cls, msg: discord.Message, get_embeds=True):
         images = []
         for att in msg.attachments:
             images.append(cls.__from_attachment(att))
+        if not get_embeds:
+            return images
         for emb in msg.embeds:
             try:
                 images.append(cls.__from_embed(emb))
@@ -61,7 +63,7 @@ class DiscordImage:
 
     @classmethod
     def __from_embed(cls, embed: discord.Embed):
-        if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:  # todo: fixxxxxxxxxxxxxxxxxxxxxxxxxx
+        if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:
             return cls(embed.image.url, True)
         elif embed.thumbnail != discord.Embed.Empty and embed.thumbnail.url != discord.Embed.Empty:
             return cls(embed.thumbnail.url, True)

@@ -41,7 +41,11 @@ class DiscordServer(models.Model):
         if not create:
             return cls.objects.get(server_id=discord_server.id)
         else:
-            return cls.objects.get_or_create(server_id=discord_server.id, defaults={'name': discord_server.name})[0]
+            context = MemeContext.by_id_or_create('default', 'Default')
+            return cls.objects.get_or_create(server_id=discord_server.id, defaults={
+                'name': discord_server.name,
+                'context': context,
+            })[0]
 
     def get_commands(self):
         return DiscordCommand.objects.filter(server=self).order_by('cmd')

@@ -1,9 +1,7 @@
 import os
 import django
 import discord
-
 import re
-
 import asyncio
 
 import lamdabotweb.settings as config
