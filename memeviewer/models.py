@@ -52,43 +52,51 @@ class MemeContext(models.Model):
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
 
-    def next_image(self, image_class):
+    def next_image(self, image_class, increment_counter=True):
+        in_context_class = image_class.in_context_class
+
         # read queue from db
-        result = image_class.objects.filter(context=self, queued=True)
+        result = in_context_class.objects.filter(context=self, queued=True)
 
         # if empty, make new queue
         if result.count() == 0:
 
+            for i in image_class.objects.filter(accepted=True).filter(Q(contexts=self) | Q(contexts=None)):
+                in_context_class.objects.get_or_create(context=self, image=i)
+
             queue_length = config.IMG_QUEUE_LENGTH
             recent_threshold = self.recent_threshold
 
-            img_queue_db = image_class.objects.filter(context=self, image__accepted=True).order_by('?')
+            img_queue_db = in_context_class.objects.filter(context=self, image__accepted=True).order_by('?')
             img_queue_recent = img_queue_db.filter(random_usages__lte=recent_threshold)[
                                0:(min(queue_length, img_queue_db.count()) / 2)]
             img_queue_old = img_queue_db[0:(min(queue_length, img_queue_db.count()) - img_queue_recent.count())]
 
+            queue_list = list(img_queue_recent) + list(img_queue_old)
+
+            if len(queue_list) == 0:
+                raise FileNotFoundError("No images found")
+
             # save queue to db
-            for s in list(img_queue_recent) + list(img_queue_old):
+            for s in queue_list:
                 s.queued = True
                 s.save()
 
-            result = image_class.objects.filter(context=self, queued=True)
+            result = in_context_class.objects.filter(context=self, queued=True)
 
         img_in_context = result.order_by('?').first()
-        img_in_context.random_usages += 1
         img_in_context.queued = False
+        if increment_counter:
+            img_in_context.random_usages += 1
+            img_in_context.all_usages += 1
         img_in_context.save()
 
         return img_in_context.image
 
     # noinspection PyProtectedMember
     def generate(self, template=None, saveme=True):
-        if MemeTemplateInContext.count(self) == 0:
-            raise FileNotFoundError("No templates")
-        if MemeSourceImageInContext.count(self) == 0:
-            raise FileNotFoundError("No source images")
         if template is None:
-            template = self.next_image(MemeTemplateInContext)
+            template = self.next_image(MemeTemplate, saveme)
         source_files = {}
         prev_slot_id = None
         source_file = None
@@ -98,7 +106,7 @@ class MemeContext(models.Model):
                 continue
             # pick source file that hasn't been used
             while True:
-                source_file = self.next_image(MemeSourceImageInContext)
+                source_file = self.next_image(MemeSourceImage, saveme)
                 if source_file not in source_files.values():
                     break
             source_files[slot.slot_order] = source_file.name
@@ -132,18 +140,17 @@ class MemeImage(models.Model):
         self.change_date = timezone.now()
         self.save()
 
-    # add image to queues of all its contexts
-    def enqueue(self):
-        for im in self.in_context_class.objects.filter(image=self, queued=True):
-            im.queued = False
-            im.save()
+    # add image to queues of all its contexts (or unqueue it if it's not accepted)
+    def reindex(self):
         if self.accepted:
             contexts = self.contexts.all()
             if len(contexts) == 0:
                 contexts = MemeContext.objects.all()
             for c in contexts:
-                im, _ = self.in_context_class.objects.get_or_create(context=c, image=self)
-                im.queued = True
+                self.in_context_class.objects.get_or_create(context=c, image=self)
+        else:
+            for im in self.in_context_class.objects.filter(image=self, queued=True):
+                im.queued = False
                 im.save()
 
     def __str__(self):
@@ -166,7 +173,6 @@ class MemeImageInContext(models.Model):
     context = models.ForeignKey(MemeContext, on_delete=models.CASCADE)
     queued = models.BooleanField(default=False)
     random_usages = models.IntegerField(default=0)
-    all_usages = models.IntegerField(default=0)  # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     @classmethod
     def count(cls, context):

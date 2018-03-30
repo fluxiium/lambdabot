@@ -107,7 +107,7 @@ class MeemAdmin(admin.ModelAdmin):
 
 
 class MemeImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'memes_link', 'change_date')
+    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'contexts',)
     fields = ('name', 'friendly_name', 'image', 'contexts', 'accepted', 'add_date', 'change_date', 'memes_link',
@@ -266,7 +266,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'name', 'is_public', 'memes_link', 'recent_threshold', 'reset_url')
+    list_display = ('__str__', 'name', 'is_public', 'recent_threshold', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public')
     readonly_fields = ('memes_link', 'reset_url',)
