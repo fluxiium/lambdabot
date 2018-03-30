@@ -28,7 +28,7 @@ class ExtraCmdCog:
         else:
             raise CommandError("couldn't generate LED sign :cry:")
 
-    @commands.command(name='mario', help='generate a mario thing', usage='[name] <first line> <message>')
+    @commands.command(name='mario', usage='[name] <first line> <message>')
     async def _cmd_mario(self, ctx, first_line, message, arg3=''):
         if arg3:
             name = first_line

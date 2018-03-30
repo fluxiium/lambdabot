@@ -12,7 +12,13 @@ class CustomHelpFormatter(HelpFormatter):
         for name, command in commands:
             if name in command.aliases:
                 continue
-            entry = '• `{0}{1}` - {2}'.format(self.context.prefix, command.signature, command.short_doc)
+            entry = '{}{} {}{}{}'.format(
+                self.context.prefix,
+                command.name,
+                command.parameter_help,
+                command.short_doc and ' - ' or '',
+                command.short_doc
+            )
             self._paginator.add_line(entry)
 
     @asyncio.coroutine
@@ -27,7 +33,7 @@ class CustomHelpFormatter(HelpFormatter):
         if isinstance(self.command, Command):
             # <signature portion>
             signature = self.get_command_signature()
-            self._paginator.add_line("• `{}`".format(signature), empty=True)
+            self._paginator.add_line("```{}```".format(signature))
 
             # <long doc> section
             if self.command.help:
@@ -51,23 +57,26 @@ class CustomHelpFormatter(HelpFormatter):
                 # there simply is no prettier way of doing this.
                 commands = sorted(commands)
                 if len(commands) > 0:
-                    self._paginator.add_line()
-                    self._paginator.add_line("**{}**".format(category))
-                    self._paginator.add_line()
-                self._add_subcommands_to_page(0, commands)
+                    self._paginator.add_line("**:: {} ::**".format(category))
+                    self._paginator.add_line("```")
+                    self._add_subcommands_to_page(0, commands)
+                    self._paginator.add_line("```")
             server_commands = server_data.get_commands()
             if len(server_commands) > 0:
-                self._paginator.add_line()
-                self._paginator.add_line("**Custom**".format(self.context.guild.name))
-                self._paginator.add_line()
+                self._paginator.add_line("**:: Custom ::**".format(self.context.guild.name))
+                self._paginator.add_line("```")
+                cmds = ""
                 for cmd_data in server_commands:
-                    entry = '• `{0}{1}`'.format(self.context.prefix, cmd_data.cmd)
-                    self._paginator.add_line(entry)
+                    cmds += '{0}{1}, '.format(self.context.prefix, cmd_data.cmd)
+                self._paginator.add_line(cmds[:-2])
+                self._paginator.add_line("```")
         else:
             filtered = sorted(filtered)
             if filtered:
                 self._paginator.add_line('Commands:')
+                self._paginator.add_line("```")
                 self._add_subcommands_to_page(0, filtered)
+                self._paginator.add_line("```")
 
         return self._paginator.pages
 
