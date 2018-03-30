@@ -268,7 +268,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 class MemeContextAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'name', 'is_public', 'memes_link', 'recent_threshold', 'reset_url')
     search_fields = ('short_name', 'name')
-    fields = ('short_name', 'name', 'recent_threshold', 'is_public', 'memes_link')
+    fields = ('short_name', 'name', 'recent_threshold', 'is_public')
     readonly_fields = ('memes_link', 'reset_url',)
     ordering = ('short_name',)
 
@@ -278,7 +278,7 @@ class MemeContextAdmin(admin.ModelAdmin):
 
     def get_fields(self, request, obj=None):
         if obj:
-            return self.fields + ('reset_url',)
+            return self.fields + ('reset_url', 'memes_link')
         return self.fields
 
     def get_readonly_fields(self, request, obj=None):

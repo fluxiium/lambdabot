@@ -11,8 +11,8 @@ from django.core.exceptions import ObjectDoesNotExist
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lamdabotweb.settings")
 django.setup()
 
-from discordbot.models import DiscordServer
-from discordbot.util import log, DiscordContext
+from discordbot.models import DiscordServer, DiscordContext
+from discordbot.util import log
 
 log("")
 log("####################")

@@ -1,10 +1,17 @@
 import discord
+import requests
+import uuid
 from datetime import timedelta
+from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
+from tempfile import mkdtemp
 from typing import Union
 
+import os
+
+from discordbot.util import log, headers
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -206,3 +213,62 @@ class DiscordMeem(models.Model):
 
     def __str__(self):
         return "{} ({})".format(self.meme, self.server_user)
+
+
+class DiscordContext(commands.Context):
+    @property
+    def server_data(self):
+        return DiscordServer.get(self.guild, create=True)
+
+    @property
+    def member_data(self):
+        return self.server_data.get_member(self.message.author, create=True)
+
+
+class DiscordImage:
+    def __init__(self, att, is_embed):
+        self.__att = att
+        self.is_embed = is_embed
+        if self.is_embed:
+            self.filename = str(uuid.uuid4())
+            self.url = self.__att
+        else:
+            self.filename = self.__att.filename
+            self.url = self.__att.proxy_url
+
+    @classmethod
+    def get_from_message(cls, msg: discord.Message, get_embeds=True):
+        images = []
+        for att in msg.attachments:
+            images.append(cls.__from_attachment(att))
+        if not get_embeds:
+            return images
+        for emb in msg.embeds:
+            try:
+                images.append(cls.__from_embed(emb))
+            except AttributeError:
+                pass
+        return images
+
+    @classmethod
+    def __from_embed(cls, embed: discord.Embed):
+        if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:
+            return cls(embed.image.url, True)
+        elif embed.thumbnail != discord.Embed.Empty and embed.thumbnail.url != discord.Embed.Empty:
+            return cls(embed.thumbnail.url, True)
+        else:
+            raise AttributeError
+
+    @classmethod
+    def __from_attachment(cls, attachment: discord.Attachment):
+        return cls(attachment, False)
+
+    def save(self):
+        tmpdir = mkdtemp(prefix="lambdabot_attach_")
+        filename = os.path.join(tmpdir, self.filename)
+        url = self.url
+        log('saving image: {0} -> {1}'.format(url, filename))
+        attachment = requests.get(url, headers=headers)
+        with open(filename, 'wb') as attachment_file:
+            attachment_file.write(attachment.content)
+        return filename

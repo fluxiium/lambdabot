@@ -2,8 +2,8 @@ import discord
 from django.core.exceptions import ObjectDoesNotExist
 
 from discord.ext.commands import Bot
-from discordbot.models import DiscordServer
-from discordbot.util import log, DiscordImage
+from discordbot.models import DiscordServer, DiscordImage
+from discordbot.util import log
 from discordbot.cogs.clevermurphybot import murphybot as murphy
 from discordbot.cogs.clevermurphybot import cleverbot as cleverboi
 
