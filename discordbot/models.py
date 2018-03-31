@@ -4,7 +4,7 @@ import uuid
 from datetime import timedelta
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from tempfile import mkdtemp
 from typing import Union
@@ -158,6 +158,7 @@ class DiscordServerUser(models.Model):
         self.user.name = discord_user.name
         self.user.save()
 
+    @transaction.atomic
     def generate_meme(self, template, channel):
         meme = self.server.context.generate(template=template)
         discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, channel_id=channel.id)
@@ -167,6 +168,7 @@ class DiscordServerUser(models.Model):
         self.server._add_meem()
         return discord_meme
 
+    @transaction.atomic
     def submit_sourceimg(self, path, filename=None):
         submission = MemeSourceImage.submit(path, filename)
         if submission is None:

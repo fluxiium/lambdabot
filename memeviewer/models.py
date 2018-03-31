@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from functools import reduce
 from PIL import Image
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
@@ -53,6 +53,7 @@ class MemeContext(models.Model):
     def get_reset_url(self):
         return reverse('memeviewer:context_reset_view', kwargs={'context': self.short_name})
 
+    @transaction.atomic
     def next_image(self, image_class, increment_counter=True):
         in_context_class = image_class.in_context_class
 
@@ -94,6 +95,7 @@ class MemeContext(models.Model):
         return img_in_context.image
 
     # noinspection PyProtectedMember
+    @transaction.atomic
     def generate(self, template=None, saveme=True):
         if template is None:
             template = self.next_image(MemeTemplate, saveme)
@@ -118,7 +120,6 @@ class MemeContext(models.Model):
             if saveme:
                 source_file._add_meem()
             prev_slot_id = slot.slot_order
-        print(source_files)
         meem = Meem(template_link=template, context_link=self, source_images=json.dumps(source_files))
         if saveme:
             template._add_meem()
@@ -152,6 +153,7 @@ class MemeImage(models.Model):
         self.save()
 
     # add image to queues of all its contexts (or unqueue it if it's not accepted)
+    @transaction.atomic
     def reindex(self):
         if self.accepted:
             contexts = self.contexts.all()
@@ -160,9 +162,7 @@ class MemeImage(models.Model):
             for c in contexts:
                 self.in_context_class.objects.get_or_create(context=c, image=self)
         else:
-            for im in self.in_context_class.objects.filter(image=self, queued=True):
-                im.queued = False
-                im.save()
+            self.in_context_class.objects.filter(image=self, queued=True).update(queued=False)
 
     def __str__(self):
         return self.friendly_name or self.name
@@ -214,6 +214,7 @@ class MemeSourceImage(MemeImage):
         return self.image_file and self.image_file.url or''
 
     @classmethod
+    @transaction.atomic
     def submit(cls, filepath, filename=None, friendly_name=None):
         try:
             image = Image.open(filepath)

@@ -1,4 +1,6 @@
 import os
+from django.db import transaction
+
 import config
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -52,6 +54,7 @@ def template_preview_view(request, template_name):
     return response
 
 
+@transaction.atomic
 def context_reset_view(request, context):
     """ clears image queue of given context, displays lists of images that were in the queue """
 
