@@ -115,34 +115,6 @@ class HalfLifeCog:
         if isinstance(error, CommandError):
             await ctx.send("{} {}".format(ctx.author.mention, str(error)))
 
-    async def on_message_edit(self, old_message: Message, message: Message):
-        if message.guild.id != _SERVER_ID or old_message.content == message.content:
-            return
-
-        embed = Embed(
-            description="**Message sent by {0} edited in <#{1}>**".format(message.author.mention, message.channel.id),
-            color=0x117EA6,
-        )
-        embed.set_author(
-            name=str(message.author),
-            icon_url=message.author.avatar_url
-        )
-        embed.set_footer(
-            text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
-        )
-        embed.add_field(
-            name="Old message",
-            value=textwrap.shorten(old_message.content, width=1000),
-            inline=False,
-        )
-        embed.add_field(
-            name="New message",
-            value=textwrap.shorten(message.content, width=1000),
-            inline=False,
-        )
-
-        await self.__log_channel.send(embed=embed)
-
     async def on_message_delete(self, message: Message):
         if message.guild.id != _SERVER_ID:
             return
