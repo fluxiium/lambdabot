@@ -39,5 +39,6 @@ def dance(text):
             frame = frame.resize([int(scale_factor * d) for d in frame.size], Image.ANTIALIAS)
         frame.save('%s/%d.png' % (tmpdir, i))
     # convert -dispose previous -delay 20 -loop 0 *.png img.gif
-    subprocess.check_call('"{0}" -dispose 2 -delay 20 -loop 0 "{1}/*.png" "{1}/dance.gif"'.format(config.IMAGEMAGICK_PATH, tmpdir))
+    process = subprocess.Popen('"{0}" -dispose 2 -delay 20 -loop 0 "{1}/*.png" "{1}/dance.gif"'.format(config.IMAGEMAGICK_PATH, tmpdir), shell=True, stdout=subprocess.PIPE)
+    process.wait()
     return tmpdir
