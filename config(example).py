@@ -16,6 +16,9 @@ MAX_SRCIMG_SIZE = 1500000
 # public root url of the bot web app
 WEBSITE_URL = 'http://example.com/'
 
+# path to imagemagick executable
+IMAGEMAGICK_PATH = 'C:\Program Files\ImageMagick\convert.exe'
+
 
 # ---- DJANGO SETTINGS - more info: https://docs.djangoproject.com/en/2.0/ref/settings/
 TIME_ZONE = 'UTC'
@@ -60,6 +63,12 @@ DISCORD_COGS = [
 ]
 DISCORD_MEME_LIMIT = 5
 DISCORD_MEME_COOLDOWN = 60
+
+# !dance command
+DANCE_MAX_W = 1000
+DANCE_MAX_LEN = 40
+DANCE_LIMIT = 2
+DANCE_COOLDOWN = 10
 
 # ignore if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_TOKEN = ''

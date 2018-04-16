@@ -1,9 +1,14 @@
 import re
 import requests
+import shutil
 
 from bs4 import BeautifulSoup
+
+import config
+import discord
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context
+from discord.ext.commands import Bot, CommandError, Context, BucketType
+from discordbot.cogs.extra.dance import dance
 from discordbot.util import headers
 
 
@@ -73,9 +78,18 @@ class ExtraCmdCog:
         else:
             raise CommandError("error :cry:")
 
+    @commands.command(name='dance', help='generate dancing text')
+    @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
+    async def _cmd_dance(self, ctx, *, text):
+        async with ctx.typing():
+            tmpdir = dance(text)
+            await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
+            shutil.rmtree(tmpdir)
+
     @_cmd_led.error
     @_cmd_mario.error
     @_cmd_noviews.error
+    @_cmd_dance.error
     async def _meem_error(self, ctx: Context, error):
         if isinstance(error, CommandError):
             await ctx.send("{} {}".format(ctx.author.mention, str(error)))
