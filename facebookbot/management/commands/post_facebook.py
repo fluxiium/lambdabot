@@ -1,6 +1,6 @@
 import facebook
 from django.core.management import BaseCommand
-from lamdabotweb.settings import FACEBOOK_PAGE_TOKEN
+from config import FACEBOOK_PAGE_TOKEN
 from memeviewer.models import MemeContext
 from memeviewer.preview import preview_meme
 from facebookbot.models import FacebookMeem

@@ -1,7 +1,6 @@
 import twitter
 from django.core.management import BaseCommand
-from lamdabotweb.settings import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_ACCESS_TOKEN_KEY, \
-    TWITTER_ACCESS_TOKEN_SECRET
+from config import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_ACCESS_TOKEN_KEY, TWITTER_ACCESS_TOKEN_SECRET
 from memeviewer.models import MemeContext
 from memeviewer.preview import preview_meme
 from twitterbot.models import TwitterMeem
