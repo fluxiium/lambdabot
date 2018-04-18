@@ -10,7 +10,7 @@ from discord import Embed, Message
 from discord.ext import commands
 from discord.ext.commands import Context, CommandError, Bot
 from django.utils import timezone
-from discordbot.util import headers
+from util import headers
 from discordbot.models import DiscordImage
 
 _IMG_ARCHIVE_CHANNEL = 395615705048809492

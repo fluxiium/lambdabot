@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission, DiscordUser, DiscordServer
 from facebookbot.models import FacebookMeem
-from lamdabotweb.settings import USERNAME_TWITTER
+from lamdabotweb.settings import TWITTER_USERNAME
 from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage, \
     MemeSourceImageInContext, MemeTemplateInContext
 from twitterbot.models import TwitterMeem
@@ -34,7 +34,7 @@ class TwitterInline(SocialLinkInline):
     fields = readonly_fields = ('twitter_url',)
 
     def twitter_url(self, obj):
-        return ahref('https://twitter.com/{0}/status/{1}'.format(USERNAME_TWITTER, obj.post, True),
+        return ahref('https://twitter.com/{0}/status/{1}'.format(TWITTER_USERNAME, obj.post, True),
                      'Show associated twitter post')
     twitter_url.short_description = 'Twitter post'
 

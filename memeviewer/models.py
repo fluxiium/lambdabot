@@ -152,6 +152,9 @@ class MemeImage(models.Model):
         self.change_date = timezone.now()
         self.save()
 
+    def post_delete(self):
+        pass
+
     # add image to queues of all its contexts (or unqueue it if it's not accepted)
     @transaction.atomic
     def reindex(self):

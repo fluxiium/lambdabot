@@ -5,8 +5,8 @@ import asyncio
 import textwrap
 import discord
 import datetime
-import discordbot.util
 import config
+import util
 
 from collections import deque
 from tempfile import mkdtemp
@@ -37,7 +37,7 @@ _request_queue = deque()
 
 
 def _log(*args):
-    discordbot.util.log(*args, tag="murphy")
+    util.log(*args, tag="murphy")
 
 
 def is_active():
@@ -156,7 +156,7 @@ async def _wait_for_request():
             _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
             _state = "1"
         except Exception as ex:
-            discordbot.util.log_exc(ex)
+            util.log_exc(ex)
             _state = "error"
         return
 
@@ -185,7 +185,7 @@ async def _wait_for_request():
                 _state = "3"
                 return
             except Exception as ex:
-                discordbot.util.log_exc(ex)
+                util.log_exc(ex)
 
         else:
             _log("ERROR: request face pic file doesn't exist: {}".format(_request.face_pic))
@@ -214,7 +214,7 @@ async def _process_request():
                 _murphybot.send_file(_MURPHYBOT_HANDLE, _channel_facepic)
                 _state = "1" if _state == "reupload face" else "3"
             except Exception as ex:
-                discordbot.util.log_exc(ex)
+                util.log_exc(ex)
                 _state = "error"
 
         return False

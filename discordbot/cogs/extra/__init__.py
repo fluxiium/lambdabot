@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, BucketType
 from discordbot.cogs.extra.dance import dance
-from discordbot.util import headers
+from util import headers
 
 
 class ExtraCmdCog:

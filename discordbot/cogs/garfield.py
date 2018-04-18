@@ -3,7 +3,7 @@ import requests
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, CommandError
-from discordbot.util import headers
+from util import headers
 
 
 class GarfieldCog:

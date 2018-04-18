@@ -99,9 +99,10 @@ ENV/
 .mypy_cache/
 
 .idea
-/tests
+/local
 desktop.ini
 /config.py
+/config.py~
 /db.sqlite3*
 /media
 /fixtures

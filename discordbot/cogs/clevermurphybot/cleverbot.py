@@ -1,11 +1,9 @@
 import discord
-
 import asyncio
-
 import config
 from cleverwrap import CleverWrap
 from json.decoder import JSONDecodeError
-from discordbot.util import log
+from util import log
 
 
 _cb_conversations = {}

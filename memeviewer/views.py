@@ -14,8 +14,8 @@ from memeviewer.preview import preview_meme
 def home_view(request):
     context = {
         'bot_name': config.BOT_NAME,
-        'bot_name_twitter': config.USERNAME_TWITTER,
-        'bot_name_facebook': config.USERNAME_FACEBOOK,
+        'bot_name_twitter': config.TWITTER_USERNAME,
+        'bot_name_facebook': config.FACEBOOK_USERNAME,
         'website_url': config.WEBSITE_URL,
     }
 
@@ -91,8 +91,8 @@ def meme_info_view(request, meme_id):
 
     context = {
         'bot_name': config.BOT_NAME,
-        'bot_name_twitter': config.USERNAME_TWITTER,
-        'bot_name_facebook': config.USERNAME_FACEBOOK,
+        'bot_name_twitter': config.TWITTER_USERNAME,
+        'bot_name_facebook': config.FACEBOOK_USERNAME,
         'meme': meme,
         'facebook_url': fb_meme and fb_meme.post,
         'twitter_url': twitter_meme and twitter_meme.post,

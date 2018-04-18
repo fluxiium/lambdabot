@@ -1,17 +1,14 @@
 import discord
 import requests
 import uuid
-from datetime import timedelta
+import os
+
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
-from django.utils import timezone
 from tempfile import mkdtemp
 from typing import Union
-
-import os
-
-from discordbot.util import log, headers
+from util import log, headers
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 

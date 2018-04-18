@@ -17,7 +17,7 @@ MAX_SRCIMG_SIZE = 1500000
 WEBSITE_URL = 'http://example.com/'
 
 # path to imagemagick executable
-IMAGEMAGICK_PATH = 'C:\Program Files\ImageMagick\convert.exe'
+IMAGEMAGICK_PATH = '/usr/bin/convert'
 
 
 # ---- DJANGO SETTINGS - more info: https://docs.djangoproject.com/en/2.0/ref/settings/
@@ -37,12 +37,17 @@ DATABASES = {
 
 
 # ---- FACEBOOK SETTINGS - ignore if you're not going to use the facebook script ----
-USERNAME_FACEBOOK = 'LambdaBot'
+FACEBOOK_USERNAME = 'LambdaBot'
+FACEBOOK_PAGE_ID = ''
+FACEBOOK_APP_ID = ''
+FACEBOOK_APP_SECRET = ''
+# fill the 3 settings above, then run `python manage.py get_facebook_token (app user access token)`
+# and the setting below will be filled automatically
 FACEBOOK_PAGE_TOKEN = ''
 
 
 # ---- TWITTER SETTINGS - ignore if you're not going to use the twitter script ----
-USERNAME_TWITTER = 'LambdaBot3883'
+TWITTER_USERNAME = 'LambdaBot3883'
 TWITTER_CONSUMER_KEY = ''
 TWITTER_CONSUMER_SECRET = ''
 TWITTER_ACCESS_TOKEN_KEY = ''
