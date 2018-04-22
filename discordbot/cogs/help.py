@@ -23,11 +23,6 @@ class CustomHelpFormatter(HelpFormatter):
 
     @asyncio.coroutine
     def format(self):
-        try:
-            server_data = DiscordServer.get(self.context.guild)
-        except ObjectDoesNotExist:
-            return []
-
         self._paginator = Paginator(prefix='', suffix='')
 
         if isinstance(self.command, Command):
@@ -61,7 +56,7 @@ class CustomHelpFormatter(HelpFormatter):
                     self._paginator.add_line("```")
                     self._add_subcommands_to_page(0, commands)
                     self._paginator.add_line("```")
-            server_commands = server_data.get_commands()
+            server_commands = self.context.server_data and self.context.server_data.get_commands() or []
             if len(server_commands) > 0:
                 self._paginator.add_line("**:: Custom ::**".format(self.context.guild.name))
                 self._paginator.add_line("```")

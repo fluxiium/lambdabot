@@ -38,7 +38,7 @@ class DiscordServer(models.Model):
         self.save()
 
     @classmethod
-    def get(cls, discord_server: discord.Guild, create=False):
+    def get(cls, discord_server: discord.Guild, create=True):
         if not create:
             return cls.objects.get(server_id=discord_server.id)
         else:
@@ -54,11 +54,11 @@ class DiscordServer(models.Model):
     def get_cmd(self, cmd):
         return self.get_commands().filter(cmd=cmd).first()
 
-    def get_member(self, discord_user: Union[discord.Member, discord.User], create=False):
+    def get_member(self, discord_user: Union[discord.Member, discord.User], create=True):
         if not create:
             return DiscordServerUser.objects.get(user_id=discord_user.id, server=self)
         else:
-            user, _ = DiscordUser.objects.get_or_create(user_id=discord_user.id, defaults={'name': discord_user.name})
+            user = DiscordUser.get(discord_user)
             member, created = DiscordServerUser.objects.get_or_create(user=user, server=self)
             if created:
                 self._add_user()
@@ -115,9 +115,33 @@ class DiscordUser(models.Model):
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
     server_count = models.IntegerField(default=0, verbose_name='Servers')
 
+    @classmethod
+    def get(cls, discord_user: discord.User, create=True):
+        if not create:
+            return cls.objects.get(user_id=discord_user.id)
+        else:
+            user, _ = DiscordUser.objects.get_or_create(user_id=discord_user.id, defaults={'name': discord_user.name})
+            return user
+
     def update(self, name):
         self.name = name
         self.save()
+
+    @transaction.atomic
+    def generate_meme(self, template, channel):
+        meme = MemeContext.by_id_or_create('discorddm', 'Discord DM').generate(template=template)
+        discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, channel_id=channel.id)
+        self._add_meem()
+        return discord_meme
+
+    @transaction.atomic
+    def submit_sourceimg(self, path, filename=None):
+        submission = MemeSourceImage.submit(path, filename)
+        if submission is None:
+            return None
+        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self)
+        self._add_sourceimg_submission()
+        return discord_submission
 
     def _add_meem(self):
         self.meme_count += 1
@@ -158,7 +182,7 @@ class DiscordServerUser(models.Model):
     @transaction.atomic
     def generate_meme(self, template, channel):
         meme = self.server.context.generate(template=template)
-        discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, channel_id=channel.id)
+        discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, discord_user=self.user, channel_id=channel.id)
         self.meme_count += 1
         self.save()
         self.user._add_meem()
@@ -170,7 +194,7 @@ class DiscordServerUser(models.Model):
         submission = MemeSourceImage.submit(path, filename)
         if submission is None:
             return None
-        discord_submission = DiscordSourceImgSubmission.objects.create(server_user=self, sourceimg=submission)
+        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, server_user=self, discord_user=self.user)
         self.submission_count += 1
         self.save()
         self.user._add_sourceimg_submission()
@@ -182,30 +206,26 @@ class DiscordServerUser(models.Model):
 
 
 class DiscordSourceImgSubmission(models.Model):
-    server_user = models.ForeignKey(DiscordServerUser, null=True, on_delete=models.CASCADE)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, default=None)
+    discord_server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, null=True, default=None)
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return "{} ({})".format(self.sourceimg, self.server_user)
 
 
 class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
-    server_user = models.ForeignKey(DiscordServerUser, on_delete=models.SET_NULL, null=True, blank=True, default=None)
-    channel_id = models.CharField(max_length=32)
-
-    def __str__(self):
-        return "{} ({})".format(self.meme, self.server_user)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
+    discord_server = models.ForeignKey(DiscordServer, on_delete=models.SET_NULL, null=True, default=None)
+    channel_id = models.CharField(max_length=32, null=True, default=None)
 
 
 class DiscordContext(commands.Context):
     @property
     def server_data(self):
-        return DiscordServer.get(self.guild, create=True)
+        return self.guild and DiscordServer.get(self.guild) or None
 
     @property
-    def member_data(self):
-        return self.server_data.get_member(self.message.author, create=True)
+    def user_data(self):
+        return self.guild and self.server_data.get_member(self.message.author) or DiscordUser.get(self.message.author)
 
 
 class DiscordImage:

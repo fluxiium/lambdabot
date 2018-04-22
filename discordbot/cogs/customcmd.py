@@ -10,11 +10,10 @@ class CustomCmds:
 
     # noinspection PyMethodMayBeStatic
     async def on_message(self, msg: Message):
-        try:
-            server_data = DiscordServer.get(msg.guild)
-        except ObjectDoesNotExist:
+        if msg.guild is None:
             return
 
+        server_data = DiscordServer.get(msg.guild)
         msg_text = msg.content.strip()
 
         if not msg_text.startswith(self.bot.command_prefix) or msg.author.bot:

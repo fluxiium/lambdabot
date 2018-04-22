@@ -14,13 +14,14 @@ def is_active():
     return _cb_active
 
 
-async def talk(msg: discord.Message, message, nodelay=False):
+async def talk(msg: discord.Message, nodelay=False):
     global _cb_active
     if not _cb_active:
         return None
 
     user = msg.author
     channel = msg.channel
+    message = msg.content
 
     if _cb_conversations.get(user.id) is None:
         log("creating session for {}".format(user), tag="cleverbot")
@@ -48,4 +49,7 @@ async def talk(msg: discord.Message, message, nodelay=False):
         await asyncio.sleep(delay)
         async with channel.typing():
             await asyncio.sleep(min(0.17 * len(response), 4))
-    await channel.send("{0} {1}".format(user.mention, response))
+    if msg.guild is None:
+        await channel.send(response)
+    else:
+        await channel.send("{0} {1}".format(user.mention, response))

@@ -45,11 +45,11 @@ class DiscordInline(SocialLinkInline):
     verbose_name_plural = "Discord"
 
     def user_link(self, obj):
-        return object_url(DiscordUser, obj.server_user.user_id, obj.server_user.user)
+        return object_url(DiscordUser, obj.discord_user.user_id, obj.discord_user)
     user_link.short_description = 'User'
 
     def server_link(self, obj):
-        return object_url(DiscordServer, obj.server_user.server_id, obj.server_user.server)
+        return object_url(DiscordServer, obj.discord_server.server_id, obj.discord_server)
     server_link.short_description = 'Server'
 
 
@@ -99,15 +99,15 @@ class MeemAdmin(admin.ModelAdmin):
         if key in (
             'source_images__contains',
             'template_link__name__exact',
-            'discordmeem__server_user__user__user_id',
-            'discordmeem__server_user__server__server_id'
+            'discordmeem__discord_user__user_id',
+            'discordmeem__discord_server__server_id'
         ):
             return True
         return super(MeemAdmin, self).lookup_allowed(key, value)
 
 
 class MemeImageAdmin(admin.ModelAdmin):
-    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'memes_link', 'change_date')
+    list_display = ('accepted', 'thumbnail', '__str__', 'context_links', 'meme_count', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'contexts',)
     fields = ('name', 'friendly_name', 'image', 'contexts', 'accepted', 'add_date', 'change_date', 'memes_link',
@@ -191,11 +191,11 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
         return False
 
     def user_link(self, obj):
-        return object_url(DiscordUser, obj.server_user.user_id, obj.server_user.user)
+        return object_url(DiscordUser, obj.discord_user.user_id, obj.discord_user)
     user_link.short_description = 'User'
 
     def server_link(self, obj):
-        return object_url(DiscordServer, obj.server_user.server_id, obj.server_user.server)
+        return object_url(DiscordServer, obj.discord_server.server_id, obj.discord_server)
     server_link.short_description = 'Server'
 
 
@@ -219,8 +219,8 @@ class MemeSourceImageAdmin(MemeImageAdmin):
 
     def lookup_allowed(self, key, value):
         if key in (
-            'discordsourceimgsubmission__server_user__user__user_id',
-            'discordsourceimgsubmission__server_user__server__server_id',
+            'discordsourceimgsubmission__discord_user__user_id',
+            'discordsourceimgsubmission__discord_server__server_id',
         ):
             return True
         return super(MemeSourceImageAdmin, self).lookup_allowed(key, value)
@@ -266,7 +266,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeContext)
 class MemeContextAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'name', 'is_public', 'recent_threshold', 'memes_link', 'reset_url')
+    list_display = ('__str__', 'name', 'is_public', 'recent_threshold', 'meme_count', 'reset_url')
     search_fields = ('short_name', 'name')
     fields = ('short_name', 'name', 'recent_threshold', 'is_public')
     readonly_fields = ('memes_link', 'reset_url',)

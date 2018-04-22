@@ -47,7 +47,7 @@ def is_active():
 class _MurphyRequest:
     def __init__(self, msg: discord.Message, question=None, face_pic=None):
         self.msg = msg
-        self.mention = msg.author.mention
+        self.mention = msg.guild and msg.author.mention or ''
         self.channel = msg.channel
         self.question = question
         self.face_pic = face_pic
@@ -268,7 +268,7 @@ async def _process_request():
     elif _state == "idk":
         _log("idk")
         if cleverbot.is_active():
-            await cleverbot.talk(_request.msg, _request.question, nodelay=True)
+            await cleverbot.talk(_request.msg, nodelay=True)
         else:
             await _request.channel.send("{} :thinking:".format(_request.mention))
 

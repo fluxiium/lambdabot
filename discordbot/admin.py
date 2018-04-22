@@ -27,22 +27,22 @@ class DiscordServerUserInline(admin.TabularInline):
 
     def submissions_link(self, obj):
         return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__server_user__user__user_id': obj.user_id,
-            'discordsourceimgsubmission__server_user__server__server_id': obj.server_id,
+            'discordsourceimgsubmission__discord_user__user_id': obj.user_id,
+            'discordsourceimgsubmission__discord_server__server_id': obj.server_id,
         }, obj.submission_count)
     submissions_link.short_description = 'Submitted images'
 
     def memes_link(self, obj):
         return list_url(Meem, {
-            'discordmeem__server_user__user__user_id': obj.user_id,
-            'discordmeem__server_user__server__server_id': obj.server_id,
+            'discordmeem__discord_user__user_id': obj.user_id,
+            'discordmeem__discord_server__server_id': obj.server_id,
         }, obj.meme_count)
     memes_link.short_description = 'Generated memes'
 
 
 @admin.register(DiscordServer)
 class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context', 'users_link', 'submissions_link', 'memes_link')
+    list_display = ('name', 'context', 'user_count', 'submission_count', 'meme_count')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
     fields = ('server_id', 'name', 'context', 'prefix')
@@ -70,20 +70,20 @@ class DiscordServerAdmin(admin.ModelAdmin):
 
     def submissions_link(self, obj):
         return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__server_user__server__server_id': obj.server_id,
+            'discordsourceimgsubmission__discord_server__server_id': obj.server_id,
         }, obj.submission_count)
     submissions_link.short_description = 'Submitted images'
 
     def memes_link(self, obj):
         return list_url(Meem, {
-            'discordmeem__server_user__server__server_id': obj.server_id,
+            'discordmeem__discord_server__server_id': obj.server_id,
         }, obj.meme_count)
     memes_link.short_description = 'Generated memes'
 
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user_id', 'server_count', 'submissions_link', 'memes_link')
+    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
     fields = readonly_fields = ('user_id', 'name', 'submissions_link', 'memes_link')
@@ -94,13 +94,13 @@ class DiscordUserAdmin(admin.ModelAdmin):
 
     def submissions_link(self, obj):
         return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__server_user__user__user_id': obj.user_id,
+            'discordsourceimgsubmission__discord_user__user_id': obj.user_id,
         }, obj.submission_count)
     submissions_link.short_description = 'Submitted images'
 
     def memes_link(self, obj):
         return list_url(Meem, {
-            'discordmeem__server_user__user__user_id': obj.user_id,
+            'discordmeem__discord_user__user_id': obj.user_id,
         }, obj.meme_count)
     memes_link.short_description = 'Generated memes'
 

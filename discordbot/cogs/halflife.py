@@ -41,51 +41,53 @@ class HalfLifeCog:
         article = None
         was_random = False
 
-        if not query:
-            was_random = True
-            response = requests.get(
-                '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            article = next(iter(article_data['query']['pages'].values()))
-
-        else:
-            response = requests.get(
-                '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
-                headers=headers,
-            )
-            article_data = json.loads(response.content.decode('utf-8'))
-            if article_data.get('query') is not None:
+        async with ctx.typing():
+            if not query:
+                was_random = True
+                response = requests.get(
+                    '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+                    headers=headers,
+                )
+                article_data = json.loads(response.content.decode('utf-8'))
                 article = next(iter(article_data['query']['pages'].values()))
+
+            else:
+                response = requests.get(
+                    '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
+                    headers=headers,
+                )
+                article_data = json.loads(response.content.decode('utf-8'))
+                if article_data.get('query') is not None:
+                    article = next(iter(article_data['query']['pages'].values()))
 
         proceed = False
         soup = None
 
-        while not proceed:
-            if article is None:
-                raise CommandError("article not found :cry:")
+        async with ctx.typing():
+            while not proceed:
+                if article is None:
+                    raise CommandError("article not found :cry:")
 
-            response = requests.get(article['fullurl'], headers=headers)
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+                response = requests.get(article['fullurl'], headers=headers)
+                soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
 
-            heading = soup.select_one('#firstHeading')
-            if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
-                proceed = True
-            else:
-                page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
-                random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
-                if random_page is None:
-                    article = None
+                heading = soup.select_one('#firstHeading')
+                if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
+                    proceed = True
                 else:
-                    response = requests.get(
-                        '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
-                            wiki_url, random_page),
-                        headers=headers,
-                    )
-                    article_data = json.loads(response.content.decode('utf-8'))
-                    if article_data.get('query') is not None:
-                        article = next(iter(article_data['query']['pages'].values()))
+                    page_links = soup.select('#mw-content-text > ul:nth-of-type(1) > li')
+                    random_page = random.choice([li.select_one('a:nth-of-type(1)').getText() for li in page_links])
+                    if random_page is None:
+                        article = None
+                    else:
+                        response = requests.get(
+                            '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
+                                wiki_url, random_page),
+                            headers=headers,
+                        )
+                        article_data = json.loads(response.content.decode('utf-8'))
+                        if article_data.get('query') is not None:
+                            article = next(iter(article_data['query']['pages'].values()))
 
         pic_tag = soup.select_one('td.infoboximage > a > img')
         if pic_tag is None:
@@ -116,7 +118,7 @@ class HalfLifeCog:
             await ctx.send("{} {}".format(ctx.author.mention, str(error)))
 
     async def on_message_delete(self, message: Message):
-        if message.guild.id != _SERVER_ID:
+        if not message.guild or message.guild.id != _SERVER_ID:
             return
 
         images = DiscordImage.get_from_message(message)

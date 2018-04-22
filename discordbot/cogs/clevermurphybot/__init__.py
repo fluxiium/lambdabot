@@ -1,8 +1,7 @@
 import discord
-from django.core.exceptions import ObjectDoesNotExist
 
 from discord.ext.commands import Bot
-from discordbot.models import DiscordServer, DiscordImage
+from discordbot.models import DiscordImage
 from util import log
 from discordbot.cogs.clevermurphybot import murphybot as murphy
 from discordbot.cogs.clevermurphybot import cleverbot as cleverboi
@@ -14,25 +13,25 @@ class CleverMurphyBot:
 
     async def on_message(self, msg: discord.Message):
         msg_text = msg.content.strip()
+        dm = False
 
-        try:
-            DiscordServer.get(msg.guild)
-        except ObjectDoesNotExist:
-            return
+        if msg.guild is None:
+            dm = True
 
-        if not self.bot.user.mentioned_in(msg):
+        if (not self.bot.user.mentioned_in(msg) and not dm) or (msg.author == self.bot.user) or msg_text.startswith(self.bot.command_prefix):
             return
 
         images = DiscordImage.get_from_message(msg)
+        mention = dm and self.bot.user.mention or msg.guild.me.mention
 
-        if msg_text.startswith(msg.guild.me.mention):
-            msg_text = msg_text.replace(msg.guild.me.mention, "", 1).strip()
-        elif msg_text.endswith(msg.guild.me.mention):
-            msg_text = msg_text.rsplit(msg.guild.me.mention, 1)[0].strip()
-        else:
+        if msg_text.startswith(mention):
+            msg_text = msg_text.replace(mention, "", 1).strip()
+        elif msg_text.endswith(mention):
+            msg_text = msg_text.rsplit(mention, 1)[0].strip()
+        elif not dm:
             return
 
-        log("{0}, {1} talking: {2}".format(msg.guild.name, msg.author.name, msg_text))
+        log("{0}, {1} talking: {2}".format(dm and "DM" or msg.guild, msg.author, msg_text))
 
         answered = False
 
@@ -57,7 +56,7 @@ class CleverMurphyBot:
                 answered = False
 
         if msg_text and (not answered or not murphy.is_active()) and cleverboi.is_active():
-            await cleverboi.talk(msg, msg_text)
+            await cleverboi.talk(msg)
 
 
 def setup(bot):

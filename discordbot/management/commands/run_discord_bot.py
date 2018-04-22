@@ -18,14 +18,14 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_guild_join(server: discord.Guild):
-            DiscordServer.get(server, create=True)
+            DiscordServer.get(server)
 
         @bot.event
         async def on_member_update(_, member: discord.Member):
             try:
                 server_data = DiscordServer.get(member.guild)
-                member_data = server_data.get_member(member)
-                member_data.update(member)
+                user_data = server_data.get_member(member)
+                user_data.update(member)
             except ObjectDoesNotExist:
                 pass
 
@@ -46,15 +46,11 @@ class Command(BaseCommand):
         async def on_message(msg: discord.Message):
             if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
                          msg.content) is not None:
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
 
             ctx = await bot.get_context(msg, cls=DiscordContext)
             if ctx.valid:
                 await bot.invoke(ctx)
-
-        @bot.check
-        def check_mans_notbot(ctx):
-            return not ctx.author.bot
 
         for cog_name in config.DISCORD_COGS:
             bot.load_extension('discordbot.cogs.' + cog_name)
