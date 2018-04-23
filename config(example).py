@@ -2,9 +2,6 @@
 # this appears on the meme web pages, in django admin and some other places
 BOT_NAME = 'LambdaBot'
 
-# the bot will keep all its media (source images, templates, generated memes) in this subdirectory of MEDIA_ROOT
-MEDIA_SUBDIR = 'lambdabot'
-
 # how many source images and templates should be queued to be used in memes (to prevent the same ones
 # being used many times in a row)
 IMG_QUEUE_LENGTH = 100

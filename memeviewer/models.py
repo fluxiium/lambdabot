@@ -152,9 +152,6 @@ class MemeImage(models.Model):
         self.change_date = timezone.now()
         self.save()
 
-    def post_delete(self):
-        pass
-
     # add image to queues of all its contexts (or unqueue it if it's not accepted)
     @transaction.atomic
     def reindex(self):
@@ -211,7 +208,7 @@ class MemeSourceImage(MemeImage):
             models.Index(fields=['meme_count'], name='idx_srcimg_mcount'),
         ]
 
-    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/sourceimg/', max_length=256)
+    image_file = models.ImageField(upload_to='sourceimg/', max_length=256)
 
     def get_image_url(self):
         return self.image_file and self.image_file.url or''
@@ -264,9 +261,9 @@ class MemeTemplate(MemeImage):
             models.Index(fields=['meme_count'], name='idx_template_mcount'),
         ]
 
-    bg_image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+    bg_image_file = models.ImageField(upload_to='templates/', max_length=256, null=True, default=None,
                                       blank=True, verbose_name="Template background")
-    image_file = models.ImageField(upload_to=config.MEDIA_SUBDIR + '/templates/', max_length=256, null=True, default=None,
+    image_file = models.ImageField(upload_to='templates/', max_length=256, null=True, default=None,
                                    blank=True, verbose_name="Template overlay")
     bg_color = ColorField(default='', blank=True, verbose_name='Background color')
 
@@ -379,10 +376,10 @@ class Meem(models.Model):
         return list(map(lambda x: MemeSourceImage.by_id(x[1]), json.loads(self.source_images).items()))
 
     def get_local_path(self):
-        return os.path.join(config.MEDIA_ROOT, config.MEDIA_SUBDIR, 'memes', self.meme_id + '.jpg')
+        return os.path.join(config.MEDIA_ROOT, 'memes', self.meme_id + '.jpg')
 
     def get_url(self):
-        return config.MEDIA_URL + config.MEDIA_SUBDIR + '/memes/' + self.meme_id + '.jpg'
+        return config.MEDIA_URL + 'memes/' + self.meme_id + '.jpg'
 
     def get_info_url(self):
         return config.WEBSITE_URL + 'meme/' + self.meme_id

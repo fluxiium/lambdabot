@@ -1,6 +1,6 @@
 import os
 from django.apps import AppConfig
-from lamdabotweb.settings import MEDIA_ROOT, MEDIA_SUBDIR
+from lamdabotweb.settings import MEDIA_ROOT
 
 
 class MemeviewerConfig(AppConfig):
@@ -8,6 +8,6 @@ class MemeviewerConfig(AppConfig):
     verbose_name = 'Meme generator'
 
     def ready(self):
-        os.makedirs(os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'memes'), exist_ok=True)
-        os.makedirs(os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'sourceimg'), exist_ok=True)
-        os.makedirs(os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'templates'), exist_ok=True)
+        os.makedirs(os.path.join(MEDIA_ROOT, 'memes'), exist_ok=True)
+        os.makedirs(os.path.join(MEDIA_ROOT, 'sourceimg'), exist_ok=True)
+        os.makedirs(os.path.join(MEDIA_ROOT, 'templates'), exist_ok=True)

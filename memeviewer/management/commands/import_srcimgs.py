@@ -1,10 +1,10 @@
 import re
 import os
 from django.core.management import BaseCommand
-from lamdabotweb.settings import MEDIA_ROOT, MEDIA_SUBDIR
+from lamdabotweb.settings import MEDIA_ROOT
 from memeviewer.models import MemeSourceImage, MemeContext
 
-IMPORT_DIR = os.path.join(MEDIA_ROOT, MEDIA_SUBDIR, 'sourceimg', 'manual')
+IMPORT_DIR = os.path.join(MEDIA_ROOT, 'sourceimg', 'manual')
 ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png|.*\.webp|.*\.gif'
 
 
