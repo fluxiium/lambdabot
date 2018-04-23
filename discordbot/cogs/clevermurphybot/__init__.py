@@ -60,5 +60,5 @@ class CleverMurphyBot:
 
 def setup(bot):
     murphy.start(bot)
-    cleverboi.start()
+    # cleverboi.start()
     bot.add_cog(CleverMurphyBot(bot))

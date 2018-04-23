@@ -17,7 +17,6 @@ def is_active():
 
 
 def start():
-    os.environ['DISPLAY'] = config.CLEVERBOT_DISPLAY
     for proc in psutil.process_iter():
         if proc.name() in ['firefox', 'firefox.exe']:
             proc.kill()
