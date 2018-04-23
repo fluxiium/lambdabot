@@ -13,7 +13,7 @@ class DiscordServerUserInline(admin.TabularInline):
     model = DiscordServerUser
     extra = 0
     verbose_name_plural = "Server-specific"
-    fields = ('server_link', 'submissions_link', 'memes_link')
+    fields = ('server_link', 'submissions_link', 'memes_link', 'blacklisted')
     readonly_fields = ('server_link', 'submissions_link', 'memes_link')
     ordering = ('server__name',)
     can_delete = False
@@ -42,25 +42,15 @@ class DiscordServerUserInline(admin.TabularInline):
 
 @admin.register(DiscordServer)
 class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context', 'user_count', 'submission_count', 'meme_count')
+    list_display = ('name', 'context', 'user_count', 'submission_count', 'meme_count', 'blacklisted')
     ordering = ('name',)
     search_fields = ('server_id', 'name', 'context__short_name')
-    fields = ('server_id', 'name', 'context', 'prefix')
-    readonly_fields = ('users_link', 'submissions_link', 'memes_link')
+    readonly_fields = ('server_id', 'name', 'users_link', 'submissions_link', 'memes_link')
+    fields = readonly_fields + ('context', 'prefix', 'blacklisted')
     inlines = [DiscordCommandInline]
 
     def has_add_permission(self, request):
         return False
-
-    def get_fields(self, request, obj=None):
-        if obj:
-            return self.fields + ('users_link', 'submissions_link', 'memes_link')
-        return self.fields
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return self.readonly_fields + ('server_id', 'name')
-        return self.readonly_fields
 
     def users_link(self, obj):
         return list_url(DiscordUser, {
@@ -83,10 +73,11 @@ class DiscordServerAdmin(admin.ModelAdmin):
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count')
+    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count', 'blacklisted')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
-    fields = readonly_fields = ('user_id', 'name', 'submissions_link', 'memes_link')
+    readonly_fields = ('user_id', 'name', 'submissions_link', 'memes_link')
+    fields = readonly_fields + ('blacklisted',)
     inlines = [DiscordServerUserInline]
 
     def has_add_permission(self, request):

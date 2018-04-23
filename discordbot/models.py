@@ -28,6 +28,7 @@ class DiscordServer(models.Model):
     name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
     context = models.ForeignKey(MemeContext, verbose_name='Context', default='default', on_delete=models.SET_DEFAULT)
     prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
+    blacklisted = models.BooleanField(default=False)
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
@@ -110,6 +111,7 @@ class DiscordUser(models.Model):
 
     user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
     name = models.CharField(max_length=64, verbose_name='Username')
+    blacklisted = models.BooleanField(default=False)
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
@@ -171,6 +173,7 @@ class DiscordServerUser(models.Model):
 
     user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
     server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
+    blacklisted = models.BooleanField(default=False)
 
     submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
     meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
