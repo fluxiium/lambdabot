@@ -1,5 +1,3 @@
-import os
-import psutil
 import discord
 import asyncio
 import config
@@ -14,12 +12,6 @@ _cb_conversations = {}
 
 def is_active():
     return config.CLEVERBOT_ENABLED
-
-
-def start():
-    for proc in psutil.process_iter():
-        if proc.name() in ['firefox', 'firefox.exe']:
-            proc.kill()
 
 
 def _get_driver(user: discord.User, attempt=5):

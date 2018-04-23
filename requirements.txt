@@ -1,4 +1,3 @@
-psutil
 selenium
 beautifulsoup4
 cleverwrap
