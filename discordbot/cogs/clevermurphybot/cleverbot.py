@@ -68,6 +68,7 @@ async def talk(msg: discord.Message, msg_text):
                     pass
             response_elem = driver.find_element_by_xpath('//*[@id="line1"]/span[1]')
             response = response_elem.text
+            log("response to {}: {}".format(user, response), tag="cleverbot")
         except WebDriverException:
             pass
 
