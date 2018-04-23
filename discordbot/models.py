@@ -182,7 +182,7 @@ class DiscordServerUser(models.Model):
     @transaction.atomic
     def generate_meme(self, template, channel):
         meme = self.server.context.generate(template=template)
-        discord_meme = DiscordMeem.objects.create(meme=meme, server_user=self, discord_user=self.user, channel_id=channel.id)
+        discord_meme = DiscordMeem.objects.create(meme=meme, discord_server=self.server, discord_user=self.user, channel_id=channel.id)
         self.meme_count += 1
         self.save()
         self.user._add_meem()
@@ -194,7 +194,7 @@ class DiscordServerUser(models.Model):
         submission = MemeSourceImage.submit(path, filename)
         if submission is None:
             return None
-        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, server_user=self, discord_user=self.user)
+        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_server=self.server, discord_user=self.user)
         self.submission_count += 1
         self.save()
         self.user._add_sourceimg_submission()
