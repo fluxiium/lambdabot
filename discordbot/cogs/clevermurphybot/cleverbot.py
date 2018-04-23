@@ -1,7 +1,8 @@
+import os
+import psutil
 import discord
 import asyncio
 import config
-from discord.ext.commands import CommandError
 from util import log, log_exc
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
@@ -13,6 +14,13 @@ _cb_conversations = {}
 
 def is_active():
     return config.CLEVERBOT_ENABLED
+
+
+def start():
+    os.environ['DISPLAY'] = config.CLEVERBOT_DISPLAY
+    for proc in psutil.process_iter():
+        if proc.name() in ['firefox', 'firefox.exe']:
+            proc.kill()
 
 
 def _get_driver(user: discord.User, attempt=5):

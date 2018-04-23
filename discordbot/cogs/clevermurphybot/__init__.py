@@ -1,5 +1,4 @@
 import discord
-import psutil
 from discord.ext.commands import Bot
 from discordbot.models import DiscordImage
 from util import log
@@ -61,7 +60,5 @@ class CleverMurphyBot:
 
 def setup(bot):
     murphy.start(bot)
-    for proc in psutil.process_iter():
-        if proc.name() in ['firefox', 'firefox.exe']:
-            proc.kill()
+    cleverboi.start()
     bot.add_cog(CleverMurphyBot(bot))

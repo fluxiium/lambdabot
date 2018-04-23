@@ -74,6 +74,7 @@ DANCE_COOLDOWN = 10
 
 # ignore if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_ENABLED = False
+CLEVERBOT_DISPLAY = ':13'
 
 # ignore if you don't want the discord bot to have murphybot functionality
 TELEGRAM_API_ID = 0
