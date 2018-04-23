@@ -1,5 +1,5 @@
 import discord
-
+import psutil
 from discord.ext.commands import Bot
 from discordbot.models import DiscordImage
 from util import log
@@ -56,9 +56,12 @@ class CleverMurphyBot:
                 answered = False
 
         if msg_text and (not answered or not murphy.is_active()) and cleverboi.is_active():
-            await cleverboi.talk(msg)
+            await cleverboi.talk(msg, msg_text)
 
 
 def setup(bot):
     murphy.start(bot)
+    for proc in psutil.process_iter():
+        if proc.name() in ['firefox', 'firefox.exe']:
+            proc.kill()
     bot.add_cog(CleverMurphyBot(bot))
