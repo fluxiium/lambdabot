@@ -75,8 +75,8 @@ DANCE_MAX_LEN = 40
 DANCE_LIMIT = 2
 DANCE_COOLDOWN = 10
 
-# ignore if you don't want the discord bot to have cleverbot functionality
-CLEVERBOT_ENABLED = False
+# set to 0 if you don't want the discord bot to have cleverbot functionality
+CLEVERBOT_TIMEOUT = 120
 
 # ignore if you don't want the discord bot to have murphybot functionality
 TELEGRAM_API_ID = 0

@@ -8,10 +8,11 @@ from selenium.webdriver.common.keys import Keys
 
 
 _cb_conversations = {}
+_waiting = {}
 
 
 def is_active():
-    return config.CLEVERBOT_ENABLED
+    return config.CLEVERBOT_TIMEOUT != 0
 
 
 def _get_driver(user: discord.User, attempt=5):
@@ -37,9 +38,13 @@ def _get_driver(user: discord.User, attempt=5):
 
 async def talk(msg: discord.Message, msg_text):
     if not is_active():
-        return None
+        return
 
     user = msg.author
+
+    if _waiting.get(user.id):
+        return
+
     channel = msg.channel
     response = 'error :cry:'
 
@@ -50,15 +55,20 @@ async def talk(msg: discord.Message, msg_text):
             input_box.clear()
             input_box.send_keys(msg_text)
             input_box.send_keys(Keys.RETURN)
+            attempt = config.CLEVERBOT_TIMEOUT
+            _waiting[user.id] = True
             while True:
-                asyncio.sleep(1)
+                if attempt == 0:
+                    break
+                await asyncio.sleep(1)
                 try:
                     driver.find_element_by_id('snipTextIcon')
+                    response_elem = driver.find_element_by_xpath('//*[@id="line1"]/span[1]')
+                    response = response_elem.text
                     break
                 except NoSuchElementException:
-                    pass
-            response_elem = driver.find_element_by_xpath('//*[@id="line1"]/span[1]')
-            response = response_elem.text
+                    attempt -= 1
+            _waiting.pop(user.id)
             log("response to {}: {}".format(user, response), tag="cleverbot")
         except WebDriverException:
             pass
