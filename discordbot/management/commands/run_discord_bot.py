@@ -1,3 +1,4 @@
+import os
 import discord
 import re
 import asyncio
@@ -5,7 +6,6 @@ import lamdabotweb.settings as config
 from django.core.management import BaseCommand
 from discord.ext import commands
 from django.core.exceptions import ObjectDoesNotExist
-
 from discord.ext.commands import CommandInvokeError, CommandOnCooldown
 from discordbot.models import DiscordServer, DiscordContext
 from util import log, log_exc
@@ -66,5 +66,8 @@ class Command(BaseCommand):
 
         for cog_name in config.DISCORD_COGS:
             bot.load_extension('discordbot.cogs.' + cog_name)
+
+        if config.DISPLAY:
+            os.environ['DISPLAY'] = config.DISPLAY
 
         bot.run(config.DISCORD_TOKEN)

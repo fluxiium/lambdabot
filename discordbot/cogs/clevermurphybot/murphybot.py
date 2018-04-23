@@ -268,7 +268,7 @@ async def _process_request():
     elif _state == "idk":
         _log("idk")
         if cleverbot.is_active():
-            await cleverbot.talk(_request.msg, nodelay=True)
+            await cleverbot.talk(_request.msg, _request.question)
         else:
             await _request.channel.send("{} :thinking:".format(_request.mention))
 

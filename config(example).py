@@ -16,6 +16,9 @@ WEBSITE_URL = 'http://example.com/'
 # path to imagemagick executable
 IMAGEMAGICK_PATH = '/usr/bin/convert'
 
+# DISPLAY environment variable override (leave empty to use system setting)
+DISPLAY = ''
+
 
 # ---- DJANGO SETTINGS - more info: https://docs.djangoproject.com/en/2.0/ref/settings/
 TIME_ZONE = 'UTC'
@@ -73,7 +76,7 @@ DANCE_LIMIT = 2
 DANCE_COOLDOWN = 10
 
 # ignore if you don't want the discord bot to have cleverbot functionality
-CLEVERBOT_TOKEN = ''
+CLEVERBOT_ENABLED = False
 
 # ignore if you don't want the discord bot to have murphybot functionality
 TELEGRAM_API_ID = 0

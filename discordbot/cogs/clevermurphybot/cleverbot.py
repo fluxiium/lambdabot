@@ -1,54 +1,68 @@
 import discord
 import asyncio
 import config
-from cleverwrap import CleverWrap
-from json.decoder import JSONDecodeError
-from util import log
+from util import log, log_exc
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.common.keys import Keys
 
 
 _cb_conversations = {}
-_cb_active = bool(config.CLEVERBOT_TOKEN)
 
 
 def is_active():
-    return _cb_active
+    return config.CLEVERBOT_ENABLED
 
 
-async def talk(msg: discord.Message, nodelay=False):
-    global _cb_active
-    if not _cb_active:
+def _get_driver(user: discord.User, attempt=5):
+    try:
+        driver = _cb_conversations.get(user.id)
+        if not driver:
+            log("creating session for {}".format(user), tag="cleverbot")
+            driver = webdriver.Firefox()
+            driver.get('http://www.cleverbot.com/')
+            _cb_conversations[user.id] = driver
+            return driver
+        else:
+            assert 'Cleverbot.com' in driver.title
+            return driver
+    except WebDriverException as exc:
+        _cb_conversations[user.id] = None
+        if attempt > 0:
+            return _get_driver(user, attempt - 1)
+        else:
+            log_exc(exc)
+            raise exc
+
+
+async def talk(msg: discord.Message, msg_text):
+    if not is_active():
         return None
 
     user = msg.author
     channel = msg.channel
-    message = msg.content
+    response = 'error :cry:'
 
-    if _cb_conversations.get(user.id) is None:
-        log("creating session for {}".format(user), tag="cleverbot")
-        _cb_conversations[user.id] = CleverWrap(config.CLEVERBOT_TOKEN)
-
-    response = "error :cry:"
-    success = False
-    retries = 5
-    while not success and retries > 0:
+    async with msg.channel.typing():
         try:
-            response = _cb_conversations[user.id].say(message)
-            success = True
-        except JSONDecodeError:
-            log("error! recreating session for {}".format(user), tag="cleverbot")
-            _cb_conversations[user.id] = CleverWrap(config.CLEVERBOT_TOKEN)
-            retries -= 1
+            driver = _get_driver(user)
+            input_box = driver.find_element_by_name('stimulus')
+            input_box.clear()
+            input_box.send_keys(msg_text)
+            input_box.send_keys(Keys.RETURN)
+            while True:
+                asyncio.sleep(1)
+                try:
+                    driver.find_element_by_id('snipTextIcon')
+                    break
+                except NoSuchElementException:
+                    pass
+            response_elem = driver.find_element_by_xpath('//*[@id="line1"]/span[1]')
+            response = response_elem.text
+            log("response to {}: {}".format(user, response), tag="cleverbot")
+        except WebDriverException:
+            pass
 
-    if response is None:
-        log("cleverbot request failed".format(response), tag="cleverbot")
-        return None
-
-    log("response: {}".format(response), tag="cleverbot")
-    delay = 0 if nodelay else 0.2 + min(0.04 * len(message), 4)
-    if delay > 0:
-        await asyncio.sleep(delay)
-        async with channel.typing():
-            await asyncio.sleep(min(0.17 * len(response), 4))
     if msg.guild is None:
         await channel.send(response)
     else:

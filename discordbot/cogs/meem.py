@@ -1,7 +1,7 @@
 import discord
 import config
 from discord.ext import commands
-from discord.ext.commands import Bot, BadArgument, BucketType, CommandOnCooldown, CommandError
+from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
 from discordbot.models import log, DiscordContext, DiscordImage
 from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
 from memeviewer.models import MemeTemplate
