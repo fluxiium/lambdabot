@@ -5,8 +5,10 @@ import lamdabotweb.settings as config
 from django.core.management import BaseCommand
 from discord.ext import commands
 from django.core.exceptions import ObjectDoesNotExist
+
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown
 from discordbot.models import DiscordServer, DiscordContext
-from util import log
+from util import log, log_exc
 
 
 class Command(BaseCommand):
@@ -51,6 +53,16 @@ class Command(BaseCommand):
             ctx = await bot.get_context(msg, cls=DiscordContext)
             if ctx.valid:
                 await bot.invoke(ctx)
+
+        @bot.event
+        async def on_command_error(ctx: DiscordContext, exc):
+            if isinstance(exc, CommandOnCooldown):
+                await ctx.send("{0} you're memeing too fast! Please wait {1} seconds.".format(ctx.author.mention, int(exc.retry_after)))
+            elif isinstance(exc, CommandInvokeError):
+                log_exc(exc)
+                await ctx.send("{} error :cry:".format(ctx.author.mention))
+            else:
+                await ctx.send("{} {}".format(ctx.author.mention, str(exc) or "error :cry:"))
 
         for cog_name in config.DISCORD_COGS:
             bot.load_extension('discordbot.cogs.' + cog_name)

@@ -112,11 +112,6 @@ class HalfLifeCog:
 
         await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
 
-    @_cmd_wiki.error
-    async def _wiki_error(self, ctx: Context, error):
-        if isinstance(error, CommandError):
-            await ctx.send("{} {}".format(ctx.author.mention, str(error)))
-
     async def on_message_delete(self, message: Message):
         if not message.guild or message.guild.id != _SERVER_ID:
             return

@@ -49,11 +49,6 @@ class GarfieldCog:
         else:
             await ctx.send("{} {}".format(ctx.author.mention, article_url))
 
-    @_cmd_wiki.error
-    async def _wiki_error(self, ctx: Context, error):
-        if isinstance(error, CommandError):
-            await ctx.send("{} {}".format(ctx.author.mention, str(error)))
-
 
 def setup(bot: Bot):
     bot.add_cog(GarfieldCog(bot))

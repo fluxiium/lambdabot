@@ -32,7 +32,7 @@ class ExtraCmdCog:
         if img is not None:
             await ctx.send("{} {}".format(ctx.author.mention, img['src']))
         else:
-            raise CommandError("couldn't generate LED sign :cry:")
+            raise CommandError()
 
     @commands.command(name='mario', usage='[name] <first line> <message>')
     async def _cmd_mario(self, ctx, first_line, message, arg3=''):
@@ -59,7 +59,7 @@ class ExtraCmdCog:
         if img is not None:
             await ctx.send("{} {}".format(ctx.author.mention, img['src']))
         else:
-            raise CommandError("error :cry:")
+            raise CommandError()
 
     @commands.command(name='noviews', help='show random video with no views')
     async def _cmd_noviews(self, ctx):
@@ -79,7 +79,7 @@ class ExtraCmdCog:
         if videourl is not None:
             await ctx.send("{} https://youtu.be/{}".format(ctx.author.mention, videourl))
         else:
-            raise CommandError("error :cry:")
+            raise CommandError()
 
     @commands.command(name='dance', help='generate dancing text')
     @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
@@ -88,14 +88,6 @@ class ExtraCmdCog:
             tmpdir = dance(text)
         await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
         shutil.rmtree(tmpdir)
-
-    @_cmd_led.error
-    @_cmd_mario.error
-    @_cmd_noviews.error
-    @_cmd_dance.error
-    async def _meem_error(self, ctx: Context, error):
-        if isinstance(error, CommandError):
-            await ctx.send("{} {}".format(ctx.author.mention, str(error)))
 
 
 def setup(bot: Bot):

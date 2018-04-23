@@ -15,7 +15,12 @@ def log(*args, tag=None):
     print(timezone.now(), tag, *args)
 
 
-def log_exc(exc):
+def log_exc(exc: Exception):
     log("--- ERROR ---")
     print(exc)
-    print(traceback.format_exc())
+    tb = traceback.format_exception(None, exc, exc.__traceback__)
+    tb_str = ""
+    for line in tb:
+        tb_str += line
+    tb_str = tb_str.strip().replace("\n\n", "\n")
+    print(tb_str)

@@ -77,14 +77,6 @@ class MemeGeneratorCog:
             else:
                 raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, MAX_SRCIMG_SIZE / 1000))
 
-    @_cmd_meem.error
-    @_cmd_submit.error
-    async def _meem_error(self, ctx: DiscordContext, error):
-        if isinstance(error, CommandOnCooldown):
-            await ctx.send("{0} you're memeing too fast! Please wait {1} seconds.".format(ctx.author.mention, int(error.retry_after)))
-        elif isinstance(error, CommandError):
-            await ctx.send("{} {}".format(ctx.author.mention, str(error)))
-
 
 def setup(bot: Bot):
     bot.add_cog(MemeGeneratorCog(bot))
