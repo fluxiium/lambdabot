@@ -34,7 +34,7 @@ class HalfLifeCog:
         handle = handle.lower()
         member = discord.utils.find(lambda m: str(m.id) == handle or str(m) == handle or handle in m.name.lower() or (m.nick and handle in m.nick.lower()), ctx.guild.members)
         if member:
-            await ctx.send('!infractions {}'.format(member.mention))
+            await ctx.send('`!infractions {}`'.format(member.mention))
 
     @property
     def __log_channel(self):
