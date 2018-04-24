@@ -29,11 +29,12 @@ class HalfLifeCog:
 
     @commands.command(name='infractions', hidden=True, aliases=['i'])
     async def _cmd_infractions(self, ctx: Context, *, handle):
-        if ctx.channel.id != 436225212774613022:
+        if ctx.channel.id != 436225212774613022 and not config.DEBUG:
             return
         handle = handle.lower()
-        member = discord.utils.find(lambda m: str(m.id) == handle or handle in m.name.lower() or (m.nick and handle in m.nick.lower()), ctx.guild.members)
-        await ctx.send('!infractions {}'.format(member.mention))
+        member = discord.utils.find(lambda m: str(m.id) == handle or str(m) == handle or handle in m.name.lower() or (m.nick and handle in m.nick.lower()), ctx.guild.members)
+        if member:
+            await ctx.send('!infractions {}'.format(member.mention))
 
     @property
     def __log_channel(self):
