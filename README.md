@@ -9,5 +9,5 @@ you can see the bot in action here:
 * https://discord.gg/halflife
 
 third party software required for some functionality to work:
-* imagemagick - !dance command
-* firefox, geckodriver - cleverbot (you may also need xvfb on headless systems)
+* imagemagick - for !dance command
+* phantomjs - for cleverbot
