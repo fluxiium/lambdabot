@@ -67,7 +67,4 @@ class Command(BaseCommand):
         for cog_name in config.DISCORD_COGS:
             bot.load_extension('discordbot.cogs.' + cog_name)
 
-        if config.DISPLAY:
-            os.environ['DISPLAY'] = config.DISPLAY
-
         bot.run(config.DISCORD_TOKEN)

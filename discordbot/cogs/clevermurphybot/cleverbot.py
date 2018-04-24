@@ -20,7 +20,7 @@ def _get_driver(user: discord.User, attempt=5):
         driver = _cb_conversations.get(user.id)
         if not driver:
             log("creating session for {}".format(user), tag="cleverbot")
-            driver = webdriver.Firefox()
+            driver = webdriver.PhantomJS()
             driver.get('http://www.cleverbot.com/')
             _cb_conversations[user.id] = driver
             return driver
@@ -57,9 +57,7 @@ async def talk(msg: discord.Message, msg_text):
             input_box.send_keys(Keys.RETURN)
             attempt = config.CLEVERBOT_TIMEOUT
             _waiting[user.id] = True
-            while True:
-                if attempt == 0:
-                    break
+            while attempt > 0:
                 await asyncio.sleep(1)
                 try:
                     driver.find_element_by_id('snipTextIcon')
