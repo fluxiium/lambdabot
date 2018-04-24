@@ -27,22 +27,6 @@ class HalfLifeCog:
         self.cog_name = "Half-Life"
         self.bot = bot
 
-    @commands.command(name='infractions', hidden=True, aliases=['i'])
-    async def _cmd_infractions(self, ctx: Context, *, handle):
-        if ctx.channel.id != 436225212774613022 and not config.DEBUG:
-            return
-        handle = handle.lower()
-        member = discord.utils.find(
-            lambda m: str(m.id) == handle or
-            str(m).lower() == handle or
-            handle in m.name.lower() or
-            (m.nick and handle in m.nick.lower()) or
-            str(m.discriminator) == handle,
-            ctx.guild.members
-        )
-        if member:
-            await ctx.send('`!infractions {}`'.format(member.mention))
-
     @property
     def __log_channel(self):
         return self.bot.get_channel(_LOG_CHANNEL)
