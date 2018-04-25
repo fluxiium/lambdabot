@@ -77,4 +77,4 @@ class CustomHelpFormatter(HelpFormatter):
 
 
 def setup(bot: Bot):
-    bot.formatter = CustomHelpFormatter()
+    bot.formatter = CustomHelpFormatter(show_check_failure=True)
