@@ -9,27 +9,6 @@ from discord.ext.commands import Bot, CommandError, BadArgument
 from discordbot.checks import image_required
 from discordbot.models import DiscordContext
 
-_FILTERS = [
-    "smile",
-    "smile_2",
-    "hot",
-    "old",
-    "young",
-    "female",
-    "female_2",
-    "makeup",
-    "impression",
-    "bangs",
-    "glasses",
-    "wave",
-    "male",
-    "hipster",
-    "pan",
-    "lion",
-    "hitman",
-    "heisenberg"
-]
-
 
 class FaceAppCog:
 
