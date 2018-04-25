@@ -74,6 +74,7 @@ DANCE_COOLDOWN = 10
 
 # set to 0 if you don't want the discord bot to have cleverbot functionality
 CLEVERBOT_TIMEOUT = 120
+CLEVERBOT_SESSION_TIMEOUT = 3600
 
 # ignore if you don't want the discord bot to have murphybot functionality
 TELEGRAM_API_ID = 0
