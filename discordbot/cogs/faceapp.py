@@ -39,30 +39,113 @@ class FaceAppCog:
 
     # source: https://github.com/xeyalxx/faceapp_p3/blob/master/faceapp.py
     @classmethod
-    def __do_faceapp(cls, url, filter_name):
+    async def __do_faceapp(cls, ctx: DiscordContext, url, filter_name):
         device_id = ''.join(random.choice(string.ascii_letters) for _ in range(8))
         headers = {'User-agent': "FaceApp/1.0.229 (Linux; Android 4.4)", 'X-FaceApp-DeviceID': device_id}
-        res = requests.post('http://node-01.faceapp.io/api/v2.7/photos', headers=headers,
-                            files={'file': requests.get(url, headers=util.headers).content})
+        async with ctx.typing():
+            res = requests.post('http://node-01.faceapp.io/api/v2.7/photos', headers=headers,
+                                files={'file': requests.get(url, headers=util.headers).content})
         code = res.json().get('code')
         if not code:
             raise BadArgument('no face detected :cry:')
         crop = filter_name in ['smile', 'smile_2', 'old', 'young'] and '0' or '1'
-        res2 = requests.get(
-            'http://node-01.faceapp.io/api/v2.7/photos/%s/filters/%s?cropped=%s' % (code, filter_name, crop),
-            headers=headers)
+        async with ctx.typing():
+            res2 = requests.get(
+                'http://node-01.faceapp.io/api/v2.7/photos/%s/filters/%s?cropped=%s' % (code, filter_name, crop),
+                headers=headers)
         if 'x-faceapp-errorcode' in res2.headers:
             raise CommandError()
-        return res2.content
+        await ctx.send(ctx.author.mention, file=discord.File(io.BytesIO(res2.content), 'faceapp.jpg'))
 
-    @commands.command(name='faceapp', aliases=['fa'], usage='<%s> <image>' % '|'.join(_FILTERS))
+    @commands.command(name='smile')
     @image_required()
-    async def _cmd_fa(self, ctx: DiscordContext, flt):
-        if flt not in _FILTERS:
-            raise BadArgument('invalid filter')
-        async with ctx.typing():
-            result = self.__do_faceapp(ctx.images[0].url, flt)
-        await ctx.send(ctx.author.mention, file=discord.File(io.BytesIO(result), 'faceapp.jpg'))
+    async def _cmd_smile(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='smile2')
+    @image_required()
+    async def _cmd_smile_2(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, 'smile_2')
+
+    @commands.command(name='hot')
+    @image_required()
+    async def _cmd_hot(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='old')
+    @image_required()
+    async def _cmd_old(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='young')
+    @image_required()
+    async def _cmd_young(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='female')
+    @image_required()
+    async def _cmd_female(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='female2')
+    @image_required()
+    async def _cmd_female_2(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, 'female_2')
+
+    @commands.command(name='makeup')
+    @image_required()
+    async def _cmd_makeup(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='impression')
+    @image_required()
+    async def _cmd_impression(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='bangs')
+    @image_required()
+    async def _cmd_bangs(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='glasses')
+    @image_required()
+    async def _cmd_glasses(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='wave')
+    @image_required()
+    async def _cmd_wave(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='male')
+    @image_required()
+    async def _cmd_male(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='hipster')
+    @image_required()
+    async def _cmd_hipster(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='pan')
+    @image_required()
+    async def _cmd_pan(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='lion')
+    @image_required()
+    async def _cmd_lion(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='hitman')
+    @image_required()
+    async def _cmd_hitman(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
+
+    @commands.command(name='heisenberg')
+    @image_required()
+    async def _cmd_heisenberg(self, ctx: DiscordContext):
+        await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
 
 def setup(bot: Bot):
