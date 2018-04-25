@@ -3,7 +3,6 @@ import json
 import operator
 import os
 import re
-import uuid
 import config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -15,12 +14,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
-
+from util import struuid4
 from util.admin_utils import object_url
-
-
-def struuid4():
-    return str(uuid.uuid4())
 
 
 def next_meme_number():
@@ -216,25 +211,8 @@ class MemeSourceImage(MemeImage):
     @classmethod
     @transaction.atomic
     def submit(cls, filepath, filename=None, friendly_name=None):
-        try:
-            image = Image.open(filepath)
-        except OSError:
-            return None
-
         imgid = struuid4()
-        saved_filename = "{0}.{1}".format(imgid, imghdr.what(filepath))
-
-        stat = os.stat(filepath)
-        if stat.st_size > config.MAX_SRCIMG_SIZE and image.mode == "RGBA":
-            image = image.convert('RGB')
-            saved_filename += ".jpeg"
-            filepath += ".jpeg"
-            image.save(filepath)
-            stat = os.stat(filepath)
-
-        if stat.st_size > config.MAX_SRCIMG_SIZE:
-            return None
-
+        saved_filename = imgid + filename
         if friendly_name is None:
             friendly_name = filename and os.path.splitext(filename.replace('_', ' ').rstrip())[0][:32] or ''
         srcimg = MemeSourceImage(name=imgid, friendly_name=friendly_name)

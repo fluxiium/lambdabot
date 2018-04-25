@@ -1,6 +1,4 @@
 import discord
-import re
-import asyncio
 import lamdabotweb.settings as config
 from django.core.management import BaseCommand
 from discord.ext import commands
@@ -45,10 +43,6 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_message(msg: discord.Message):
-            if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
-                         msg.content) is not None:
-                await asyncio.sleep(3)
-
             ctx = await bot.get_context(msg, cls=DiscordContext)
             if ctx.valid:
                 await bot.invoke(ctx)

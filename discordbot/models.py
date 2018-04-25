@@ -1,14 +1,18 @@
+import config
 import discord
 import requests
 import uuid
 import os
 
+from discord import Message
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from tempfile import mkdtemp
 from typing import Union
-from util import log, headers
+
+from discord.ext.commands import BadArgument
+from util import log, headers, struuid4, is_url
 from memeviewer.models import MemeContext, Meem, MemeSourceImage
 
 
@@ -222,6 +226,8 @@ class DiscordMeem(models.Model):
 
 
 class DiscordContext(commands.Context):
+    __images = None
+
     @property
     def server_data(self):
         return self.guild and DiscordServer.get(self.guild) or None
@@ -230,48 +236,45 @@ class DiscordContext(commands.Context):
     def user_data(self):
         return self.guild and self.server_data.get_member(self.message.author) or DiscordUser.get(self.message.author)
 
+    @property
+    def images(self):
+        if self.__images is None:
+            self.__images = DiscordImage.from_message(self.message)
+        return self.__images
+
 
 class DiscordImage:
-    def __init__(self, att, is_embed):
-        self.__att = att
-        self.is_embed = is_embed
-        if self.is_embed:
-            self.filename = str(uuid.uuid4())
-            self.url = self.__att
-        else:
-            self.filename = self.__att.filename
-            self.url = self.__att.proxy_url
+    def __init__(self, url, filename=None):
+        self.url = url
+        self.filename = filename
 
     @classmethod
-    def get_from_message(cls, msg: discord.Message, get_embeds=True):
-        images = []
-        for att in msg.attachments:
-            images.append(cls.__from_attachment(att))
-        if not get_embeds:
-            return images
-        for emb in msg.embeds:
-            try:
-                images.append(cls.__from_embed(emb))
-            except AttributeError:
-                pass
-        return images
+    def from_message(cls, msg: Message, attachments_only=False):
+        images = {}
+        for attachment in msg.attachments:
+            images[attachment.proxy_url] = attachment.filename
+        if not attachments_only:
+            for embed in msg.embeds:
+                if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:
+                    images[embed.image.url] = None
+                elif embed.thumbnail != discord.Embed.Empty and embed.thumbnail.url != discord.Embed.Empty:
+                    images[embed.thumbnail.url] = None
+            for url in msg.content.split(' '):
+                url = url.strip('<>')
+                if is_url(url):
+                    images[url] = None
+        actual_images = []
+        for url, filename in images.items():
+            r = requests.head(url, headers=headers)
+            contenttype = r.headers.get('content-type')
+            contentlength = int(r.headers.get('content-length'))
+            if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
+                actual_images.append(cls(url, filename or struuid4()))
+        return actual_images
 
-    @classmethod
-    def __from_embed(cls, embed: discord.Embed):
-        if embed.image != discord.Embed.Empty and embed.image.url != discord.Embed.Empty:
-            return cls(embed.image.url, True)
-        elif embed.thumbnail != discord.Embed.Empty and embed.thumbnail.url != discord.Embed.Empty:
-            return cls(embed.thumbnail.url, True)
-        else:
-            raise AttributeError
-
-    @classmethod
-    def __from_attachment(cls, attachment: discord.Attachment):
-        return cls(attachment, False)
-
-    def save(self):
+    def save(self, filename_override=None):
         tmpdir = mkdtemp(prefix="lambdabot_attach_")
-        filename = os.path.join(tmpdir, self.filename)
+        filename = os.path.join(tmpdir, filename_override or self.filename)
         url = self.url
         log('saving image: {0} -> {1}'.format(url, filename))
         attachment = requests.get(url, headers=headers)

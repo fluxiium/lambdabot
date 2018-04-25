@@ -1,8 +1,9 @@
 import discord
 import config
 from discord.ext import commands
-from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
-from discordbot.models import log, DiscordContext, DiscordImage
+from discord.ext.commands import Bot, BadArgument, BucketType
+from discordbot.checks import image_required
+from discordbot.models import log, DiscordContext
 from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
 from memeviewer.models import MemeTemplate
 from memeviewer.preview import preview_meme
@@ -47,19 +48,14 @@ class MemeGeneratorCog:
 
         await ctx.send(msgstr, file=DISCORD_SEND_ATTACHMENTS and discord.File(meme.get_local_path()) or None)
 
-    @commands.command(name='submit', help='submit a source image', usage='<attachment | embed>')
+    @commands.command(name='submit', help='submit a source image', usage='<image>')
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
+    @image_required()
     async def _cmd_submit(self, ctx: DiscordContext):
-        images = DiscordImage.get_from_message(ctx.message)
-        imgcount = len(images)
-
-        if imgcount < 1:
-            raise CommandError("please add an attachment or embed")
-
         added = 0
-
+        imgcount = len(ctx.images)
         async with ctx.typing():
-            for attachment in images:
+            for attachment in ctx.images:
                 submitted_file = attachment.save()
                 submission = ctx.user_data.submit_sourceimg(submitted_file, attachment.filename)
                 if submission is not None:

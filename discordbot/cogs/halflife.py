@@ -116,7 +116,7 @@ class HalfLifeCog:
         if not message.guild or message.guild.id != _SERVER_ID:
             return
 
-        images = DiscordImage.get_from_message(message)
+        images = DiscordImage.from_message(message, attachments_only=True)
 
         if len(images) == 0:
             return

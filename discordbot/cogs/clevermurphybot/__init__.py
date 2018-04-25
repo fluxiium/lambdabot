@@ -20,7 +20,7 @@ class CleverMurphyBot:
         if (not self.bot.user.mentioned_in(msg) and not dm) or (msg.author == self.bot.user) or msg_text.startswith(self.bot.command_prefix):
             return
 
-        images = DiscordImage.get_from_message(msg)
+        images = DiscordImage.from_message(msg)
         mention = dm and self.bot.user.mention or msg.guild.me.mention
 
         if msg_text.startswith(mention):
@@ -35,8 +35,7 @@ class CleverMurphyBot:
         answered = False
 
         for img in images:
-            if img.is_embed:
-                msg_text = msg_text.replace(img.url, "", 1).strip()
+            msg_text = msg_text.replace(img.url, "", 1).strip()
 
         if murphy.is_active() and not msg.author.bot:
             answered = True
