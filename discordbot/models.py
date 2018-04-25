@@ -272,10 +272,9 @@ class DiscordImage:
             contentlength = int(r.headers.get('content-length'))
             if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
-        if len(actual_images) == 0:
-            recent = cls.channel_recents.get(msg.channel)
-            if recent:
-                actual_images.append(recent)
+        recent = cls.channel_recents.get(msg.channel)
+        if not attachments_only and len(actual_images) == 0 and recent:
+            actual_images.append(recent)
         return actual_images
 
     @classmethod
