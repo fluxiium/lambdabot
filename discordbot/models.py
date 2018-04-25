@@ -244,6 +244,8 @@ class DiscordContext(commands.Context):
 
 
 class DiscordImage:
+    channel_recents = {}
+
     def __init__(self, url, filename=None):
         self.url = url
         self.filename = filename
@@ -270,7 +272,16 @@ class DiscordImage:
             contentlength = int(r.headers.get('content-length'))
             if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
+        if len(actual_images) == 0:
+            recent = cls.channel_recents.get(msg.channel)
+            if recent:
+                actual_images.append(recent)
         return actual_images
+
+    @classmethod
+    def update_channel_recent(cls, ctx: DiscordContext):
+        if len(ctx.images) > 0:
+            cls.channel_recents[ctx.channel] = ctx.images[0]
 
     def save(self, filename_override=None):
         tmpdir = mkdtemp(prefix="lambdabot_attach_")

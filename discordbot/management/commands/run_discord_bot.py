@@ -4,7 +4,7 @@ from django.core.management import BaseCommand
 from discord.ext import commands
 from django.core.exceptions import ObjectDoesNotExist
 from discord.ext.commands import CommandInvokeError, CommandOnCooldown
-from discordbot.models import DiscordServer, DiscordContext
+from discordbot.models import DiscordServer, DiscordContext, DiscordImage
 from util import log, log_exc
 
 
@@ -44,6 +44,7 @@ class Command(BaseCommand):
         @bot.event
         async def on_message(msg: discord.Message):
             ctx = await bot.get_context(msg, cls=DiscordContext)
+            DiscordImage.update_channel_recent(ctx=ctx)
             if ctx.valid:
                 await bot.invoke(ctx)
 
