@@ -1,28 +1,27 @@
 import facebook
 from django.core.management import BaseCommand
-from config import FACEBOOK_PAGE_TOKEN
-from memeviewer.models import MemeContext
-from memeviewer.preview import preview_meme
-from facebookbot.models import FacebookMeem
+from facebookbot.models import FacebookMeem, FacebookPage
 
 
 class Command(BaseCommand):
     help = 'Posts a meme to facebook'
 
     def handle(self, *args, **options):
-        api = facebook.GraphAPI(FACEBOOK_PAGE_TOKEN)
-        meme = MemeContext.by_id_or_create('facebook', 'Facebook', is_public=True).generate()
-        preview_meme(meme)
+        for p in FacebookPage.objects.all():
+            api = facebook.GraphAPI(p.token)
 
-        post_status = api.put_photo(open(meme.get_local_path(), 'rb'))
-        print("post added!")
-        print(post_status)
+            meme = p.generate_meme()
+            meme.make_img()
 
-        comment_status = api.put_comment(
-            post_status['id'],
-            "template and source images: {0}".format(meme.get_info_url())
-        )
-        print("comment added!")
-        print(comment_status)
+            post_status = api.put_photo(open(meme.get_local_path(), 'rb'))
+            print("post added!")
+            print(post_status)
 
-        FacebookMeem.objects.create(meme=meme, post=post_status['post_id'])
+            comment_status = api.put_comment(
+                post_status['id'],
+                "template and source images: {0}".format(meme.get_info_url())
+            )
+            print("comment added!")
+            print(comment_status)
+
+            FacebookMeem.objects.filter(meme=meme).update(post=post_status['post_id'])

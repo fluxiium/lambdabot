@@ -140,11 +140,6 @@ class DiscordImage:
                 pass
         return actual_images
 
-    @classmethod
-    def update_channel_recent(cls, ctx: DiscordContext):
-        if len(ctx.images) > 0:
-            cls.channel_recents[ctx.channel] = ctx.images[0]
-
     def save(self, filename_override=None):
         tmpdir = mkdtemp(prefix="lambdabot_attach_")
         filename = os.path.join(tmpdir, filename_override or self.filename)
