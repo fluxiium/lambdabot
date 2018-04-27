@@ -2,29 +2,23 @@ import config
 import discord
 import requests
 import os
-
 from discord import Message
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from tempfile import mkdtemp
-from typing import Union
 from util import log, headers, struuid4, is_url
-from memeviewer.models import MemeContext, Meem, MemeSourceImage, MemeImagePool, MemeTemplate
+from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate
 
 
 class DiscordServer(models.Model):
     class Meta:
+        verbose_name = 'Server'
         indexes = [models.Index(fields=['name'], name='idx_ds_name')]
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, blank=True, default='')
-    context = models.ForeignKey(MemeContext, verbose_name='Context', default='default', on_delete=models.SET_DEFAULT)
     blacklisted = models.BooleanField(default=False)
-
-    def get_member_data(self, discord_user: Union[discord.Member, discord.User]):
-        user = DiscordUser.get(discord_user)
-        return DiscordServerUser.objects.get_or_create(user=user, server=self)[0]
 
     def __str__(self):
         return self.name or "?"
@@ -37,11 +31,14 @@ class DiscordChannel(models.Model):
             models.Index(fields=['server'], name='idx_dc_server'),
         ]
 
+    channel_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     server = models.ForeignKey(DiscordServer, null=True, blank=True, default=None, on_delete=models.SET_NULL)
     name = models.CharField(max_length=64, blank=True, default='')
     image_pools = models.ManyToManyField(MemeImagePool)
-    last_template = models.ForeignKey(MemeTemplate, null=True, default=None, on_delete=models.SET_NULL)
-    last_image = models.TextField(blank=True, default='')
+    submission_pool = models.ForeignKey(MemeImagePool, null=True, blank=True, default=None, on_delete=models.SET_NULL,
+                                        related_name='submission_channel')
+    recent_template = models.ForeignKey(MemeTemplate, null=True, default=None, on_delete=models.SET_NULL)
+    recent_image = models.TextField(blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
     def __str__(self):
@@ -58,69 +55,29 @@ class DiscordUser(models.Model):
     blacklisted = models.BooleanField(default=False)
 
     @transaction.atomic
-    def generate_meme(self, template, channel):
-        # todo: pass pools instead of context
-        meme = MemeContext.by_id_or_create('discorddm', 'Discord DM').generate(template=template)
-        discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, channel_id=channel.id)
+    def generate_meme(self, channel: DiscordChannel, template: MemeTemplate):
+        meme = Meem.generate(channel.image_pools, 'dc-' + channel.channel_id, template)
+        discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, discord_channel=channel)
         return discord_meme
 
     @transaction.atomic
-    def submit_sourceimg(self, path, filename=None):
-        submission = MemeSourceImage.submit(path, filename)
-        if submission is None:
-            return None
-        return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self)
+    def submit_sourceimg(self, channel: DiscordChannel, path, filename=None):
+        submission = MemeSourceImage.submit(channel.submission_pool, path, filename)
+        return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self, discord_channel=channel)
 
     def __str__(self):
         return self.name or "?"
 
 
-# noinspection PyProtectedMember
-class DiscordServerUser(models.Model):
-
-    class Meta:
-        verbose_name = "Server user"
-        unique_together = ('user', 'server')
-        indexes = [
-            models.Index(fields=['user', 'server'], name='idx_ds_user'),
-        ]
-
-    user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
-    server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    blacklisted = models.BooleanField(default=False)
-
-    def update(self, discord_user: Union[discord.Member, discord.User]):
-        self.user.name = discord_user.name
-        self.user.save()
-
-    @transaction.atomic
-    def generate_meme(self, template, channel):
-        meme = self.server.context.generate(template=template)
-        return DiscordMeem.objects.create(meme=meme, discord_server=self.server, discord_user=self.user, channel_id=channel.id)
-
-    @transaction.atomic
-    def submit_sourceimg(self, path, filename=None):
-        submission = MemeSourceImage.submit(path, filename)
-        if submission is None:
-            return None
-        return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_server=self.server, discord_user=self.user)
-
-    def __str__(self):
-        return "{0} ({1})".format(self.user, self.server)
-
-
 class DiscordSourceImgSubmission(models.Model):
-    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, default=None)
-    discord_server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, null=True, default=None)
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
+    discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 
 
 class DiscordMeem(models.Model):
     meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
-    discord_server = models.ForeignKey(DiscordServer, on_delete=models.SET_NULL, null=True, default=None)
-    channel_id = models.CharField(max_length=32, null=True, default=None)
-    # todo: migrate channel_id+discord_server -> channel
     discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 
 
@@ -129,11 +86,16 @@ class DiscordContext(commands.Context):
 
     @property
     def server_data(self):
-        return self.guild and DiscordServer.get(self.guild) or None
+        return self.guild and DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})[0] or None
+
+    @property
+    def channel_data(self):
+        chname = self.guild and self.channel.name or '[DM] ' + self.channel.id
+        return DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})[0]
 
     @property
     def user_data(self):
-        return self.guild and self.server_data.get_member(self.message.author) or DiscordUser.get(self.message.author)
+        return DiscordUser.objects.get_or_create(user_id=self.message.author.id, defaults={'name': self.message.author.name})[0]
 
     @property
     def images(self):
@@ -143,8 +105,6 @@ class DiscordContext(commands.Context):
 
 
 class DiscordImage:
-    channel_recents = {}
-
     def __init__(self, url, filename=None):
         self.url = url
         self.filename = filename
@@ -171,9 +131,13 @@ class DiscordImage:
             contentlength = int(r.headers.get('content-length'))
             if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
-        recent = cls.channel_recents.get(msg.channel)
-        if not attachments_only and len(actual_images) == 0 and recent:
-            actual_images.append(recent)
+        if not attachments_only and len(actual_images) == 0:  # get last image from channel
+            try:
+                channel_data = DiscordChannel.objects.get(channel_id=msg.channel.id)
+                if channel_data.last_image:
+                    actual_images.append(cls(channel_data.recent_image, struuid4()))
+            except DiscordChannel.DoesNotExist:
+                pass
         return actual_images
 
     @classmethod

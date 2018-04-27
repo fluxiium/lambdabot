@@ -18,14 +18,6 @@ from util import struuid4
 from util.admin_utils import object_url
 
 
-class MemeContext(models.Model):
-    short_name = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
-    name = models.CharField(max_length=64, verbose_name='Name')
-    recent_threshold = models.IntegerField(default=10, verbose_name='Recent threshold')
-    is_public = models.BooleanField(default=False, verbose_name='Is public?')
-    meme_count = models.IntegerField(default=0, verbose_name='Memes')
-
-
 def next_meme_number():
     return (Meem.objects.all().aggregate(largest=models.Max('number'))['largest'] or 0) + 1
 
@@ -50,7 +42,6 @@ class MemeImagePool(models.Model):
     friendly_name = models.CharField(max_length=64, default='', blank=True)
 
 
-# noinspection PyTypeChecker
 class MemeImage(models.Model):
 
     class Meta:

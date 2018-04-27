@@ -2,10 +2,12 @@
 
 from django.db import migrations
 
-from memeviewer.models import MemeSourceImage, MemeImagePool, MemeTemplate, Meem
-
 
 def do_stuff(apps, schema_editor):
+    MemeImagePool = apps.get_model('memeviewer', 'MemeImagePool')
+    MemeSourceImage = apps.get_model('memeviewer', 'MemeSourceImage')
+    MemeTemplate = apps.get_model('memeviewer', 'MemeTemplate')
+    Meem = apps.get_model('memeviewer', 'Meem')
     hldcreated = False
     hldpool = None
     halflifecreated = False
