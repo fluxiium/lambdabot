@@ -1,12 +1,7 @@
 from django.contrib import admin
-from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser
+from discordbot.models import DiscordServer, DiscordServerUser, DiscordUser
 from memeviewer.models import MemeSourceImage, Meem
 from util.admin_utils import list_url, object_url
-
-
-class DiscordCommandInline(admin.TabularInline):
-    model = DiscordCommand
-    extra = 0
 
 
 class DiscordServerUserInline(admin.TabularInline):
@@ -47,7 +42,6 @@ class DiscordServerAdmin(admin.ModelAdmin):
     search_fields = ('server_id', 'name', 'context__short_name')
     readonly_fields = ('server_id', 'name', 'users_link', 'submissions_link', 'memes_link')
     fields = readonly_fields + ('context', 'prefix', 'blacklisted')
-    inlines = [DiscordCommandInline]
 
     def has_add_permission(self, request):
         return False

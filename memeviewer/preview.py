@@ -2,12 +2,13 @@ import os
 
 from PIL import Image
 from PIL import ImageFilter
+from memeviewer.models import Meem
 
 
-def preview_meme(meme, saveme=True):
+def preview_meme(meme: Meem, saveme=True):
     """ return image based on meme data """
 
-    meme_file = meme.get_local_path()
+    meme_file = meme.local_path
 
     if os.path.isfile(meme_file):
         return Image.open(meme_file)
@@ -30,7 +31,7 @@ def preview_meme(meme, saveme=True):
     if background is None:
         background = background_color
 
-    for slot, sourceimg in meme.get_sourceimgs_in_slots().items():
+    for slot, sourceimg in meme.sourceimgs_in_slots.items():
 
         source_image_original = Image.open(sourceimg.image_file).convert("RGBA")
 

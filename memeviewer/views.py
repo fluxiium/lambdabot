@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
-from memeviewer.models import Meem, MemeContext, MemeTemplate, MemeSourceImageInContext, MemeTemplateInContext
+from memeviewer.models import Meem, MemeContext, MemeTemplate
 from memeviewer.preview import preview_meme
 
 
@@ -52,28 +52,6 @@ def template_preview_view(request, template_name):
     response = HttpResponse(content_type='image/jpeg')
     preview_meme(meme, saveme=False).save(response, "JPEG")
     return response
-
-
-@transaction.atomic
-def context_reset_view(request, context):
-    """ clears image queue of given context, displays lists of images that were in the queue """
-
-    if not request.user.has_perm('memecontext.change_memecontext'):
-        return HttpResponseForbidden()
-
-    siq = MemeSourceImageInContext.objects.filter(queued=True)
-    if context:
-        siq = siq.filter(context=MemeContext.by_id(context))
-
-    tq = MemeTemplateInContext.objects.filter(queued=True)
-    if context:
-        tq = siq.filter(context=MemeContext.by_id(context))
-
-    for i in list(siq) + list(tq):
-        i.queued = False
-        i.save()
-
-    return HttpResponse('ok')
 
 
 def meme_info_view(request, meme_id):

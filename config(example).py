@@ -10,6 +10,9 @@ IMG_QUEUE_LENGTH = 100
 # JPG and their size will be checked again
 MAX_SRCIMG_SIZE = 1500000
 
+# how many times an image has to be used by the meme generator for it to stop being considered "recent"
+RECENT_THRESHOLD = 5
+
 # public root url of the bot web app
 WEBSITE_URL = 'http://example.com/'
 

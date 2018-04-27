@@ -3,8 +3,7 @@ from django.utils.safestring import mark_safe
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission, DiscordUser, DiscordServer
 from facebookbot.models import FacebookMeem
 from lamdabotweb.settings import TWITTER_USERNAME
-from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage, \
-    MemeSourceImageInContext, MemeTemplateInContext
+from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeContext, MemeSourceImage
 from twitterbot.models import TwitterMeem
 from util.admin_utils import ahref, htmlimg, object_url, list_url
 
@@ -169,17 +168,6 @@ class MemeImageInContextInline(admin.TabularInline):
     context_link.short_description = 'Context'
 
 
-class MemeSourceImageInContextInline(MemeImageInContextInline):
-    model = MemeSourceImageInContext
-
-    def memes_link(self, obj):
-        return list_url(Meem, {
-            'source_images__contains': '%22' + obj.image.name + '%22',
-            'context_link__short_name__exact': obj.context.short_name,
-        }, obj.random_usages)
-    memes_link.short_description = 'Memes'
-
-
 class DiscordSourceImgSubmissionInline(admin.TabularInline):
     model = DiscordSourceImgSubmission
     extra = 0
@@ -201,7 +189,7 @@ class DiscordSourceImgSubmissionInline(admin.TabularInline):
 
 @admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(MemeImageAdmin):
-    inlines = [MemeSourceImageInContextInline, DiscordSourceImgSubmissionInline]
+    inlines = [DiscordSourceImgSubmissionInline]
 
     def image(self, obj):
         return ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400))
@@ -231,21 +219,8 @@ class MemeTemplateSlotInline(admin.TabularInline):
     extra = 0
 
 
-class MemeTemplateInContextInline(MemeImageInContextInline):
-    model = MemeTemplateInContext
-
-    def memes_link(self, obj):
-        return list_url(Meem, {
-            'template_link__name': obj.image.name,
-            'context_link__short_name__exact': obj.context.short_name,
-        }, obj.random_usages)
-    memes_link.short_description = 'Memes'
-
-
 @admin.register(MemeTemplate)
 class MemeTemplateAdmin(MemeImageAdmin):
-    inlines = [MemeTemplateInContextInline]
-
     def image(self, obj):
         return mark_safe(
             ahref(obj.get_image_url(), htmlimg(obj.get_image_url(), mw=600, mh=400)) + " " +
