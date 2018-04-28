@@ -179,8 +179,8 @@ class DiscordImage:
         for url, filename in images.items():
             r = requests.head(url, headers=headers)
             contenttype = r.headers.get('content-type')
-            contentlength = int(r.headers.get('content-length'))
-            if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
+            contentlength = r.headers.get('content-length')
+            if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
         if not attachments_only and len(actual_images) == 0:  # get last image from channel
             try:
