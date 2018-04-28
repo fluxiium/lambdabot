@@ -22,15 +22,21 @@ class TwitterPage(models.Model):
                           consumer_secret=self.consumer_secret,
                           access_token_key=self.token_key,
                           access_token_secret=self.token_secret)
-        meme = Meem.generate(self.image_pools.all(), 'twt-' + self.pk)
+        meme = Meem.generate(self.image_pools.all(), 'twt-' + str(self.pk))
         meme.make_img()
         status = api.PostUpdate(
             meme.info_url,
             media=open(meme.local_path, 'rb')
         )
+        self.name = status.user.name
+        self.handle = status.user.screen_name
+        self.save()
         print("post added!")
         print(status)
         return TwitterMeem.objects.create(meme=meme, page=self, post=status.id)
+
+    def __str__(self):
+        return '{0} (@{1})'.format(self.name or '?', self.handle or '?')
 
 
 class TwitterMeem(models.Model):
@@ -43,4 +49,4 @@ class TwitterMeem(models.Model):
     post = models.CharField(max_length=40, blank=True, default='')
 
     def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.post)
+        return "{0} - {1}".format(self.meme.number, self.page)

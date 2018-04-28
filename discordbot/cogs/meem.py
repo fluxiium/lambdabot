@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType
 from discordbot.checks import image_required
 from discordbot.models import log, DiscordContext
-from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
+from lamdabotweb.settings import MAX_SRCIMG_SIZE
 from memeviewer.models import MemeTemplate
 
 
@@ -39,13 +39,13 @@ class MemeGeneratorCog:
             meme.make_img()
             log(ctx.author, ' - meme generated:', meme)
 
-            msgstr = "{2} here's a meme (using template `{0}`){1}".format(
+            msgstr = "{2} here's a meme (using template `{0}`)\n<{1}>".format(
                 meme.template_link,
-                DISCORD_SEND_ATTACHMENTS and ' ' or ('\n' + meme.get_info_url()),
+                meme.info_url,
                 ctx.author.mention
             )
 
-        await ctx.send(msgstr, file=DISCORD_SEND_ATTACHMENTS and discord.File(meme.local_path) or None)
+        await ctx.send(msgstr, file=discord.File(meme.local_path))
 
     @commands.command(name='submit', help='submit a source image', usage='<image>')
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)

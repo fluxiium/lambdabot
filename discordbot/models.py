@@ -43,7 +43,7 @@ class DiscordChannel(models.Model):
     blacklisted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name or "?"
+        return '#{0} ({1})'.format(self.name or '?', self.server)
 
 
 class DiscordUser(models.Model):
@@ -77,33 +77,70 @@ class DiscordSourceImgSubmission(models.Model):
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
     discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 
+    def __str__(self):
+        return str(self.sourceimg)
+
 
 class DiscordMeem(models.Model):
     meme = models.OneToOneField(Meem, on_delete=models.CASCADE)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
     discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 
+    def __str__(self):
+        return str(self.meme)
+
 
 class DiscordContext(commands.Context):
     __images = None
+    __server_data = None
+    __channel_data = None
+    __user_data = None
 
     @property
     def server_data(self):
-        return self.guild and DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})[0] or None
+        if not self.guild:
+            return None
+        if self.__server_data:
+            return self.__server_data
+        server, cr = DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})
+        if not cr and not server.name:
+            server.name = self.guild.name
+            server.save()
+        self.__server_data = server
+        return server
 
     @property
     def channel_data(self):
+        if self.__channel_data:
+            return self.__channel_data
         chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
-        return DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})[0]
+        channel, cr = DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})
+        if not cr:
+            if not channel.name:
+                channel.name = chname
+                channel.save()
+            if self.guild and not channel.server:
+                channel.server = self.server_data
+                channel.save()
+        self.__channel_data = channel
+        return channel
 
     @property
     def user_data(self):
-        return DiscordUser.objects.get_or_create(user_id=self.message.author.id, defaults={'name': self.message.author.name})[0]
+        if self.__user_data:
+            return self.__user_data
+        user, cr = DiscordUser.objects.get_or_create(user_id=self.author.id, defaults={'name': self.author.name})
+        if not cr and not user.name:
+            user.name = self.author.name
+            user.save()
+        self.__user_data = user
+        return user
 
     @property
     def images(self):
-        if self.__images is None:
-            self.__images = DiscordImage.from_message(self.message)
+        if self.__images:
+            return self.__images
+        self.__images = DiscordImage.from_message(self.message)
         return self.__images
 
 

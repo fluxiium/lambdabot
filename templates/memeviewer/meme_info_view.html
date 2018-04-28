@@ -25,14 +25,15 @@
     <p id="date">
         meme #{{ meme.number }} - {{ meme.gen_date }}<br>
         {% if meme.facebookmeem %}
-            <a href="https://fb.com/{{ meme.facebookmeem.page_id }}" target="_blank">{{ meme.facebookmeem.page.name }}</a>
+            facebook :: {{ meme.facebookmeem.page.name }}
         {% elif meme.twittermeem %}
-            <a href="https://twitter.com/{{ meme.twittermeem.page.handle }}" target="_blank">{{ meme.twittermeem.page.name }}</a>
+            twitter :: {{ meme.twittermeem.page.name }} :: @{{ meme.twittermeem.page.handle }}
         {% elif meme.discordmeem %}
+            discord ::
             {% if meme.discordmeem.discord_channel.server %}
-                {{ meme.discordmeem.discord_channel.server.name }} (#{{ meme.discordmeem.discord_channel.name }})
+                {{ meme.discordmeem.discord_channel.server.name }} :: #{{ meme.discordmeem.discord_channel.name }}
             {% else %}
-                Discord DM
+                DM
             {% endif %}
         {% endif %}
     </p>
@@ -41,7 +42,7 @@
         <tr>
             <td>
                 <a href="{{ meme.url }}">
-                    <img src="{{ meme.url }}" alt="meme">
+                    <img src="{{ meme.url }}" alt="meme"><br>
                 </a>
                 {% if meme.facebookmeem %}
                     <a href="https://facebook.com/{{  meme.facebookmeem.post }}" target="_blank">Facebook post</a>

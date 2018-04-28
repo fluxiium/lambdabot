@@ -14,9 +14,9 @@ class FacebookPage(models.Model):
 
     page_id = models.CharField(max_length=32, primary_key=True)
     name = models.CharField(max_length=64, blank=True, default='')
-    app_id = models.CharField(max_length=32)
-    app_secret = models.CharField(max_length=64)
-    token = models.TextField()
+    app_id = models.CharField(max_length=32, blank=True, default='')
+    app_secret = models.CharField(max_length=64, blank=True, default='')
+    token = models.TextField(blank=True, default='')
     image_pools = models.ManyToManyField(MemeImagePool)
     enabled = models.BooleanField(default=True)
 
@@ -48,7 +48,7 @@ class FacebookPage(models.Model):
                 self.save()
 
     def __str__(self):
-        return self.name
+        return self.name or '?'
 
 
 class FacebookMeem(models.Model):
@@ -57,4 +57,4 @@ class FacebookMeem(models.Model):
     post = models.CharField(max_length=40, blank=True, default='')
 
     def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.post)
+        return "{0} - {1}".format(self.meme.number, self.page)
