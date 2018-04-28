@@ -21,7 +21,7 @@ class TwitterPage(models.Model):
                           consumer_secret=self.consumer_secret,
                           access_token_key=self.token_key,
                           access_token_secret=self.token_secret)
-        meme = Meem.generate(self.image_pools, 'twt-' + self.pk)
+        meme = Meem.generate(self.image_pools.all(), 'twt-' + self.pk)
         meme.make_img()
         status = api.PostUpdate(
             meme.info_url,

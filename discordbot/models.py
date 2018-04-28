@@ -1,3 +1,4 @@
+import shutil
 import config
 import discord
 import requests
@@ -56,7 +57,9 @@ class DiscordUser(models.Model):
 
     @transaction.atomic
     def generate_meme(self, channel: DiscordChannel, template: MemeTemplate):
-        meme = Meem.generate(channel.image_pools, 'dc-' + channel.channel_id, template)
+        meme = Meem.generate(channel.image_pools.all(), 'dc-' + channel.channel_id, template)
+        channel.recent_template = meme.template_link
+        channel.save()
         discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, discord_channel=channel)
         return discord_meme
 
@@ -90,7 +93,7 @@ class DiscordContext(commands.Context):
 
     @property
     def channel_data(self):
-        chname = self.guild and self.channel.name or '[DM] ' + self.channel.id
+        chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
         return DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})[0]
 
     @property
@@ -108,6 +111,7 @@ class DiscordImage:
     def __init__(self, url, filename=None):
         self.url = url
         self.filename = filename
+        self.tmpdir = None
 
     @classmethod
     def from_message(cls, msg: Message, attachments_only=False):
@@ -134,18 +138,22 @@ class DiscordImage:
         if not attachments_only and len(actual_images) == 0:  # get last image from channel
             try:
                 channel_data = DiscordChannel.objects.get(channel_id=msg.channel.id)
-                if channel_data.last_image:
+                if channel_data.recent_image:
                     actual_images.append(cls(channel_data.recent_image, struuid4()))
             except DiscordChannel.DoesNotExist:
                 pass
         return actual_images
 
     def save(self, filename_override=None):
-        tmpdir = mkdtemp(prefix="lambdabot_attach_")
-        filename = os.path.join(tmpdir, filename_override or self.filename)
+        self.tmpdir = mkdtemp(prefix="lambdabot_attach_")
+        filename = os.path.join(self.tmpdir, filename_override or self.filename)
         url = self.url
         log('saving image: {0} -> {1}'.format(url, filename))
         attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
             attachment_file.write(attachment.content)
         return filename
+
+    def cleanup(self):
+        shutil.rmtree(self.tmpdir)
+        self.tmpdir = None

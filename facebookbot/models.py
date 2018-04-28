@@ -23,7 +23,7 @@ class FacebookPage(models.Model):
     @transaction.atomic
     def generate_meme(self):
         api = facebook.GraphAPI(self.token)
-        meme = Meem.generate(self.image_pools, 'fb-' + self.page_id)
+        meme = Meem.generate(self.image_pools.all(), 'fb-' + self.page_id)
         meme.make_img()
         post_status = api.put_photo(open(meme.local_path, 'rb'))
         print("post added!")

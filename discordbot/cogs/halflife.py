@@ -124,6 +124,7 @@ class HalfLifeCog:
         for att in images:
             att_path = att.save()
             msg_archived = await self.__img_archive_channel.send(file=discord.File(att_path))
+            att.cleanup()
             att = msg_archived.attachments[0]
 
             embed = Embed(
