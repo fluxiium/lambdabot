@@ -79,7 +79,7 @@ class DiscordSourceImgSubmission(models.Model):
 
 
 class DiscordMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    meme = models.OneToOneField(Meem, on_delete=models.CASCADE)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
     discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 

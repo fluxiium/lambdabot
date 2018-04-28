@@ -8,6 +8,7 @@ class TwitterPage(models.Model):
         indexes = [models.Index(fields=['name'], name='idx_twtp_name')]
 
     name = models.CharField(max_length=64, blank=True, default='')
+    handle = models.CharField(max_length=64, blank=True, default='')
     consumer_key = models.CharField(max_length=64)
     consumer_secret = models.CharField(max_length=64)
     token_key = models.CharField(max_length=64)
@@ -37,7 +38,7 @@ class TwitterMeem(models.Model):
     class Meta:
         verbose_name = "Twitter meme link"
 
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    meme = models.OneToOneField(Meem, on_delete=models.CASCADE)
     page = models.ForeignKey(TwitterPage, null=True, default=None, on_delete=models.SET_NULL)
     post = models.CharField(max_length=40, blank=True, default='')
 

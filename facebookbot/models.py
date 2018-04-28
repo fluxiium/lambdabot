@@ -52,7 +52,7 @@ class FacebookPage(models.Model):
 
 
 class FacebookMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    meme = models.OneToOneField(Meem, on_delete=models.CASCADE)
     page = models.ForeignKey(FacebookPage, null=True, default=None, on_delete=models.SET_NULL)
     post = models.CharField(max_length=40, blank=True, default='')
 
