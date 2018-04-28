@@ -1,4 +1,8 @@
 import shutil
+
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
 import config
 import discord
 import requests
@@ -9,7 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from tempfile import mkdtemp
 from util import log, headers, struuid4, is_url
-from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate
+from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate, QueuedMemeImage
 
 
 class DiscordServer(models.Model):
@@ -44,6 +48,12 @@ class DiscordChannel(models.Model):
 
     def __str__(self):
         return '#{0} ({1})'.format(self.name or '?', self.server)
+
+
+@receiver(m2m_changed, sender=DiscordChannel.image_pools.through)
+def pools_changed(sender, instance, **_):
+    if isinstance(instance, DiscordChannel):
+        QueuedMemeImage.objects.filter(queue_id='dc-' + instance.channel_id).delete()
 
 
 class DiscordUser(models.Model):

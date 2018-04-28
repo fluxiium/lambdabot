@@ -2,7 +2,10 @@ import json
 import facebook
 import requests
 from django.db import models, transaction
-from memeviewer.models import Meem, MemeImagePool
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+from memeviewer.models import Meem, MemeImagePool, QueuedMemeImage
 from util import headers
 
 _API_URL = 'https://graph.facebook.com/v2.10/'
@@ -49,6 +52,12 @@ class FacebookPage(models.Model):
 
     def __str__(self):
         return self.name or '?'
+
+
+@receiver(m2m_changed, sender=FacebookPage.image_pools.through)
+def pools_changed(sender, instance, **_):
+    if isinstance(instance, FacebookPage):
+        QueuedMemeImage.objects.filter(queue_id='fb-' + instance.page_id).delete()
 
 
 class FacebookMeem(models.Model):

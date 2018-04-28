@@ -136,10 +136,6 @@ class MemeImageAdmin(admin.ModelAdmin):
     def lookup_allowed(self, key, value):
         return True
 
-    # def save_related(self, request, form, formsets, change):
-    #     admin.ModelAdmin.save_related(self, request, form, formsets, change)
-    #     form.instance.reindex()
-
 
 @admin.register(MemeSourceImage)
 class MemeSourceImageAdmin(MemeImageAdmin):

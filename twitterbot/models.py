@@ -1,6 +1,9 @@
 import twitter
 from django.db import models, transaction
-from memeviewer.models import Meem, MemeImagePool
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+from memeviewer.models import Meem, MemeImagePool, QueuedMemeImage
 
 
 class TwitterPage(models.Model):
@@ -37,6 +40,12 @@ class TwitterPage(models.Model):
 
     def __str__(self):
         return '{0} (@{1})'.format(self.name or '?', self.handle or '?')
+
+
+@receiver(m2m_changed, sender=TwitterPage.image_pools.through)
+def pools_changed(sender, instance, **_):
+    if isinstance(instance, TwitterPage):
+        QueuedMemeImage.objects.filter(queue_id='twt-' + str(instance.id)).delete()
 
 
 class TwitterMeem(models.Model):

@@ -7,7 +7,10 @@ def do_stuff(apps, schema_editor):
     MemeImagePool = apps.get_model('memeviewer', 'MemeImagePool')
     TwitterMeem = apps.get_model('twitterbot', 'TwitterMeem')
     TwitterPage = apps.get_model('twitterbot', 'TwitterPage')
-    halflifepool = MemeImagePool.objects.get(name='halflife')
+    try:
+        halflifepool = MemeImagePool.objects.get(name='halflife')
+    except MemeImagePool.DoesNotExist:
+        return
     mypage = None
     for m in TwitterMeem.objects.all():
         if not mypage:
