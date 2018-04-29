@@ -11,7 +11,7 @@ def do_stuff(apps, schema_editor):
     mypage = None
     for m in FacebookMeem.objects.all():
         if not mypage:
-            mypage = FacebookPage.objects.get_or_create(page_id='486920085001034', name='LambdaBot 3883', app_id='', app_secret='', token='')[0]
+            mypage = FacebookPage.objects.get_or_create(page_id='486920085001034', name='LambdaBot 3883', token='')[0]
             mypage.image_pools.add(halflifepool)
             mypage.save()
         m.page = mypage
