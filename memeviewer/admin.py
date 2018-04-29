@@ -34,7 +34,7 @@ class TwitterInline(SocialLinkInline):
     model = TwitterMeem
     verbose_name_plural = "Twitter"
 
-    fields = readonly_fields = ('twitter_url',)
+    fields = readonly_fields = ('twitter_url', 'page_admin_url')
 
     def twitter_url(self, obj: TwitterMeem):
         return ahref('https://twitter.com/statuses/' + obj.post, 'See post', True)
