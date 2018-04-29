@@ -8,4 +8,4 @@ urlpatterns = [
     path('', include('memeviewer.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-admin.site.site_header = settings.BOT_NAME + ' administration'
+admin.site.site_header = 'LambdaBot administration'

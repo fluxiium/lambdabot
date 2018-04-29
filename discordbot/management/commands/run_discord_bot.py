@@ -1,10 +1,10 @@
 import discord
 import lamdabotweb.settings as config
 from django.core.management import BaseCommand
+
 from discord.ext import commands
-from django.core.exceptions import ObjectDoesNotExist
 from discord.ext.commands import CommandInvokeError, CommandOnCooldown
-from discordbot.models import DiscordServer, DiscordContext, DiscordImage
+from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel
 from util import log, log_exc
 
 
@@ -17,24 +17,26 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_guild_join(server: discord.Guild):
-            DiscordServer.get(server)
+            s, cr = DiscordServer.objects.get_or_create(server_id=server.id, defaults={'name': server.name})
+            if not cr:
+                s.name = server.name
+                s.save()
 
         @bot.event
         async def on_member_update(_, member: discord.Member):
-            try:
-                server_data = DiscordServer.get(member.guild)
-                user_data = server_data.get_member(member)
-                user_data.update(member)
-            except ObjectDoesNotExist:
-                pass
+            DiscordUser.objects.filter(user_id=member.id).update(name=member.name)
 
         @bot.event
         async def on_guild_update(_, server: discord.Guild):
-            try:
-                server_data = DiscordServer.get(server)
-                server_data.update(server.name)
-            except ObjectDoesNotExist:
-                pass
+            DiscordServer.objects.filter(server_id=server.id).update(name=server.name)
+
+        @bot.event
+        async def on_guild_channel_update(_, channel):
+            DiscordChannel.objects.filter(channel_id=channel.id).update(name=channel.name)
+
+        @bot.event
+        async def on_private_channel_update(_, channel):
+            DiscordChannel.objects.filter(channel_id=channel.id).update(name='DM-' + str(channel.id))
 
         @bot.event
         async def on_ready():
@@ -44,7 +46,8 @@ class Command(BaseCommand):
         @bot.event
         async def on_message(msg: discord.Message):
             ctx = await bot.get_context(msg, cls=DiscordContext)
-            DiscordImage.update_channel_recent(ctx=ctx)
+            if len(ctx.images) > 0:
+                DiscordChannel.objects.filter(channel_id=ctx.channel.id).update(recent_image=ctx.images[0].url)
             if ctx.valid:
                 await bot.invoke(ctx)
 

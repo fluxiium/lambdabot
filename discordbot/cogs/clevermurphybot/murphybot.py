@@ -2,6 +2,7 @@
 
 import os
 import asyncio
+import shutil
 import textwrap
 import discord
 import datetime
@@ -248,6 +249,7 @@ async def _process_request():
         tmpdir = mkdtemp(prefix="lambdabot_murphy_")
         output = _murphybot.download_media(_media, file=tmpdir)
         await _request.channel.send(_request.mention, file=discord.File(output))
+        shutil.rmtree(tmpdir)
 
     elif _state == "3.2":
         _log("face accepted, sending question")

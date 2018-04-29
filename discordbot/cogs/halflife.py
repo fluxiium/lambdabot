@@ -124,6 +124,7 @@ class HalfLifeCog:
         for att in images:
             att_path = att.save()
             msg_archived = await self.__img_archive_channel.send(file=discord.File(att_path))
+            att.cleanup()
             att = msg_archived.attachments[0]
 
             embed = Embed(
@@ -131,13 +132,14 @@ class HalfLifeCog:
                     message.author.mention, message.channel.id, att.proxy_url
                 ),
                 color=0xFF470F,
+                timestamp=timezone.now()
             )
             embed.set_author(
                 name=str(message.author),
                 icon_url=message.author.avatar_url
             )
             embed.set_footer(
-                text="ID: {0} | {1}".format(message.author.id, timezone.now().strftime("%a, %d %b %Y %I:%M %p")),
+                text="ID: {0}".format(message.author.id),
             )
 
             await self.__log_channel.send(embed=embed)

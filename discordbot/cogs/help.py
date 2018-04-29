@@ -56,15 +56,6 @@ class CustomHelpFormatter(HelpFormatter):
                     self._paginator.add_line("```")
                     self._add_subcommands_to_page(0, commands)
                     self._paginator.add_line("```")
-            server_commands = self.context.server_data and self.context.server_data.get_commands() or []
-            if len(server_commands) > 0:
-                self._paginator.add_line("**:: Custom ::**".format(self.context.guild.name))
-                self._paginator.add_line("```")
-                cmds = ""
-                for cmd_data in server_commands:
-                    cmds += '{0}{1}, '.format(self.context.prefix, cmd_data.cmd)
-                self._paginator.add_line(cmds[:-2])
-                self._paginator.add_line("```")
         else:
             filtered = sorted(filtered)
             if filtered:

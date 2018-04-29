@@ -4,9 +4,8 @@ from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType
 from discordbot.checks import image_required
 from discordbot.models import log, DiscordContext
-from lamdabotweb.settings import MAX_SRCIMG_SIZE, DISCORD_SEND_ATTACHMENTS
+from lamdabotweb.settings import MAX_SRCIMG_SIZE
 from memeviewer.models import MemeTemplate
-from memeviewer.preview import preview_meme
 
 
 class MemeGeneratorCog:
@@ -28,7 +27,7 @@ class MemeGeneratorCog:
 
         async with ctx.typing():
             if template_name == '^':
-                template = MemeTemplate.find(ctx.server_data.context)
+                template = ctx.channel_data.recent_template
             elif template_name:
                 template = MemeTemplate.find(template_name)
 
@@ -36,17 +35,17 @@ class MemeGeneratorCog:
             raise BadArgument("template `{0}` not found :cry:".format(template_name))
 
         async with ctx.typing():
-            meme = ctx.user_data.generate_meme(template=template, channel=ctx.message.channel).meme
-            preview_meme(meme)
+            meme = ctx.user_data.generate_meme(template=template, channel=ctx.channel_data).meme
+            meme.make_img()
             log(ctx.author, ' - meme generated:', meme)
 
-            msgstr = "{2} here's a meme (using template `{0}`){1}".format(
+            msgstr = "{2} here's a meme (using template `{0}`)\n<{1}>".format(
                 meme.template_link,
-                DISCORD_SEND_ATTACHMENTS and ' ' or ('\n' + meme.get_info_url()),
+                meme.info_url,
                 ctx.author.mention
             )
 
-        await ctx.send(msgstr, file=DISCORD_SEND_ATTACHMENTS and discord.File(meme.get_local_path()) or None)
+        await ctx.send(msgstr, file=discord.File(meme.local_path))
 
     @commands.command(name='submit', help='submit a source image', usage='<image>')
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
@@ -55,9 +54,10 @@ class MemeGeneratorCog:
         added = 0
         imgcount = len(ctx.images)
         async with ctx.typing():
-            for attachment in ctx.images:
-                submitted_file = attachment.save()
-                submission = ctx.user_data.submit_sourceimg(submitted_file, attachment.filename)
+            for img in ctx.images:
+                submitted_file = img.save()
+                submission = ctx.user_data.submit_sourceimg(channel=ctx.channel_data, path=submitted_file, filename=img.filename)
+                img.cleanup()
                 if submission is not None:
                     added += 1
                     log(ctx.author, 'sourceimg submitted:', submission.sourceimg)

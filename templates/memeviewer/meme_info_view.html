@@ -3,20 +3,20 @@
 
 {% block head_extra %}
 
-    <meta property="og:title" content="{{ bot_name }} meme #{{ meme.number }}"/>
+    <meta property="og:title" content="LambdaBot meme #{{ meme.number }}"/>
     <meta property="og:type" content="article"/>
-    <meta property="og:url" content="{{ meme.get_info_url }}"/>
-    <meta property="og:image" content="{{ meme.get_url }}"/>
+    <meta property="og:url" content="{{ meme.info_url }}"/>
+    <meta property="og:image" content="{{ meme.url }}"/>
     <meta property="og:description" content="{{ meme.gen_date }}"/>
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@{{ bot_name_twitter }}">
-    <meta name="twitter:creator" content="@{{ bot_name_twitter }}">
-    <meta name="twitter:title" content="{{ bot_name }} meme #{{ meme.number }}">
+    <meta name="twitter:site" content="@lambdabot3883">
+    <meta name="twitter:creator" content="@lambdabot3883">
+    <meta name="twitter:title" content="LambdaBot meme #{{ meme.number }}">
     <meta name="twitter:description" content="{{ meme.gen_date }}">
-    <meta name="twitter:image" content="{{ meme.get_url }}">
+    <meta name="twitter:image" content="{{ meme.url }}">
 
-    <title>{{ bot_name }} meme #{{ meme.number }}</title>
+    <title>LambdaBot meme #{{ meme.number }}</title>
 
 {% endblock %}
 
@@ -24,28 +24,34 @@
 
     <p id="date">
         meme #{{ meme.number }} - {{ meme.gen_date }}<br>
-        {{ meme.context_link.name }}
+        {% if meme.facebookmeem %}
+            facebook :: {{ meme.facebookmeem.page.name }}
+        {% elif meme.twittermeem %}
+            twitter :: {{ meme.twittermeem.page.name }} :: @{{ meme.twittermeem.page.handle }}
+        {% elif meme.discordmeem %}
+            discord ::
+            {% if meme.discordmeem.discord_channel.server %}
+                {{ meme.discordmeem.discord_channel.server.name }} :: #{{ meme.discordmeem.discord_channel.name }}
+            {% else %}
+                DM
+            {% endif %}
+        {% endif %}
     </p>
 
     <table>
         <tr>
             <td>
-                <a href="{{ meme.get_url }}">
-                    <img src="{{ meme.get_url }}" alt="meme">
+                <a href="{{ meme.url }}">
+                    <img src="{{ meme.url }}" alt="meme"><br>
                 </a>
-                <br><a href="{{ meme.get_info_url }}">This page</a>
-                {% if facebook_url %}
-                    | <a href="https://facebook.com/{{  facebook_url }}" target="_blank">Facebook post</a>
-                {% endif %}
-                {% if twitter_url %}
-                    | <a href="https://twitter.com/{{ bot_name_twitter }}/status/{{ twitter_url }}" target="_blank">Twitter post</a>
-                {% endif %}
-                {% if perms.meem.change_meem %}
-                    | {{ meme.get_admin_link }}
+                {% if meme.facebookmeem %}
+                    <a href="https://facebook.com/{{  meme.facebookmeem.post }}" target="_blank">Facebook post</a>
+                {% elif meme.twittermeem %}
+                    <a href="https://twitter.com/statuses/{{ meme.twittermeem.post }}" target="_blank">Twitter post</a>
                 {% endif %}
             </td>
         </tr>
-        {% if meme.template_link.get_bgimage_url %}
+        {% if meme.template_link.bgimage_url %}
             <tr>
                 <th>
                     template
@@ -53,13 +59,13 @@
             </tr>
             <tr>
                 <td>
-                    <a href="{{ meme.template_link.get_bgimage_url }}">
-                        <img src="{{ meme.template_link.get_bgimage_url }}" alt="template bg">
+                    <a href="{{ meme.template_link.bgimage_url }}">
+                        <img src="{{ meme.template_link.bgimage_url }}" alt="template bg">
                     </a>
                 </td>
             </tr>
         {% endif %}
-        {% if meme.template_link.get_image_url %}
+        {% if meme.template_link.image_url %}
             <tr>
                 <th>
                     template overlay
@@ -67,8 +73,8 @@
             </tr>
             <tr>
                 <td>
-                    <a href="{{ meme.template_link.get_image_url }}">
-                        <img src="{{ meme.template_link.get_image_url }}" alt="template fg">
+                    <a href="{{ meme.template_link.image_url }}">
+                        <img src="{{ meme.template_link.image_url }}" alt="template fg">
                     </a><br>
                 </td>
             </tr>
@@ -79,11 +85,11 @@
         <tr>
             <th>source images</th>
         </tr>
-        {% for source_img in meme.get_sourceimgs %}
+        {% for source_img in meme.sourceimgs %}
             <tr>
                 <td>
-                    <a href="{{ source_img.get_image_url }}">
-                        <img src="{{ source_img.get_image_url }}" alt="source image">
+                    <a href="{{ source_img.image_url }}">
+                        <img src="{{ source_img.image_url }}" alt="source image">
                     </a>
                 </td>
             </tr>

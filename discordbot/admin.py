@@ -1,103 +1,78 @@
 from django.contrib import admin
-from discordbot.models import DiscordServer, DiscordCommand, DiscordServerUser, DiscordUser
+from django.utils.safestring import mark_safe
+from discordbot.models import DiscordServer, DiscordUser, DiscordChannel
 from memeviewer.models import MemeSourceImage, Meem
-from util.admin_utils import list_url, object_url
+from util.admin_utils import list_url
 
 
-class DiscordCommandInline(admin.TabularInline):
-    model = DiscordCommand
+class DiscordChannelInline(admin.TabularInline):
+    model = DiscordChannel
     extra = 0
-
-
-class DiscordServerUserInline(admin.TabularInline):
-    model = DiscordServerUser
-    extra = 0
-    verbose_name_plural = "Server-specific"
-    fields = ('server_link', 'submissions_link', 'memes_link', 'blacklisted')
-    readonly_fields = ('server_link', 'submissions_link', 'memes_link')
-    ordering = ('server__name',)
+    fields = ('name', 'channel_id', 'image_pools', 'submission_pool', 'blacklisted', 'links',)
+    readonly_fields = ('name', 'channel_id', 'links')
+    ordering = ('name',)
     can_delete = False
 
     def has_add_permission(self, request):
         return False
 
-    def server_link(self, obj):
-        return object_url(DiscordServer, obj.server_id, obj.server)
-    server_link.short_description = 'Server'
-
-    def submissions_link(self, obj):
-        return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__discord_user__user_id': obj.user_id,
-            'discordsourceimgsubmission__discord_server__server_id': obj.server_id,
-        }, obj.submission_count)
-    submissions_link.short_description = 'Submitted images'
-
-    def memes_link(self, obj):
-        return list_url(Meem, {
-            'discordmeem__discord_user__user_id': obj.user_id,
-            'discordmeem__discord_server__server_id': obj.server_id,
-        }, obj.meme_count)
-    memes_link.short_description = 'Generated memes'
+    def links(self, obj: DiscordChannel):
+        return mark_safe(
+            list_url(MemeSourceImage, {
+                'discordsourceimgsubmission__discord_channel': obj.channel_id,
+            }, 'Submitted images') + '<br>' +
+            list_url(Meem, {
+                'discordmeem__discord_channel': obj.channel_id,
+            }, 'Generated memes')
+        )
+    links.short_description = 'Links'
 
 
 @admin.register(DiscordServer)
 class DiscordServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'context', 'user_count', 'submission_count', 'meme_count', 'blacklisted')
+    list_display = ('name', 'server_id', 'blacklisted')
     ordering = ('name',)
-    search_fields = ('server_id', 'name', 'context__short_name')
-    readonly_fields = ('server_id', 'name', 'users_link', 'submissions_link', 'memes_link')
-    fields = readonly_fields + ('context', 'prefix', 'blacklisted')
-    inlines = [DiscordCommandInline]
+    search_fields = ('server_id', 'name',)
+    readonly_fields = ('server_id', 'name', 'links')
+    fields = ('name', 'server_id', 'blacklisted', 'links',)
+    inlines = [DiscordChannelInline]
 
     def has_add_permission(self, request):
         return False
 
-    def users_link(self, obj):
-        return list_url(DiscordUser, {
-            'discordserveruser__server__server_id': obj.server_id,
-        }, obj.user_count)
-    users_link.short_description = 'Users'
-
-    def submissions_link(self, obj):
-        return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__discord_server__server_id': obj.server_id,
-        }, obj.submission_count)
-    submissions_link.short_description = 'Submitted images'
-
-    def memes_link(self, obj):
-        return list_url(Meem, {
-            'discordmeem__discord_server__server_id': obj.server_id,
-        }, obj.meme_count)
-    memes_link.short_description = 'Generated memes'
+    def links(self, obj: DiscordServer):
+        return mark_safe(
+            list_url(MemeSourceImage, {
+                'discordsourceimgsubmission__discord_channel__server': obj.server_id,
+            }, 'Submitted images') + '<br>' +
+            list_url(Meem, {
+                'discordmeem__discord_channel__server': obj.server_id,
+            }, 'Generated memes')
+        )
+    links.short_description = 'Links'
 
 
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user_id', 'server_count', 'submission_count', 'meme_count', 'blacklisted')
+    list_display = ('name', 'user_id', 'blacklisted')
     search_fields = ('user_id', 'name')
     ordering = ('name',)
-    readonly_fields = ('user_id', 'name', 'submissions_link', 'memes_link')
-    fields = readonly_fields + ('blacklisted',)
-    inlines = [DiscordServerUserInline]
+    readonly_fields = ('user_id', 'name', 'links')
+    fields = ('user_id', 'name', 'blacklisted', 'links')
 
     def has_add_permission(self, request):
         return False
 
-    def submissions_link(self, obj):
-        return list_url(MemeSourceImage, {
-            'discordsourceimgsubmission__discord_user__user_id': obj.user_id,
-        }, obj.submission_count)
-    submissions_link.short_description = 'Submitted images'
-
-    def memes_link(self, obj):
-        return list_url(Meem, {
-            'discordmeem__discord_user__user_id': obj.user_id,
-        }, obj.meme_count)
-    memes_link.short_description = 'Generated memes'
+    def links(self, obj: DiscordUser):
+        return mark_safe(
+            list_url(MemeSourceImage, {
+                'discordsourceimgsubmission__discord_user': obj.user_id,
+            }, 'Submitted images') + '<br>' +
+            list_url(Meem, {
+                'discordmeem__discord_user': obj.user_id,
+            }, 'Generated memes')
+        )
+    links.short_description = 'Links'
 
     def lookup_allowed(self, key, value):
-        if key in (
-            'discordserveruser__server__server_id',
-        ):
-            return True
-        return super(DiscordUserAdmin, self).lookup_allowed(key, value)
+        return True

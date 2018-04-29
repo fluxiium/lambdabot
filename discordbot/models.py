@@ -1,254 +1,164 @@
+import shutil
+
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
 import config
 import discord
 import requests
-import uuid
 import os
-
 from discord import Message
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from tempfile import mkdtemp
-from typing import Union
-
-from discord.ext.commands import BadArgument
 from util import log, headers, struuid4, is_url
-from memeviewer.models import MemeContext, Meem, MemeSourceImage
+from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate, QueuedMemeImage
 
 
-# noinspection PyProtectedMember
 class DiscordServer(models.Model):
-
     class Meta:
-        verbose_name = "Discord server"
-        indexes = [
-            models.Index(fields=['context'], name='idx_ds_context'),
-            models.Index(fields=['name'], name='idx_ds_name'),
-            models.Index(fields=['submission_count'], name='idx_ds_scount'),
-            models.Index(fields=['meme_count'], name='idx_ds_mcount'),
-        ]
+        verbose_name = 'Server'
+        indexes = [models.Index(fields=['name'], name='idx_ds_name')]
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
-    name = models.CharField(max_length=64, verbose_name="Server name", blank=True, default='')
-    context = models.ForeignKey(MemeContext, verbose_name='Context', default='default', on_delete=models.SET_DEFAULT)
-    prefix = models.CharField(max_length=8, default='!', verbose_name='Prefix')
+    name = models.CharField(max_length=64, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
-
-    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
-    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
-    user_count = models.IntegerField(default=0, verbose_name='Users')
-
-    def update(self, name=None):
-        self.name = name
-        self.save()
-
-    @classmethod
-    def get(cls, discord_server: discord.Guild, create=True):
-        if not create:
-            return cls.objects.get(server_id=discord_server.id)
-        else:
-            context = MemeContext.by_id_or_create('default', 'Default')
-            return cls.objects.get_or_create(server_id=discord_server.id, defaults={
-                'name': discord_server.name,
-                'context': context,
-            })[0]
-
-    def get_commands(self):
-        return DiscordCommand.objects.filter(server=self).order_by('cmd')
-
-    def get_cmd(self, cmd):
-        return self.get_commands().filter(cmd=cmd).first()
-
-    def get_member(self, discord_user: Union[discord.Member, discord.User], create=True):
-        if not create:
-            return DiscordServerUser.objects.get(user_id=discord_user.id, server=self)
-        else:
-            user = DiscordUser.get(discord_user)
-            member, created = DiscordServerUser.objects.get_or_create(user=user, server=self)
-            if created:
-                self._add_user()
-                user._add_server()
-            return member
-
-    def _add_meem(self):
-        self.meme_count += 1
-        self.save()
-
-    def _add_sourceimg_submission(self):
-        self.submission_count += 1
-        self.save()
-
-    def _add_user(self):
-        self.user_count += 1
-        self.save()
 
     def __str__(self):
         return self.name or "?"
 
 
-class DiscordCommand(models.Model):
-
+class DiscordChannel(models.Model):
     class Meta:
-        verbose_name = "Command"
-        unique_together = ('server', 'cmd')
         indexes = [
-            models.Index(fields=['server', 'cmd'], name='idx_discordcmd')
+            models.Index(fields=['name'], name='idx_dc_name'),
+            models.Index(fields=['server'], name='idx_dc_server'),
         ]
 
-    cmd = models.CharField(max_length=32, verbose_name='Command')
-    message = models.TextField(blank=True, default='', verbose_name='Text message')
-    server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
+    channel_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
+    server = models.ForeignKey(DiscordServer, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=64, blank=True, default='')
+    image_pools = models.ManyToManyField(MemeImagePool)
+    submission_pool = models.ForeignKey(MemeImagePool, null=True, blank=True, default=None, on_delete=models.SET_NULL,
+                                        related_name='submission_channel')
+    recent_template = models.ForeignKey(MemeTemplate, null=True, default=None, on_delete=models.SET_NULL)
+    recent_image = models.TextField(blank=True, default='')
+    blacklisted = models.BooleanField(default=False)
 
     def __str__(self):
-        return "{0} ({1})".format(self.cmd, self.server)
+        return '#{0} ({1})'.format(self.name or '?', self.server)
+
+
+@receiver(m2m_changed, sender=DiscordChannel.image_pools.through)
+def pools_changed(sender, instance, **_):
+    if isinstance(instance, DiscordChannel):
+        QueuedMemeImage.objects.filter(queue_id='dc-' + instance.channel_id).delete()
 
 
 class DiscordUser(models.Model):
 
     class Meta:
-        verbose_name = "Discord user"
-        indexes = [
-            models.Index(fields=['name'], name='idx_du_name'),
-            models.Index(fields=['submission_count'], name='idx_du_scount'),
-            models.Index(fields=['meme_count'], name='idx_du_mcount'),
-        ]
+        indexes = [models.Index(fields=['name'], name='idx_du_name')]
 
-    user_id = models.CharField(max_length=64, verbose_name='User ID', primary_key=True)
-    name = models.CharField(max_length=64, verbose_name='Username')
+    user_id = models.CharField(max_length=64, primary_key=True)
+    name = models.CharField(max_length=64, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
-    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
-    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
-    server_count = models.IntegerField(default=0, verbose_name='Servers')
-
-    @classmethod
-    def get(cls, discord_user: discord.User, create=True):
-        if not create:
-            return cls.objects.get(user_id=discord_user.id)
-        else:
-            user, _ = DiscordUser.objects.get_or_create(user_id=discord_user.id, defaults={'name': discord_user.name})
-            return user
-
-    def update(self, name):
-        self.name = name
-        self.save()
-
     @transaction.atomic
-    def generate_meme(self, template, channel):
-        meme = MemeContext.by_id_or_create('discorddm', 'Discord DM').generate(template=template)
-        discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, channel_id=channel.id)
-        self._add_meem()
+    def generate_meme(self, channel: DiscordChannel, template: MemeTemplate):
+        meme = Meem.generate(channel.image_pools.all(), 'dc-' + channel.channel_id, template)
+        channel.recent_template = meme.template_link
+        channel.save()
+        discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, discord_channel=channel)
         return discord_meme
 
     @transaction.atomic
-    def submit_sourceimg(self, path, filename=None):
-        submission = MemeSourceImage.submit(path, filename)
-        if submission is None:
-            return None
-        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self)
-        self._add_sourceimg_submission()
-        return discord_submission
-
-    def _add_meem(self):
-        self.meme_count += 1
-        self.save()
-
-    def _add_sourceimg_submission(self):
-        self.submission_count += 1
-        self.save()
-
-    def _add_server(self):
-        self.server_count += 1
-        self.save()
+    def submit_sourceimg(self, channel: DiscordChannel, path, filename=None):
+        submission = MemeSourceImage.submit(channel.submission_pool, path, filename)
+        return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self, discord_channel=channel)
 
     def __str__(self):
         return self.name or "?"
 
 
-# noinspection PyProtectedMember
-class DiscordServerUser(models.Model):
-
-    class Meta:
-        verbose_name = "Server user"
-        unique_together = ('user', 'server')
-        indexes = [
-            models.Index(fields=['user', 'server'], name='idx_ds_user'),
-        ]
-
-    user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, verbose_name="Discord user")
-    server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, verbose_name="Server")
-    blacklisted = models.BooleanField(default=False)
-
-    submission_count = models.IntegerField(default=0, verbose_name='Submitted source images')
-    meme_count = models.IntegerField(default=0, verbose_name='Generated memes')
-
-    def update(self, discord_user: Union[discord.Member, discord.User]):
-        self.user.name = discord_user.name
-        self.user.save()
-
-    @transaction.atomic
-    def generate_meme(self, template, channel):
-        meme = self.server.context.generate(template=template)
-        discord_meme = DiscordMeem.objects.create(meme=meme, discord_server=self.server, discord_user=self.user, channel_id=channel.id)
-        self.meme_count += 1
-        self.save()
-        self.user._add_meem()
-        self.server._add_meem()
-        return discord_meme
-
-    @transaction.atomic
-    def submit_sourceimg(self, path, filename=None):
-        submission = MemeSourceImage.submit(path, filename)
-        if submission is None:
-            return None
-        discord_submission = DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_server=self.server, discord_user=self.user)
-        self.submission_count += 1
-        self.save()
-        self.user._add_sourceimg_submission()
-        self.server._add_sourceimg_submission()
-        return discord_submission
+class DiscordSourceImgSubmission(models.Model):
+    sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
+    discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
-        return "{0} ({1})".format(self.user, self.server)
-
-
-class DiscordSourceImgSubmission(models.Model):
-    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, default=None)
-    discord_server = models.ForeignKey(DiscordServer, on_delete=models.CASCADE, null=True, default=None)
-    sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
+        return str(self.sourceimg)
 
 
 class DiscordMeem(models.Model):
-    meme = models.ForeignKey(Meem, on_delete=models.CASCADE)
+    meme = models.OneToOneField(Meem, on_delete=models.CASCADE)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)
-    discord_server = models.ForeignKey(DiscordServer, on_delete=models.SET_NULL, null=True, default=None)
-    channel_id = models.CharField(max_length=32, null=True, default=None)
+    discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.SET_NULL, null=True, default=None)
+
+    def __str__(self):
+        return str(self.meme)
 
 
 class DiscordContext(commands.Context):
     __images = None
+    __server_data = None
+    __channel_data = None
+    __user_data = None
 
     @property
     def server_data(self):
-        return self.guild and DiscordServer.get(self.guild) or None
+        if not self.guild:
+            return None
+        if self.__server_data:
+            return self.__server_data
+        server, cr = DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})
+        if not cr and not server.name:
+            server.name = self.guild.name
+            server.save()
+        self.__server_data = server
+        return server
+
+    @property
+    def channel_data(self):
+        if self.__channel_data:
+            return self.__channel_data
+        chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
+        channel, cr = DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})
+        if not cr:
+            if not channel.name:
+                channel.name = chname
+                channel.save()
+            if self.guild and not channel.server:
+                channel.server = self.server_data
+                channel.save()
+        self.__channel_data = channel
+        return channel
 
     @property
     def user_data(self):
-        return self.guild and self.server_data.get_member(self.message.author) or DiscordUser.get(self.message.author)
+        if self.__user_data:
+            return self.__user_data
+        user, cr = DiscordUser.objects.get_or_create(user_id=self.author.id, defaults={'name': self.author.name})
+        if not cr and not user.name:
+            user.name = self.author.name
+            user.save()
+        self.__user_data = user
+        return user
 
     @property
     def images(self):
-        if self.__images is None:
-            self.__images = DiscordImage.from_message(self.message)
+        if self.__images:
+            return self.__images
+        self.__images = DiscordImage.from_message(self.message)
         return self.__images
 
 
 class DiscordImage:
-    channel_recents = {}
-
     def __init__(self, url, filename=None):
         self.url = url
         self.filename = filename
+        self.tmpdir = None
 
     @classmethod
     def from_message(cls, msg: Message, attachments_only=False):
@@ -269,25 +179,28 @@ class DiscordImage:
         for url, filename in images.items():
             r = requests.head(url, headers=headers)
             contenttype = r.headers.get('content-type')
-            contentlength = int(r.headers.get('content-length'))
-            if 'image' in contenttype and contentlength <= config.MAX_SRCIMG_SIZE:
+            contentlength = r.headers.get('content-length')
+            if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
-        recent = cls.channel_recents.get(msg.channel)
-        if not attachments_only and len(actual_images) == 0 and recent:
-            actual_images.append(recent)
+        if not attachments_only and len(actual_images) == 0:  # get last image from channel
+            try:
+                channel_data = DiscordChannel.objects.get(channel_id=msg.channel.id)
+                if channel_data.recent_image:
+                    actual_images.append(cls(channel_data.recent_image, struuid4()))
+            except DiscordChannel.DoesNotExist:
+                pass
         return actual_images
 
-    @classmethod
-    def update_channel_recent(cls, ctx: DiscordContext):
-        if len(ctx.images) > 0:
-            cls.channel_recents[ctx.channel] = ctx.images[0]
-
     def save(self, filename_override=None):
-        tmpdir = mkdtemp(prefix="lambdabot_attach_")
-        filename = os.path.join(tmpdir, filename_override or self.filename)
+        self.tmpdir = mkdtemp(prefix="lambdabot_attach_")
+        filename = os.path.join(self.tmpdir, filename_override or self.filename)
         url = self.url
         log('saving image: {0} -> {1}'.format(url, filename))
         attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
             attachment_file.write(attachment.content)
         return filename
+
+    def cleanup(self):
+        shutil.rmtree(self.tmpdir)
+        self.tmpdir = None
