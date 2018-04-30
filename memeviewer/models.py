@@ -55,7 +55,7 @@ class MemeImage(models.Model):
 
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
     friendly_name = models.CharField(max_length=64, default='', blank=True)
-    image_pool = models.ForeignKey(MemeImagePool, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    image_pool = models.ForeignKey(MemeImagePool, on_delete=models.CASCADE)
     accepted = models.BooleanField(default=False)
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
@@ -94,7 +94,7 @@ class MemeImage(models.Model):
             queue_length = config.IMG_QUEUE_LENGTH
             recent_threshold = config.RECENT_THRESHOLD
 
-            img_queue_db = cls.objects.filter(accepted=True).filter(Q(image_pool__in=image_pools) | Q(image_pool=None)).order_by('?')
+            img_queue_db = cls.objects.filter(accepted=True).filter(image_pool__in=image_pools).order_by('?')
             img_count = min(queue_length, img_queue_db.count())
             img_queue_recent = img_queue_db.filter(random_usages__lte=recent_threshold)[0:(img_count / 2)]
             img_queue_any = img_queue_db[0:(img_count - img_queue_recent.count())]
