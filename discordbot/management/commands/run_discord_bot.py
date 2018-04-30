@@ -21,6 +21,7 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_guild_join(server: discord.Guild):
+            log('joining server:', server)
             s = DiscordServer.objects.get_or_create(server_id=server.id)[0]
             s.name = server.name
             s.save()
@@ -44,6 +45,7 @@ class Command(BaseCommand):
         @bot.event
         async def on_ready():
             log('Logged in as', bot.user.name, bot.user.id)
+            print('\n'.join(map(lambda x: '        {} {}'.format(x.id, x.name), bot.guilds)))
             await bot.change_presence(activity=discord.Game(name=config.DISCORD_STATUS))
 
         @bot.event
