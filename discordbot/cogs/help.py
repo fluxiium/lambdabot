@@ -1,12 +1,12 @@
 import asyncio
 import itertools
+
+from discord.ext.commands.bot import _default_help_command
 from discord.ext.commands.core import Command
 from discord.ext.commands import HelpFormatter, Bot, Paginator
-from django.core.exceptions import ObjectDoesNotExist
-from discordbot.models import DiscordServer
+from discordbot.util import discord_command
 
 
-# noinspection PyAttributeOutsideInit,PyTypeChecker
 class CustomHelpFormatter(HelpFormatter):
     def _add_subcommands_to_page(self, _, commands):
         for name, command in commands:
@@ -62,4 +62,7 @@ class CustomHelpFormatter(HelpFormatter):
 
 
 def setup(bot: Bot):
+    bot.remove_command('help')
+    cmd_help = discord_command(name='help')(_default_help_command)
+    bot.add_command(cmd_help)
     bot.formatter = CustomHelpFormatter(show_check_failure=True)

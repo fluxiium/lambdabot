@@ -138,6 +138,8 @@ class DiscordContext(commands.Context):
 
     @property
     def channel_data(self):
+        if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
+            return None
         if self.__channel_data:
             return self.__channel_data
         chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)

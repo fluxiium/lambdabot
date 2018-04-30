@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError, CommandOnCooldown
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown, MissingPermissions, DisabledCommand
 from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel
 from util import log, log_exc
 
@@ -61,10 +61,12 @@ class Command(BaseCommand):
         async def on_command_error(ctx: DiscordContext, exc):
             if isinstance(exc, CommandOnCooldown):
                 await ctx.send("{0} you're memeing too fast! Please wait {1} seconds.".format(ctx.author.mention, int(exc.retry_after)))
+            elif isinstance(exc, MissingPermissions) and 'send_messages' in exc.missing_perms:
+                pass
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc)
                 await ctx.send("{} error :cry:".format(ctx.author.mention))
-            else:
+            elif ctx.channel_data is not None:
                 await ctx.send("{} {}".format(ctx.author.mention, str(exc) or "error :cry:"))
 
         print('loading cogs: ', end='')

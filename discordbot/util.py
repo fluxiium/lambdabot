@@ -1,6 +1,6 @@
 from discord import Message
 from discord.ext import commands
-from discord.ext.commands import BadArgument, Command, CheckFailure, NoPrivateMessage
+from discord.ext.commands import BadArgument, Command, CheckFailure, NoPrivateMessage, MissingPermissions
 from discordbot.models import DiscordContext, DiscordServer
 from memeviewer.models import MemeImagePool, MemeTemplate
 
@@ -13,6 +13,8 @@ def get_prefix(_, msg: Message):
 
 
 def command_enabled(cmd, ctx: DiscordContext):
+    if ctx.channel_data is None:
+        return False
     name = isinstance(cmd, Command) and cmd.name or cmd
     return not ctx.server_data or (ctx.channel_data.command_enabled(name) and ctx.server_data.command_enabled(name))
 
@@ -27,7 +29,7 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
         if (guild_only or management) and ctx.guild is None:
             raise NoPrivateMessage('This command cannot be used in private messages.')
         if management and not is_manager(ctx):
-            raise CheckFailure('you need the Manage Server permission to use this command.')
+            raise MissingPermissions(['manage_server'])
         if image_required and len(ctx.images) == 0:
             raise BadArgument('an image is required')
         return True
