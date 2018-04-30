@@ -1,5 +1,5 @@
 from django.contrib import admin
-from discordbot.models import DiscordServer, DiscordUser, DiscordChannel
+from discordbot.models import DiscordServer, DiscordUser, DiscordChannel, MemeImagePoolOwnership
 from memeviewer.models import MemeSourceImage, Meem
 from util.admin_utils import list_url
 
@@ -46,6 +46,12 @@ class DiscordServerAdmin(admin.ModelAdmin):
     memes_link.short_description = 'Generated memes'
 
 
+class MemeImagePoolOwnershipInline(admin.TabularInline):
+    model = MemeImagePoolOwnership
+    extra = 0
+    fields = ('owner', 'image_pool', 'shared_with', 'publish_requested')
+
+
 @admin.register(DiscordUser)
 class DiscordUserAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'user_id', 'blacklisted')
@@ -53,6 +59,7 @@ class DiscordUserAdmin(admin.ModelAdmin):
     ordering = ('name',)
     readonly_fields = ('submissions_link', 'memes_link')
     fields = ('user_id', 'name', 'blacklisted', 'submissions_link', 'memes_link')
+    # inlines = [MemeImagePoolOwnershipInline]
 
     def submissions_link(self, obj: DiscordUser):
         return list_url(MemeSourceImage, {

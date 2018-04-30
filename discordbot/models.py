@@ -99,6 +99,19 @@ class DiscordUser(models.Model):
         return self.name or "?"
 
 
+class MemeImagePoolOwnership(models.Model):
+    class Meta:
+        indexes = []
+
+    owner = models.ForeignKey(DiscordUser, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    image_pool = models.OneToOneField(MemeImagePool, on_delete=models.CASCADE)
+    shared_with = models.ManyToManyField(DiscordUser, blank=True, related_name='shared_image_pool')
+    publish_requested = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.owner)
+
+
 class DiscordSourceImgSubmission(models.Model):
     sourceimg = models.ForeignKey(MemeSourceImage, on_delete=models.CASCADE)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.SET_NULL, null=True, default=None)

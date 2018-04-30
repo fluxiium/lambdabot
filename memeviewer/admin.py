@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
+
+from discordbot.admin import MemeImagePoolOwnershipInline
 from discordbot.models import DiscordMeem, DiscordSourceImgSubmission, DiscordUser, DiscordServer
 from facebookbot.models import FacebookMeem, FacebookPage
-from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeSourceImage, MemeImagePool, MemeImage, \
-    QueuedMemeImage
+from memeviewer.models import Meem, MemeTemplate, MemeTemplateSlot, MemeSourceImage, MemeImagePool, QueuedMemeImage
 from twitterbot.models import TwitterMeem, TwitterPage
 from util.admin_utils import ahref, htmlimg, object_url, list_url
 
@@ -177,10 +178,12 @@ class MemeTemplateAdmin(MemeImageAdmin):
 
 @admin.register(MemeImagePool)
 class MemeImagePoolAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'memeimagepoolownership')
+    list_filter = ('memeimagepoolownership__publish_requested',)
     fields = ('name', 'srcimgs_admin_url', 'templates_admin_url')
     readonly_fields = ('srcimgs_admin_url', 'templates_admin_url')
     ordering = ('name',)
+    inlines = [MemeImagePoolOwnershipInline]
 
     def srcimgs_admin_url(self, obj: MemeImagePool):
         return list_url(MemeSourceImage, {'image_pool': obj.pk}, 'Go')
