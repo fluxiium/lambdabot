@@ -32,7 +32,7 @@ class ManagementCog:
             ', '.join(cmd_names),
         ))
 
-    @discord_command(name='svcmd', usage='[on <command> | off <command>]', group=True, management=True)
+    @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True)
     async def _cmd_svcmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.server_data)
 
@@ -44,7 +44,7 @@ class ManagementCog:
     async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
 
-    @discord_command(name='cmd', usage='[on <command> | off <command>]', group=True, management=True)
+    @discord_command(name='cmd', usage='[on <commands> | off <commands>]', group=True, management=True)
     async def _cmd_cmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.channel_data)
 
@@ -56,7 +56,7 @@ class ManagementCog:
     async def _cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.channel_data, False)
 
-    @discord_command(name='prefix', usage='<on|off> <command>', management=True)
+    @discord_command(name='prefix', management=True)
     async def _cmd_prefix(self, ctx: DiscordContext, prefix):
         ctx.server_data.prefix = prefix
         ctx.server_data.save()
