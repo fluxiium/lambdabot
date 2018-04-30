@@ -123,14 +123,12 @@ class MemeImageAdmin(admin.ModelAdmin):
         queryset.update(accepted=True)
         for img in queryset:
             img.clean()
-            img.reindex()
     accept.short_description = "Approve selected images"
 
     def reject(self, request, queryset):
         queryset.update(accepted=False)
         for img in queryset:
             img.clean()
-            img.reindex()
     reject.short_description = "Reject selected images"
 
     def lookup_allowed(self, key, value):

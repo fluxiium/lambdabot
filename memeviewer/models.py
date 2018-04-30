@@ -56,7 +56,7 @@ class MemeImage(models.Model):
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
     friendly_name = models.CharField(max_length=64, default='', blank=True)
     image_pool = models.ForeignKey(MemeImagePool, on_delete=models.CASCADE)
-    accepted = models.BooleanField(default=False)
+    accepted = models.NullBooleanField(default=None, blank=True, null=True)
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
     random_usages = models.IntegerField(default=0)
