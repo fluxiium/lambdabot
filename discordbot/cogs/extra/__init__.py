@@ -19,7 +19,7 @@ class ExtraCmdCog:
         self.cog_name = "Cool stuff"
         self.bot = bot
 
-    @discord_command(name='led', help='generate an LED sign')
+    @discord_command(name='led')
     async def _cmd_led(self, ctx: Context, *, text):
         async with ctx.typing():
             response = requests.post('http://wigflip.com/signbot/', data={
@@ -62,7 +62,7 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @discord_command(name='noviews', help='show random video with no views')
+    @discord_command(name='noviews')
     async def _cmd_noviews(self, ctx):
         attempt = 0
         videourl = None
@@ -82,7 +82,7 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @discord_command(name='dance', help='generate dancing text')
+    @discord_command(name='dance')
     @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
     @guild_only()
     async def _cmd_dance(self, ctx, *, text):

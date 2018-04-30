@@ -11,7 +11,7 @@ class GarfieldCog:
         self.cog_name = "Garfield"
         self.bot = bot
 
-    @discord_command(name='gfwiki', help='search the garfield wiki')
+    @discord_command(name='gfwiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
         wiki_url = 'http://garfield.wikia.com'
         article_url = None

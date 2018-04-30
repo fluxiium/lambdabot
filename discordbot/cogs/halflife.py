@@ -35,7 +35,7 @@ class HalfLifeCog:
     def __img_archive_channel(self):
         return self.bot.get_channel(_IMG_ARCHIVE_CHANNEL)
 
-    @discord_command(name='overwiki', help='search the half-life overwiki')
+    @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
         wiki_url = 'http://combineoverwiki.net'
         article = None
