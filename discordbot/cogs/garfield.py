@@ -1,8 +1,8 @@
 import json
 import requests
 
-from discord.ext import commands
 from discord.ext.commands import Bot, Context, CommandError
+from discordbot.util import discord_command
 from util import headers
 
 
@@ -11,7 +11,7 @@ class GarfieldCog:
         self.cog_name = "Garfield"
         self.bot = bot
 
-    @commands.command(name='wiki', help='search the garfield wiki')
+    @discord_command(name='gfwiki', help='search the garfield wiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
         wiki_url = 'http://garfield.wikia.com'
         article_url = None

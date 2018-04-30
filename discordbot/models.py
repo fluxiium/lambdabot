@@ -1,3 +1,4 @@
+import re
 import shutil
 
 from django.db.models.signals import m2m_changed
@@ -16,20 +17,41 @@ from util import log, headers, struuid4, is_url
 from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate, QueuedMemeImage
 
 
-class DiscordServer(models.Model):
+class CommandContext(models.Model):
+    class Meta:
+        abstract = True
+
+    disabled_cmds = models.TextField(blank=True, default='')
+    blacklisted = models.BooleanField(default=False)
+
+    def toggle_command(self, cmd_name):
+        if self.command_enabled(cmd_name):
+            self.disabled_cmds += cmd_name + '\n'
+            self.save()
+            return False
+        else:
+            self.disabled_cmds = self.disabled_cmds.replace(cmd_name + '\n', '')
+            self.save()
+            return True
+
+    def command_enabled(self, cmd_name):
+        return cmd_name + '\n' not in self.disabled_cmds
+
+
+class DiscordServer(CommandContext):
     class Meta:
         verbose_name = 'Server'
         indexes = [models.Index(fields=['name'], name='idx_ds_name')]
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     name = models.CharField(max_length=64, blank=True, default='')
-    blacklisted = models.BooleanField(default=False)
+    prefix = models.CharField(max_length=16, default='!')
 
     def __str__(self):
         return self.name or "?"
 
 
-class DiscordChannel(models.Model):
+class DiscordChannel(CommandContext):
     class Meta:
         indexes = [
             models.Index(fields=['name'], name='idx_dc_name'),
@@ -44,7 +66,6 @@ class DiscordChannel(models.Model):
                                         related_name='submission_channel')
     recent_template = models.ForeignKey(MemeTemplate, null=True, default=None, on_delete=models.SET_NULL)
     recent_image = models.TextField(blank=True, default='')
-    blacklisted = models.BooleanField(default=False)
 
     def __str__(self):
         return '#{0} ({1})'.format(self.name or '?', self.server)
@@ -67,7 +88,7 @@ class DiscordUser(models.Model):
 
     @transaction.atomic
     def generate_meme(self, channel: DiscordChannel, template: MemeTemplate):
-        meme = Meem.generate(channel.image_pools.all(), 'dc-' + channel.channel_id, template)
+        meme = Meem.generate(channel.image_pools.all(), 'dc-' + str(channel.channel_id), template)
         channel.recent_template = meme.template_link
         channel.save()
         discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, discord_channel=channel)
@@ -177,7 +198,10 @@ class DiscordImage:
                     images[url] = None
         actual_images = []
         for url, filename in images.items():
-            r = requests.head(url, headers=headers)
+            try:
+                r = requests.head(url, headers=headers)
+            except ValueError:
+                continue
             contenttype = r.headers.get('content-type')
             contentlength = r.headers.get('content-length')
             if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= config.MAX_SRCIMG_SIZE:

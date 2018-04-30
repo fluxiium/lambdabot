@@ -12,7 +12,7 @@ def do_stuff(apps, schema_editor):
     mypool = None
     for t in MemeTemplate.objects.filter(image_pool=None):
         if not mypool:
-            mypool = MemeImagePool.objects.get_or_create(name='global templates')[0]
+            mypool = MemeImagePool.objects.get_or_create(name='templates')[0]
         t.image_pool = mypool
         t.save()
     for c in list(DiscordChannel.objects.all()) + list(FacebookPage.objects.all()) + list(TwitterPage.objects.all()):

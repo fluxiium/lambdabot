@@ -4,9 +4,8 @@ import string
 import requests
 import discord
 import util
-from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, BadArgument
-from discordbot.checks import image_required
+from discordbot.util import image_required, discord_command
 from discordbot.models import DiscordContext
 
 
@@ -36,92 +35,92 @@ class FaceAppCog:
             raise CommandError()
         await ctx.send(ctx.author.mention, file=discord.File(io.BytesIO(res2.content), 'faceapp.jpg'))
 
-    @commands.command(name='smile')
+    @discord_command(name='smile')
     @image_required()
     async def _cmd_smile(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='smile2')
+    @discord_command(name='smile2')
     @image_required()
     async def _cmd_smile_2(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, 'smile_2')
 
-    @commands.command(name='hot')
+    @discord_command(name='hot')
     @image_required()
     async def _cmd_hot(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='old')
+    @discord_command(name='old')
     @image_required()
     async def _cmd_old(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='young')
+    @discord_command(name='young')
     @image_required()
     async def _cmd_young(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='female')
+    @discord_command(name='female')
     @image_required()
     async def _cmd_female(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='female2')
+    @discord_command(name='female2')
     @image_required()
     async def _cmd_female_2(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, 'female_2')
 
-    @commands.command(name='makeup')
+    @discord_command(name='makeup')
     @image_required()
     async def _cmd_makeup(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='impression')
+    @discord_command(name='impression')
     @image_required()
     async def _cmd_impression(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='bangs')
+    @discord_command(name='bangs')
     @image_required()
     async def _cmd_bangs(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='glasses')
+    @discord_command(name='glasses')
     @image_required()
     async def _cmd_glasses(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='wave')
+    @discord_command(name='wave')
     @image_required()
     async def _cmd_wave(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='male')
+    @discord_command(name='male')
     @image_required()
     async def _cmd_male(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='hipster')
+    @discord_command(name='hipster')
     @image_required()
     async def _cmd_hipster(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='pan')
+    @discord_command(name='pan')
     @image_required()
     async def _cmd_pan(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='lion')
+    @discord_command(name='lion')
     @image_required()
     async def _cmd_lion(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='hitman')
+    @discord_command(name='hitman')
     @image_required()
     async def _cmd_hitman(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)
 
-    @commands.command(name='heisenberg')
+    @discord_command(name='heisenberg')
     @image_required()
     async def _cmd_heisenberg(self, ctx: DiscordContext):
         await self.__do_faceapp(ctx, ctx.images[0].url, ctx.command.name)

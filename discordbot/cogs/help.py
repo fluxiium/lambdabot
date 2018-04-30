@@ -12,10 +12,8 @@ class CustomHelpFormatter(HelpFormatter):
         for name, command in commands:
             if name in command.aliases:
                 continue
-            entry = '{}{} {}{}{}'.format(
-                self.context.prefix,
-                command.name,
-                command.parameter_help,
+            entry = '  {}{}{}'.format(
+                '{} {}'.format(command.name, command.parameter_help).strip(),
                 command.short_doc and ' - ' or '',
                 command.short_doc
             )
@@ -23,12 +21,12 @@ class CustomHelpFormatter(HelpFormatter):
 
     @asyncio.coroutine
     def format(self):
-        self._paginator = Paginator(prefix='', suffix='')
+        self._paginator = Paginator(prefix='```', suffix='```')
 
         if isinstance(self.command, Command):
             # <signature portion>
             signature = self.get_command_signature()
-            self._paginator.add_line("```{}```".format(signature))
+            self._paginator.add_line(signature)
 
             # <long doc> section
             if self.command.help:
@@ -52,17 +50,13 @@ class CustomHelpFormatter(HelpFormatter):
                 # there simply is no prettier way of doing this.
                 commands = sorted(commands)
                 if len(commands) > 0:
-                    self._paginator.add_line("**:: {} ::**".format(category))
-                    self._paginator.add_line("```")
+                    self._paginator.add_line(category)
                     self._add_subcommands_to_page(0, commands)
-                    self._paginator.add_line("```")
         else:
             filtered = sorted(filtered)
             if filtered:
                 self._paginator.add_line('Commands:')
-                self._paginator.add_line("```")
                 self._add_subcommands_to_page(0, filtered)
-                self._paginator.add_line("```")
 
         return self._paginator.pages
 

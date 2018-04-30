@@ -7,8 +7,9 @@ from bs4 import BeautifulSoup
 import config
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, BucketType
+from discord.ext.commands import Bot, CommandError, Context, BucketType, guild_only
 from discordbot.cogs.extra.dance import dance
+from discordbot.util import discord_command
 from util import headers
 
 
@@ -18,7 +19,7 @@ class ExtraCmdCog:
         self.cog_name = "Cool stuff"
         self.bot = bot
 
-    @commands.command(name='led', help='generate an LED sign')
+    @discord_command(name='led', help='generate an LED sign')
     async def _cmd_led(self, ctx: Context, *, text):
         async with ctx.typing():
             response = requests.post('http://wigflip.com/signbot/', data={
@@ -34,7 +35,7 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @commands.command(name='mario', usage='[name] <first line> <message>')
+    @discord_command(name='mario', usage='[name] <first_line> <message>')
     async def _cmd_mario(self, ctx, first_line, message, arg3=''):
         if arg3:
             name = first_line
@@ -61,7 +62,7 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @commands.command(name='noviews', help='show random video with no views')
+    @discord_command(name='noviews', help='show random video with no views')
     async def _cmd_noviews(self, ctx):
         attempt = 0
         videourl = None
@@ -81,8 +82,9 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @commands.command(name='dance', help='generate dancing text')
+    @discord_command(name='dance', help='generate dancing text')
     @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
+    @guild_only()
     async def _cmd_dance(self, ctx, *, text):
         async with ctx.typing():
             tmpdir = dance(text)

@@ -8,7 +8,7 @@ from util.admin_utils import list_url
 class DiscordChannelInline(admin.TabularInline):
     model = DiscordChannel
     extra = 0
-    fields = ('name', 'channel_id', 'image_pools', 'submission_pool', 'blacklisted', 'links',)
+    fields = ('name', 'channel_id', 'image_pools', 'submission_pool', 'disabled_cmds', 'blacklisted', 'links',)
     readonly_fields = ('name', 'channel_id', 'links')
     ordering = ('name',)
     can_delete = False
@@ -34,7 +34,7 @@ class DiscordServerAdmin(admin.ModelAdmin):
     ordering = ('name',)
     search_fields = ('server_id', 'name',)
     readonly_fields = ('server_id', 'name', 'links')
-    fields = ('name', 'server_id', 'blacklisted', 'links',)
+    fields = ('name', 'server_id', 'prefix', 'disabled_cmds', 'blacklisted', 'links',)
     inlines = [DiscordChannelInline]
 
     def has_add_permission(self, request):

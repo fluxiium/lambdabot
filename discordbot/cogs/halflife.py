@@ -7,9 +7,9 @@ import config
 
 from bs4 import BeautifulSoup
 from discord import Embed, Message
-from discord.ext import commands
 from discord.ext.commands import Context, CommandError, Bot
 from django.utils import timezone
+from discordbot.util import discord_command
 from util import headers
 from discordbot.models import DiscordImage
 
@@ -35,7 +35,7 @@ class HalfLifeCog:
     def __img_archive_channel(self):
         return self.bot.get_channel(_IMG_ARCHIVE_CHANNEL)
 
-    @commands.command(name='wiki', help='search the half-life overwiki')
+    @discord_command(name='overwiki', help='search the half-life overwiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
         wiki_url = 'http://combineoverwiki.net'
         article = None

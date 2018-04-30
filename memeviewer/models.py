@@ -29,8 +29,10 @@ IMAGE_TYPES = (
     (1, 'Template')
 )
 
-
 class MemeGeneratorException(Exception):
+    pass
+
+class NotEnoughImages(MemeGeneratorException):
     pass
 
 
@@ -100,7 +102,7 @@ class MemeImage(models.Model):
             queue_list = list(img_queue_recent) + list(img_queue_any)
 
             if len(queue_list) == 0:
-                raise MemeGeneratorException("No images found")
+                raise NotEnoughImages('No images found')
 
             # save queue to db
             for s in queue_list:
@@ -283,7 +285,7 @@ class Meem(models.Model):
                 else:
                     attempts += 1
                 if attempts > 5:
-                    raise MemeGeneratorException("Not enough source images")
+                    raise NotEnoughImages('Not enough source images for template ' + templ.name)
             source_files[slot.slot_order] = source_file.name
             if saveme:
                 source_file.inc_counter()
