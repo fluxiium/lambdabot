@@ -1,5 +1,6 @@
-from discord.ext.commands import Bot, BadArgument, guild_only, Command
-from discordbot.models import DiscordContext, DiscordChannel
+from typing import Union, List
+from discord.ext.commands import Bot, Command
+from discordbot.models import DiscordContext, DiscordChannel, DiscordServer
 from discordbot.util import discord_command, management_cmd, CommandParam
 
 
@@ -9,34 +10,59 @@ class ManagementCog:
         self.cog_name = "Management"
         self.bot = bot
 
-    async def __toggle_cmd(self, ctx: DiscordContext, cmd: Command, data):
-        if not cmd:
-            return await ctx.send("{} currently disabled commands{}: ```{} ```".format(
-                ctx.author.mention,
-                isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
-                ', '.join(data.disabled_cmds.strip().split('\n'))
-            ))
-        if cmd.name in ['svcmd', 'cmd']:
-            raise BadArgument('nope.avi')
-        enabled = data.toggle_command(cmd.name)
-        await ctx.send("{} command `{}` is now {}abled{}".format(
+    @staticmethod
+    async def __list_cmds(ctx: DiscordContext, data):
+        return await ctx.send("{} currently disabled commands{}: ```{} ```".format(
             ctx.author.mention,
-            cmd.name,
-            enabled and 'en' or 'dis',
             isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
+            ', '.join(data.disabled_cmds.strip().split('\n'))
         ))
 
-    @discord_command(name='svcmd', help='toggle command serverwide')
-    @management_cmd()
-    async def _cmd_svcmd(self, ctx: DiscordContext, cmd: CommandParam()=None):
-        await self.__toggle_cmd(ctx, cmd, ctx.server_data)
+    @staticmethod
+    async def __toggle_cmds(ctx: DiscordContext, cmds: List[Command], data: Union[DiscordChannel, DiscordServer], enable):
+        cmd_names = []
+        for cmd in cmds:
+            if cmd.name not in ['svcmd', 'cmd']:
+                cmd_names.append(cmd.name)
+                data.toggle_command(cmd.name, enable)
+        await ctx.send("{} the following commands have been {}abled{}: ```{}```".format(
+            ctx.author.mention,
+            enable and 'en' or 'dis',
+            isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
+            ', '.join(cmd_names),
+        ))
 
-    @discord_command(name='cmd', help='toggle command in current channel')
+    @discord_command(name='svcmd', usage='[on <command> | off <command>]', group=True, invoke_without_command=True)
     @management_cmd()
-    async def _cmd_cmd(self, ctx: DiscordContext, cmd: CommandParam()=None):
-        await self.__toggle_cmd(ctx, cmd, ctx.channel_data)
+    async def _cmd_svcmd(self, ctx: DiscordContext):
+        await self.__list_cmds(ctx, ctx.server_data)
 
-    @discord_command(name='prefix', help='set command prefix')
+    @_cmd_svcmd.command(name='on')
+    @management_cmd()
+    async def _cmd_svcmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
+        await self.__toggle_cmds(ctx, cmds, ctx.server_data, True)
+
+    @_cmd_svcmd.command(name='off')
+    @management_cmd()
+    async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
+        await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
+
+    @discord_command(name='cmd', usage='[on <command> | off <command>]', group=True, invoke_without_command=True)
+    @management_cmd()
+    async def _cmd_cmd(self, ctx: DiscordContext):
+        await self.__list_cmds(ctx, ctx.channel_data)
+
+    @_cmd_cmd.command(name='on')
+    @management_cmd()
+    async def _cmd_cmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
+        await self.__toggle_cmds(ctx, cmds, ctx.channel_data, True)
+
+    @_cmd_cmd.command(name='off')
+    @management_cmd()
+    async def _cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
+        await self.__toggle_cmds(ctx, cmds, ctx.channel_data, False)
+
+    @discord_command(name='prefix', usage='<on|off> <command>')
     @management_cmd()
     async def _cmd_prefix(self, ctx: DiscordContext, prefix):
         ctx.server_data.prefix = prefix

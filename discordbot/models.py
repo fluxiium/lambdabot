@@ -1,13 +1,10 @@
-import re
 import shutil
-
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
-
 import config
 import discord
 import requests
 import os
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from discord import Message
 from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
@@ -24,18 +21,17 @@ class CommandContext(models.Model):
     disabled_cmds = models.TextField(blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
-    def toggle_command(self, cmd_name):
-        if self.command_enabled(cmd_name):
-            self.disabled_cmds += cmd_name + '\n'
-            self.save()
-            return False
-        else:
-            self.disabled_cmds = self.disabled_cmds.replace(cmd_name + '\n', '')
-            self.save()
-            return True
+    def toggle_command(self, cmd_name, enable):
+        disabled_cmds = self.disabled_cmds.strip().split()
+        if enable is True and cmd_name in disabled_cmds:
+            disabled_cmds.remove(cmd_name)
+        elif enable is False and cmd_name not in disabled_cmds:
+            disabled_cmds.append(cmd_name)
+        self.disabled_cmds = ' '.join(disabled_cmds)
+        self.save()
 
     def command_enabled(self, cmd_name):
-        return cmd_name + '\n' not in self.disabled_cmds
+        return cmd_name not in self.disabled_cmds.strip().split()
 
 
 class DiscordServer(CommandContext):

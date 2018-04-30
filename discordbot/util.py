@@ -31,8 +31,11 @@ def command_enabled(cmd: Command, ctx: DiscordContext):
     return not ctx.server_data or (ctx.channel_data.command_enabled(cmd.name) and ctx.server_data.command_enabled(cmd.name))
 
 
-def discord_command(name, cls=None, enabled=None, **attrs):
-    return commands.command(name=name, cls=cls, enabled=command_enabled, **attrs)
+def discord_command(name, cls=None, enabled=None, group=False, **attrs):
+    if group:
+        return commands.group(name=name, enabled=command_enabled, pass_context=True, **attrs)
+    else:
+        return commands.command(name=name, cls=cls, enabled=command_enabled, **attrs)
 
 
 class ImagePoolParam(commands.Converter):
@@ -56,8 +59,15 @@ class MemeTemplateParam(commands.Converter):
 
 
 class CommandParam(commands.Converter):
+    def __init__(self, many=False):
+        self.__many = many
+
     async def convert(self, ctx: DiscordContext, argument):
-        cmd = ctx.bot.get_command(argument)
-        if not cmd:
-            raise BadArgument("command `{0}` not found!".format(argument))
-        return cmd
+        if self.__many:
+            cmd_names = argument.split()
+        else:
+            cmd_names = [argument]
+        cmds = list(map(lambda cmd_name: ctx.bot.get_command(cmd_name), cmd_names))
+        if len(cmds) == 0:
+            raise BadArgument("no commands found!")
+        return self.__many and cmds or cmds[0]
