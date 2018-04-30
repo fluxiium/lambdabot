@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError, CommandOnCooldown, MissingPermissions, DisabledCommand
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown, MissingPermissions
 from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel
 from util import log, log_exc
 
