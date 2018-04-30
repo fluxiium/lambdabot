@@ -15,17 +15,14 @@ class MemeGeneratorCog:
         self.cog_name = "Meme generator"
         self.bot = bot
 
-    @discord_command(
-        name='meme',
-        help='generate a random meme\n'
-             'you can specify a template to use for the meme\n'
-             'use `^` to use the template of the last meme generated in this channel',
-        aliases=['meem', 'mem', 'meemay', 'memuch', 'miejm'],
-        usage='[[template_name] | ^]',
-        guild_only=True,
-    )
+    @discord_command(name='meme', aliases=['meem', 'mem', 'meemay', 'memuch', 'miejm'], guild_only=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
     async def _cmd_meem(self, ctx: DiscordContext, *, template: MemeTemplateParam()=None):
+        """
+        generate a random meme
+        you can specify a template to use for the meme
+        use `^` to use the template of the last meme generated in this channel
+        """
         try:
             async with ctx.typing():
                 meme = ctx.user_data.generate_meme(template=template, channel=ctx.channel_data).meme
@@ -42,15 +39,10 @@ class MemeGeneratorCog:
 
         await ctx.send(msgstr, file=discord.File(meme.local_path))
 
-    @discord_command(
-        name='submit',
-        help='submit a source image',
-        usage='<image>',
-        guild_only=True,
-        image_required=True,
-    )
+    @discord_command(name='submit', usage='<image>', guild_only=True, image_required=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
     async def _cmd_submit(self, ctx: DiscordContext):
+        """ submit a source image """
         if ctx.channel_data.submission_pool is None:
             raise CommandError('submission pool is not set for this channel')
         added = 0
@@ -75,14 +67,9 @@ class MemeGeneratorCog:
             else:
                 raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, MAX_SRCIMG_SIZE / 1000))
 
-    @discord_command(
-        name='pool',
-        help='edit image pools for this channel',
-        usage='[add <pools> | remove <pools>]',
-        management=True,
-        group=True,
-    )
+    @discord_command(name='pool', usage='[add <pools> | remove <pools>]', management=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):
+        """ edit image pools for this channel """
         pools = ctx.channel_data.image_pools.values_list('name', flat=True)
         avail = ctx.user_data.available_pools.exclude(name__in=pools).values_list('name', flat=True)
         return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
@@ -117,12 +104,9 @@ class MemeGeneratorCog:
     async def _cmd_pool_remove(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True, avail_only=True)):
         await self.__toggle_pools(ctx, pools, False)
 
-    @discord_command(
-        name='subpool',
-        help='set the default image pool used for submissions',
-        management=True,
-    )
+    @discord_command(name='subpool', management=True)
     async def _cmd_subpool(self, ctx: DiscordContext, *, pool: ImagePoolParam()=None):
+        """ set the default image pool used for submissions """
         if not pool:
             avail = ctx.user_data.available_pools.values_list('name', flat=True)
             if ctx.channel_data.submission_pool:
