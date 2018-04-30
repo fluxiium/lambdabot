@@ -87,7 +87,7 @@ class MemeGeneratorCog:
             ctx.channel_data.image_pools.remove(pool)
         else:
             ctx.channel_data.image_pools.add(pool)
-        await ctx.send("{} image pool `#{}` is now {}abled in `#{}`".format(
+        await ctx.send("{} image pool `{}` is now {}abled in `#{}`".format(
             ctx.author.mention,
             pool,
             enabled and 'dis' or 'en',
