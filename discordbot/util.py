@@ -6,7 +6,10 @@ from memeviewer.models import MemeImagePool, MemeTemplate
 
 
 def get_prefix(_, msg: Message):
-    return DiscordServer.objects.get_or_create(server_id=msg.guild.id)[0].prefix
+    if msg.guild is None:
+        return '!'
+    else:
+        return DiscordServer.objects.get_or_create(server_id=msg.guild.id)[0].prefix
 
 
 def command_enabled(cmd: Command, ctx: DiscordContext):

@@ -17,7 +17,7 @@ class CleverMurphyBot:
         if msg.guild is None:
             dm = True
 
-        if (not self.bot.user.mentioned_in(msg) and not dm) or (msg.author == self.bot.user) or msg_text.startswith(self.bot.command_prefix):
+        if (not self.bot.user.mentioned_in(msg) and not dm) or (msg.author == self.bot.user) or msg_text.startswith(await self.bot.get_prefix(msg)):
             return
 
         images = DiscordImage.from_message(msg)
