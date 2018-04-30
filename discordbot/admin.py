@@ -9,7 +9,7 @@ class DiscordChannelInline(admin.TabularInline):
     model = DiscordChannel
     extra = 0
     fields = ('name', 'channel_id', 'image_pools', 'submission_pool', 'disabled_cmds', 'blacklisted', 'links',)
-    readonly_fields = ('name', 'channel_id', 'links')
+    readonly_fields = ('links',)
     ordering = ('name',)
     can_delete = False
 
