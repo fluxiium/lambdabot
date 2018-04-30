@@ -15,7 +15,7 @@ class ManagementCog:
         return await ctx.send("{} currently disabled commands{}: ```{} ```".format(
             ctx.author.mention,
             isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
-            ', '.join(data.disabled_cmds.strip().split('\n'))
+            ' '.join(data.disabled_cmds.strip().split('\n'))
         ))
 
     @staticmethod
@@ -29,7 +29,7 @@ class ManagementCog:
             ctx.author.mention,
             enable and 'en' or 'dis',
             isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
-            ', '.join(cmd_names),
+            ' '.join(cmd_names),
         ))
 
     @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True)

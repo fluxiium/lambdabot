@@ -87,8 +87,8 @@ class MemeGeneratorCog:
         return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
             ctx.author.mention,
             ctx.channel.name,
-            ', '.join(pools),
-            ', '.join(MemeImagePool.objects.exclude(name__in=pools).values_list('name', flat=True))
+            ' '.join(pools),
+            ' '.join(MemeImagePool.objects.exclude(name__in=pools).values_list('name', flat=True))
         ))
 
     @staticmethod
@@ -105,7 +105,7 @@ class MemeGeneratorCog:
             ctx.author.mention,
             enable and 'en' or 'dis',
             ctx.channel.name,
-            ', '.join(pool_names),
+            ' '.join(pool_names),
         ))
 
     @discord_command(parent=_cmd_pool, name='add', management=True)
@@ -130,7 +130,7 @@ class MemeGeneratorCog:
                 ctx.author.mention,
                 ctx.channel.name,
                 ctx.channel_data.submission_pool or '(none)',
-                ', '.join(avail)
+                ' '.join(avail)
             ))
         assert isinstance(pool, MemeImagePool)
         ctx.channel_data.submission_pool = pool
