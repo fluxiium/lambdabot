@@ -61,15 +61,16 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_command_error(ctx: DiscordContext, exc):
+            msg = None
             if isinstance(exc, CommandOnCooldown):
-                await ctx.send("{0} you're memeing too fast! Please wait {1} seconds.".format(ctx.author.mention, int(exc.retry_after)))
-            elif isinstance(exc, MissingPermissions) and 'send_messages' in exc.missing_perms:
-                pass
+                msg = "You're memeing too fast! Please wait {} seconds.".format(int(exc.retry_after))
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc)
-                await ctx.send("{} error :cry:".format(ctx.author.mention))
+                msg = "error :cry:"
             elif ctx.channel_data is not None:
-                await ctx.send("{} {}".format(ctx.author.mention, str(exc) or "error :cry:"))
+                msg = str(exc) or "error :cry:"
+            if msg:
+                await ctx.send("{} :x: {}".format(ctx.author.mention, msg))
 
         print('loading cogs: ', end='')
         for cog_name in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'cogs')):
