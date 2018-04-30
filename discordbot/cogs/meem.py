@@ -84,11 +84,12 @@ class MemeGeneratorCog:
     )
     async def _cmd_pool(self, ctx: DiscordContext):
         pools = ctx.channel_data.image_pools.values_list('name', flat=True)
+        avail = ctx.user_data.available_pools.exclude(name__in=pools).values_list('name', flat=True)
         return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
             ctx.author.mention,
             ctx.channel.name,
             ' '.join(pools),
-            ' '.join(MemeImagePool.objects.exclude(name__in=pools).values_list('name', flat=True))
+            ' '.join(avail),
         ))
 
     @staticmethod
@@ -109,11 +110,11 @@ class MemeGeneratorCog:
         ))
 
     @discord_command(parent=_cmd_pool, name='add', management=True)
-    async def _cmd_pool_add(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True)):
+    async def _cmd_pool_add(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True, avail_only=True)):
         await self.__toggle_pools(ctx, pools, True)
 
     @discord_command(parent=_cmd_pool, name='remove', management=True)
-    async def _cmd_pool_remove(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True)):
+    async def _cmd_pool_remove(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True, avail_only=True)):
         await self.__toggle_pools(ctx, pools, False)
 
     @discord_command(
@@ -123,13 +124,13 @@ class MemeGeneratorCog:
     )
     async def _cmd_subpool(self, ctx: DiscordContext, *, pool: ImagePoolParam()=None):
         if not pool:
-            avail = MemeImagePool.objects.values_list('name', flat=True)
+            avail = ctx.user_data.available_pools.values_list('name', flat=True)
             if ctx.channel_data.submission_pool:
                 avail = avail.exclude(pk=ctx.channel_data.submission_pool.pk)
             return await ctx.send("{} current submission pool for `#{}`: ```{}```\navailable pools: ```{} ```".format(
                 ctx.author.mention,
                 ctx.channel.name,
-                ctx.channel_data.submission_pool or '(none)',
+                ctx.channel_data.submission_pool or '',
                 ' '.join(avail)
             ))
         assert isinstance(pool, MemeImagePool)

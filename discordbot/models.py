@@ -3,6 +3,7 @@ import config
 import discord
 import requests
 import os
+from django.db.models import Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from discord import Message
@@ -82,6 +83,14 @@ class DiscordUser(models.Model):
     name = models.CharField(max_length=64, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
+    @property
+    def available_pools(self):
+        return MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
+
+    @property
+    def moderated_pools(self):
+        return MemeImagePool.objects.filter(Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__moderators=self))
+
     @transaction.atomic
     def generate_meme(self, channel: DiscordChannel, template: MemeTemplate):
         meme = Meem.generate(channel.image_pools.all(), 'dc-' + str(channel.channel_id), template)
@@ -106,6 +115,7 @@ class MemeImagePoolOwnership(models.Model):
     owner = models.ForeignKey(DiscordUser, null=True, blank=True, default=None, on_delete=models.SET_NULL)
     image_pool = models.OneToOneField(MemeImagePool, on_delete=models.CASCADE)
     shared_with = models.ManyToManyField(DiscordUser, blank=True, related_name='shared_image_pool')
+    moderators = models.ManyToManyField(DiscordUser, blank=True, related_name='moderated_image_pool')
     publish_requested = models.BooleanField(default=False)
 
     def __str__(self):

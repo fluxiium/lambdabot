@@ -63,15 +63,23 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
 
 
 class ImagePoolParam(commands.Converter):
-    def __init__(self, many=False):
+    def __init__(self, many=False, avail_only=False, moderated_only=False):
         self.__many = many
+        self.__avail_only = avail_only
+        self.__moderated_only = moderated_only
 
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx: DiscordContext, argument):
         if self.__many:
             pool_names = argument.split()
         else:
             pool_names = [argument]
-        pools = MemeImagePool.objects.filter(name__in=pool_names)
+        if self.__avail_only:
+            obj = ctx.user_data.available_pools.all() | ctx.channel_data.image_pools.all()
+        elif self.__moderated_only:
+            obj = ctx.user_data.moderated_pools
+        else:
+            obj = MemeImagePool.objects
+        pools = obj.filter(name__in=pool_names)
         if len(pools) == 0:
             raise BadArgument("no matching pools found!")
         return self.__many and pools or pools[0]
