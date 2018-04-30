@@ -1,5 +1,6 @@
 import discord
 import config
+from typing import List
 from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
 from discordbot.util import MemeTemplateParam, ImagePoolParam, discord_command
@@ -76,30 +77,44 @@ class MemeGeneratorCog:
 
     @discord_command(
         name='pool',
-        help='enable/disable image pool in current channel',
+        help='edit image pools for this channel',
+        usage='[add <pools> | remove <pools>]',
         management=True,
+        group=True,
     )
-    async def _cmd_pool(self, ctx: DiscordContext, *, pool: ImagePoolParam()=None):
-        if not pool:
-            pools = ctx.channel_data.image_pools.values_list('name', flat=True)
-            return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
-                ctx.author.mention,
-                ctx.channel.name,
-                ', '.join(pools),
-                ', '.join(MemeImagePool.objects.exclude(name__in=pools).values_list('name', flat=True))
-            ))
-        assert isinstance(pool, MemeImagePool)
-        enabled = ctx.channel_data.image_pools.filter(pk=pool.pk).first() and True or False
-        if enabled:
-            ctx.channel_data.image_pools.remove(pool)
-        else:
-            ctx.channel_data.image_pools.add(pool)
-        await ctx.send("{} image pool `{}` is now {}abled in `#{}`".format(
+    async def _cmd_pool(self, ctx: DiscordContext):
+        pools = ctx.channel_data.image_pools.values_list('name', flat=True)
+        return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
             ctx.author.mention,
-            pool,
-            enabled and 'dis' or 'en',
-            ctx.channel.name
+            ctx.channel.name,
+            ', '.join(pools),
+            ', '.join(MemeImagePool.objects.exclude(name__in=pools).values_list('name', flat=True))
         ))
+
+    @staticmethod
+    async def __toggle_pools(ctx: DiscordContext, pools: List[MemeImagePool], enable):
+        pool_names = []
+        for pool in pools:
+            assert isinstance(pool, MemeImagePool)
+            pool_names.append(pool.name)
+            if enable:
+                ctx.channel_data.image_pools.add(pool)
+            else:
+                ctx.channel_data.image_pools.remove(pool)
+        await ctx.send("{} the following image pools are now {}abled in `#{}`: ```{}```".format(
+            ctx.author.mention,
+            enable and 'en' or 'dis',
+            ctx.channel.name,
+            ', '.join(pool_names),
+        ))
+
+    @discord_command(parent=_cmd_pool, name='add', management=True)
+    async def _cmd_pool_add(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True)):
+        await self.__toggle_pools(ctx, pools, True)
+
+    @discord_command(parent=_cmd_pool, name='remove', management=True)
+    async def _cmd_pool_remove(self, ctx: DiscordContext, *, pools: ImagePoolParam(many=True)):
+        await self.__toggle_pools(ctx, pools, False)
 
     @discord_command(
         name='subpool',
