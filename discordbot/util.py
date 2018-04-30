@@ -9,33 +9,35 @@ def get_prefix(_, msg: Message):
     return DiscordServer.objects.get_or_create(server_id=msg.guild.id)[0].prefix
 
 
-def image_required():
-    async def predicate(ctx: DiscordContext):
-        if len(ctx.images) == 0:
-            raise BadArgument('an image is required')
-        return True
-    return commands.check(predicate)
-
-
-def management_cmd():
-    async def predicate(ctx: DiscordContext):
-        if ctx.guild is None:
-            raise NoPrivateMessage('This command cannot be used in private messages.')
-        if not getattr(ctx.channel.permissions_for(ctx.author), 'manage_guild', None) and ctx.author.id != 257499042039332866:
-            raise CheckFailure('you need the Manage Server permission to use this command.')
-        return True
-    return commands.check(predicate)
-
-
 def command_enabled(cmd: Command, ctx: DiscordContext):
     return not ctx.server_data or (ctx.channel_data.command_enabled(cmd.name) and ctx.server_data.command_enabled(cmd.name))
 
 
-def discord_command(name, cls=None, enabled=None, group=False, **attrs):
-    if group:
-        return commands.group(name=name, enabled=command_enabled, pass_context=True, **attrs)
-    else:
-        return commands.command(name=name, cls=cls, enabled=command_enabled, **attrs)
+def discord_command(parent=None, group=False, management=False, guild_only=False, image_required=False,
+                    invoke_without_command=True, enabled=command_enabled, pass_context=True, **attrs):
+
+    async def predicate(ctx: DiscordContext):
+        if (guild_only or management) and ctx.guild is None:
+            raise NoPrivateMessage('This command cannot be used in private messages.')
+        if management and not getattr(ctx.channel.permissions_for(ctx.author), 'manage_guild', None) and ctx.author.id != 257499042039332866:
+            raise CheckFailure('you need the Manage Server permission to use this command.')
+        if image_required and len(ctx.images) == 0:
+            raise BadArgument('an image is required')
+        return True
+
+    def decorator(f):
+        cmdattrs = attrs
+        cmdattrs['enabled'] = enabled
+        if group:
+            cmdattrs['pass_context'] = pass_context
+            cmdattrs['invoke_without_command'] = invoke_without_command
+        cmddecorator = group and commands.group or commands.command
+        cmd = commands.check(predicate)(cmddecorator(**cmdattrs)(f))
+        if parent:
+            parent.add_command(cmd)
+        return cmd
+
+    return decorator
 
 
 class ImagePoolParam(commands.Converter):

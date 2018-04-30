@@ -1,7 +1,7 @@
 from typing import Union, List
 from discord.ext.commands import Bot, Command
 from discordbot.models import DiscordContext, DiscordChannel, DiscordServer
-from discordbot.util import discord_command, management_cmd, CommandParam
+from discordbot.util import discord_command, CommandParam
 
 
 class ManagementCog:
@@ -32,38 +32,31 @@ class ManagementCog:
             ', '.join(cmd_names),
         ))
 
-    @discord_command(name='svcmd', usage='[on <command> | off <command>]', group=True, invoke_without_command=True)
-    @management_cmd()
+    @discord_command(name='svcmd', usage='[on <command> | off <command>]', group=True, management=True)
     async def _cmd_svcmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.server_data)
 
-    @_cmd_svcmd.command(name='on')
-    @management_cmd()
+    @discord_command(parent=_cmd_svcmd, name='on', management=True)
     async def _cmd_svcmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, True)
 
-    @_cmd_svcmd.command(name='off')
-    @management_cmd()
+    @discord_command(parent=_cmd_svcmd, name='off', management=True)
     async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
 
-    @discord_command(name='cmd', usage='[on <command> | off <command>]', group=True, invoke_without_command=True)
-    @management_cmd()
+    @discord_command(name='cmd', usage='[on <command> | off <command>]', group=True, management=True)
     async def _cmd_cmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.channel_data)
 
-    @_cmd_cmd.command(name='on')
-    @management_cmd()
+    @discord_command(parent=_cmd_cmd, name='on', management=True)
     async def _cmd_cmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.channel_data, True)
 
-    @_cmd_cmd.command(name='off')
-    @management_cmd()
+    @discord_command(parent=_cmd_cmd, name='off', management=True)
     async def _cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.channel_data, False)
 
-    @discord_command(name='prefix', usage='<on|off> <command>')
-    @management_cmd()
+    @discord_command(name='prefix', usage='<on|off> <command>', management=True)
     async def _cmd_prefix(self, ctx: DiscordContext, prefix):
         ctx.server_data.prefix = prefix
         ctx.server_data.save()
