@@ -111,14 +111,11 @@ class MemeImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', '__str__', 'image_pool', 'random_usages', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'image_pool')
-    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'memes_link',)
-    readonly_fields = ('name', 'add_date', 'change_date', 'image', 'memes_link',)
+    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'memes_link')
+    readonly_fields = ('name', 'image', 'memes_link')
     search_fields = ('name', 'friendly_name')
     ordering = ('-change_date',)
     actions = ['accept', 'reject']
-
-    def has_add_permission(self, request):
-        return False
 
     def accept(self, request, queryset):
         queryset.update(accepted=True)
@@ -160,6 +157,8 @@ class MemeTemplateSlotInline(admin.TabularInline):
 
 @admin.register(MemeTemplate)
 class MemeTemplateAdmin(MemeImageAdmin):
+    inlines = [MemeTemplateSlotInline]
+
     def image(self, obj: MemeTemplate):
         return mark_safe(
             ahref(obj.image_url, htmlimg(obj.image_url, mw=600, mh=400)) + " " +
@@ -174,6 +173,16 @@ class MemeTemplateAdmin(MemeImageAdmin):
     def memes_link(self, obj: MemeTemplate):
         return list_url(Meem, {'template_link__name': obj.name}, 'Go')
     memes_link.short_description = 'Memes using this template'
+
+    def preview_url(self, obj: MemeTemplate):
+        return ahref(obj.preview_url, 'Go', True)
+    preview_url.short_description = 'Preview'
+
+    def get_fields(self, request, obj=None):
+        return super(MemeTemplateAdmin, self).get_fields(request, obj) + ('preview_url',)
+
+    def get_readonly_fields(self, request, obj=None):
+        return super(MemeTemplateAdmin, self).get_readonly_fields(request, obj) + ('preview_url',)
 
 
 @admin.register(MemeImagePool)
