@@ -191,7 +191,7 @@ class DiscordImage:
         self.tmpdir = None
 
     @classmethod
-    def from_message(cls, msg: Message, attachments_only=False):
+    def from_message(cls, msg: Message, attachments_only=False, just_one=False):
         images = {}
         for attachment in msg.attachments:
             images[attachment.proxy_url] = attachment.filename
@@ -215,6 +215,8 @@ class DiscordImage:
             contentlength = r.headers.get('content-length')
             if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= config.MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
+                if just_one and len(actual_images) == 1:
+                    return actual_images[0]
         if not attachments_only and len(actual_images) == 0:  # get last image from channel
             try:
                 channel_data = DiscordChannel.objects.get(channel_id=msg.channel.id)
@@ -222,7 +224,10 @@ class DiscordImage:
                     actual_images.append(cls(channel_data.recent_image, struuid4()))
             except DiscordChannel.DoesNotExist:
                 pass
-        return actual_images
+        if just_one:
+            return len(actual_images) > 0 and actual_images[0] or None
+        else:
+            return actual_images
 
     def save(self, filename_override=None):
         self.tmpdir = mkdtemp(prefix="lambdabot_attach_")

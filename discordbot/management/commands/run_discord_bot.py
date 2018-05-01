@@ -7,8 +7,8 @@ from django.core.management import BaseCommand
 from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError, CommandOnCooldown, MissingPermissions
-from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown
+from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel, DiscordImage
 from util import log, log_exc
 
 
@@ -50,14 +50,17 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_message(msg: discord.Message):
-            if re.search("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg.content) is not None:
-                await asyncio.sleep(2)
-
             ctx = await bot.get_context(msg, cls=DiscordContext)
             if len(ctx.images) > 0:
                 DiscordChannel.objects.filter(channel_id=ctx.channel.id).update(recent_image=ctx.images[0].url)
             if ctx.valid:
                 await bot.invoke(ctx)
+
+        @bot.event
+        async def on_message_edit(_, msg: discord.Message):
+            image = DiscordImage.from_message(msg, just_one=True)
+            if image:
+                DiscordChannel.objects.filter(channel_id=msg.channel.id).update(recent_image=image.url)
 
         @bot.event
         async def on_command_error(ctx: DiscordContext, exc):
