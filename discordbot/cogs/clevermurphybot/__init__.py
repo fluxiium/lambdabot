@@ -30,7 +30,7 @@ class CleverMurphyBot:
         elif not dm:
             return
 
-        log("{0}, {1} talking: {2}".format(dm and "DM" or msg.guild, msg.author, msg_text))
+        log("{0}, {1} talking: {2}".format(msg.guild or "DM", msg.author, msg_text))
 
         answered = False
 
