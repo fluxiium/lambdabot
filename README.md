@@ -1,13 +1,8 @@
-a facebook/twitter/discord bot that generates random memes by combining source images
-with a meme template (it also does some other things)
+cool discord bot (and facebook/twitter bot to some extent)
 
-i'm too lazy to explain it in detail atm so you'll have to figure it out on your own...
+main purpose: generating random memes by combining one or more source images with a meme template (it also does some other things)
 
 you can see the bot in action here:
 * https://fb.com/lambdabot
 * https://twitter.com/lambdabot3883
 * https://discord.gg/halflife
-
-third party software required for some functionality to work:
-* imagemagick - for !dance command
-* phantomjs - for cleverbot
