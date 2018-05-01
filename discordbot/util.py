@@ -9,7 +9,7 @@ def get_prefix(_, msg: Message):
     if msg.guild is None:
         return '!'
     else:
-        return DiscordServer.objects.get_or_create(server_id=msg.guild.id)[0].prefix
+        return DiscordServer.objects.get_or_create(server_id=str(msg.guild.id))[0].prefix
 
 
 def command_enabled(cmd, ctx: DiscordContext):

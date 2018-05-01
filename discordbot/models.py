@@ -4,7 +4,7 @@ import discord
 import requests
 import os
 from django.db.models import Q
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from discord import Message
 from discord.ext import commands
@@ -71,7 +71,21 @@ class DiscordChannel(CommandContext):
 @receiver(m2m_changed, sender=DiscordChannel.image_pools.through)
 def pools_changed(sender, instance, **_):
     if isinstance(instance, DiscordChannel):
-        QueuedMemeImage.objects.filter(queue_id='dc-' + instance.channel_id).delete()
+        QueuedMemeImage.objects.filter(queue_id='dc-' + str(instance.channel_id)).delete()
+
+
+@receiver(post_save, sender=DiscordChannel)
+def channel_saved(sender, instance: DiscordChannel, created, **_):
+    if created:
+        try:
+            hlpool = MemeImagePool.objects.get(name='halflife')
+            templpool = MemeImagePool.objects.get(name='templates')
+            instance.image_pools.add(hlpool)
+            instance.image_pools.add(templpool)
+            instance.submission_pool = hlpool
+            instance.save()
+        except MemeImagePool.DoesNotExist:
+            pass
 
 
 class DiscordUser(models.Model):
@@ -149,7 +163,7 @@ class DiscordContext(commands.Context):
     def server_data(self):
         if not self.guild:
             return None
-        server, cr = DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})
+        server, cr = DiscordServer.objects.get_or_create(server_id=str(self.guild.id), defaults={'name': self.guild.name})
         if not cr and not server.name:
             server.name = self.guild.name
             server.save()
@@ -160,7 +174,7 @@ class DiscordContext(commands.Context):
         if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
             return None
         chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
-        channel, cr = DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})
+        channel, cr = DiscordChannel.objects.get_or_create(channel_id=str(self.channel.id), defaults={'name': chname})
         if not cr:
             if not channel.name:
                 channel.name = chname
@@ -172,7 +186,7 @@ class DiscordContext(commands.Context):
 
     @property
     def user_data(self):
-        user, cr = DiscordUser.objects.get_or_create(user_id=self.author.id, defaults={'name': self.author.name})
+        user, cr = DiscordUser.objects.get_or_create(user_id=str(self.author.id), defaults={'name': self.author.name})
         if not cr and not user.name:
             user.name = self.author.name
             user.save()

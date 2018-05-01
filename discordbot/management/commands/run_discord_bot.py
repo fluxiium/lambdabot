@@ -20,7 +20,7 @@ class Command(BaseCommand):
         @bot.event
         async def on_guild_join(server: discord.Guild):
             log('joining server:', server)
-            s = DiscordServer.objects.get_or_create(server_id=server.id)[0]
+            s = DiscordServer.objects.get_or_create(server_id=str(server.id))[0]
             s.name = server.name
             s.save()
 
