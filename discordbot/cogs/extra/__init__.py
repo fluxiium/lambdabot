@@ -84,6 +84,7 @@ class ExtraCmdCog:
 
     @discord_command(name='dance', guild_only=True)
     @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
+    @commands.bot_has_permissions(attach_files=True)
     async def _cmd_dance(self, ctx, *, text):
         async with ctx.typing():
             tmpdir = dance(text)

@@ -17,6 +17,7 @@ class MemeGeneratorCog:
 
     @discord_command(name='meme', aliases=['meem', 'mem', 'meemay', 'memuch', 'miejm'], guild_only=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
+    @commands.bot_has_permissions(attach_files=True)
     async def _cmd_meem(self, ctx: DiscordContext, *, template: MemeTemplateParam()=None):
         """
         generate a random meme
