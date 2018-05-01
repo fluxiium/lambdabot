@@ -19,14 +19,6 @@ DATABASES = {
 }
 DISCORD_TOKEN = '**********************'
 DISCORD_STATUS = '!help | lambdabot.morchkovalski.com'
-DISCORD_CMD_PREFIX = '!'
-DISCORD_COGS = [
-    'help',
-    'meem',
-    'clevermurphybot',
-    'extra',
-    'faceapp',
-]
 IMG_QUEUE_LENGTH = 100
 MAX_SRCIMG_SIZE = 1500000
 RECENT_THRESHOLD = 5
