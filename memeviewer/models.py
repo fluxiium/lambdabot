@@ -51,8 +51,6 @@ class MemeImage(models.Model):
     class Meta:
         abstract = True
 
-    in_context_class = None
-
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
     friendly_name = models.CharField(max_length=64, default='', blank=True)
     image_pool = models.ForeignKey(MemeImagePool, on_delete=models.CASCADE)
@@ -341,7 +339,7 @@ class Meem(models.Model):
             background = Image.open(self.template_link.bg_image_file).convert('RGBA')
 
         if not foreground and not background:
-            raise AttributeError("Template has no background or overlay file")
+            raise MemeGeneratorException("Template has no background or overlay file")
 
         background_color = Image.new('RGBA', (foreground or background).size, self.template_link.bg_color or '#000000')
 
