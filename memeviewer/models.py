@@ -2,7 +2,7 @@ import json
 import operator
 import os
 import re
-import config
+import lamdabotweb.settings as config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files import File

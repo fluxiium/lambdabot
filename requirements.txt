@@ -10,3 +10,4 @@ psycopg2
 requests
 Telethon==0.17.4.3
 python-twitter==3.4.1
+python-dotenv

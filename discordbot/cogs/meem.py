@@ -1,11 +1,10 @@
 import discord
-import config
+import lamdabotweb.settings as config
 from typing import List
 from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
 from discordbot.util import MemeTemplateParam, ImagePoolParam, discord_command
 from discordbot.models import log, DiscordContext
-from lamdabotweb.settings import MAX_SRCIMG_SIZE
 from memeviewer.models import NotEnoughImages, MemeImagePool
 
 
@@ -64,9 +63,9 @@ class MemeGeneratorCog:
                 await ctx.send("{} thanks! The source images will be added once they're approved.".format(ctx.author.mention))
         else:
             if imgcount == 1:
-                raise BadArgument("the image is too big or invalid format! (supported jpeg/png < {} KB)".format(MAX_SRCIMG_SIZE / 1000))
+                raise BadArgument("the image is too big or invalid format! (supported jpeg/png < {} KB)".format(config.MAX_SRCIMG_SIZE / 1000))
             else:
-                raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, MAX_SRCIMG_SIZE / 1000))
+                raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, config.MAX_SRCIMG_SIZE / 1000))
 
     @discord_command(name='pool', usage='[add <pools> | remove <pools>]', management=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):

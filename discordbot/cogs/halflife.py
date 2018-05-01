@@ -3,7 +3,7 @@ import json
 import random
 import requests
 import textwrap
-import config
+import lamdabotweb.settings as config
 
 from bs4 import BeautifulSoup
 from discord import Embed, Message

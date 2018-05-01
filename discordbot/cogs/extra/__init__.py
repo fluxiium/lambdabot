@@ -1,11 +1,9 @@
 import re
 import requests
 import shutil
-
-from bs4 import BeautifulSoup
-
-import config
+import lamdabotweb.settings as config
 import discord
+from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, BucketType, guild_only
 from discordbot.cogs.extra.dance import dance

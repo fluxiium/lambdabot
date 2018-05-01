@@ -1,7 +1,7 @@
 import discord
 import requests
 import json
-import config
+import lamdabotweb.settings as config
 from util import log
 
 

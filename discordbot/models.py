@@ -1,5 +1,5 @@
 import shutil
-import config
+import lamdabotweb.settings as config
 import discord
 import requests
 import os

@@ -6,7 +6,7 @@ import shutil
 import textwrap
 import discord
 import datetime
-import config
+import lamdabotweb.settings as config
 import util
 
 from collections import deque

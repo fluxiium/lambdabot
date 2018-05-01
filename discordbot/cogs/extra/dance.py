@@ -1,5 +1,5 @@
 import subprocess
-import config
+import lamdabotweb.settings as config
 from PIL import Image
 from tempfile import mkdtemp
 from lamdabotweb.settings import BASE_DIR
