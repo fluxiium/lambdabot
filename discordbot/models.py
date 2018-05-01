@@ -132,7 +132,7 @@ class MemeImagePoolOwnership(models.Model):
     image_pool = models.OneToOneField(MemeImagePool, on_delete=models.CASCADE)
     shared_with = models.ManyToManyField(DiscordUser, blank=True, related_name='shared_image_pool')
     moderators = models.ManyToManyField(DiscordUser, blank=True, related_name='moderated_image_pool')
-    publish_requested = models.BooleanField(default=False)
+    publish_requested = models.NullBooleanField(default=None)
 
     def __str__(self):
         return str(self.owner)
