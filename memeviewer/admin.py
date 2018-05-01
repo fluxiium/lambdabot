@@ -111,8 +111,8 @@ class MemeImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', '__str__', 'image_pool', 'random_usages', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'image_pool')
-    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'memes_link')
-    readonly_fields = ('name', 'image', 'memes_link')
+    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'random_usages', 'memes_link', 'image_file')
+    readonly_fields = ('image', 'memes_link')
     search_fields = ('name', 'friendly_name')
     ordering = ('-change_date',)
     actions = ['accept', 'reject']
@@ -179,7 +179,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
     preview_url.short_description = 'Preview'
 
     def get_fields(self, request, obj=None):
-        return super(MemeTemplateAdmin, self).get_fields(request, obj) + ('preview_url',)
+        return super(MemeTemplateAdmin, self).get_fields(request, obj) + ('bg_image_file', 'bg_color', 'preview_url',)
 
     def get_readonly_fields(self, request, obj=None):
         return super(MemeTemplateAdmin, self).get_readonly_fields(request, obj) + ('preview_url',)
