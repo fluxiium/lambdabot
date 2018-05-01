@@ -72,7 +72,7 @@ class MemeGeneratorCog:
     async def _cmd_pool(self, ctx: DiscordContext):
         """ edit image pools for this channel """
         pools = ctx.channel_data.image_pools.values_list('name', flat=True)
-        avail = ctx.user_data.available_pools.exclude(name__in=pools).values_list('name', flat=True)
+        avail = ctx.user_data.available_pools().exclude(name__in=pools).values_list('name', flat=True)
         return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
             ctx.author.mention,
             ctx.channel.name,
@@ -109,7 +109,7 @@ class MemeGeneratorCog:
     async def _cmd_subpool(self, ctx: DiscordContext, *, pool: ImagePoolParam()=None):
         """ set the default image pool used for submissions """
         if not pool:
-            avail = ctx.user_data.available_pools.values_list('name', flat=True)
+            avail = ctx.user_data.available_pools().values_list('name', flat=True)
             if ctx.channel_data.submission_pool:
                 avail = avail.exclude(pk=ctx.channel_data.submission_pool.pk)
             return await ctx.send("{} current submission pool for `#{}`: ```{}```\navailable pools: ```{} ```".format(

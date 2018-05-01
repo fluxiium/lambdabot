@@ -83,9 +83,11 @@ class DiscordUser(models.Model):
     name = models.CharField(max_length=64, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
-    @property
-    def available_pools(self):
-        return MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
+    def available_pools(self, channel_data: DiscordChannel=None):
+        avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
+        if channel_data:
+            avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_data.image_pools.values_list('pk', flat=True)))
+        return avail
 
     @property
     def moderated_pools(self):

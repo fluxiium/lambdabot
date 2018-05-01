@@ -68,6 +68,8 @@ class Command(BaseCommand):
                 log_exc(exc)
                 msg = "error :cry:"
             else:
+                if config.DEBUG:
+                    log_exc(exc)
                 msg = str(exc) or "error :cry:"
             if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
                 await ctx.send("{} :x: {}".format(ctx.author.mention, msg))
