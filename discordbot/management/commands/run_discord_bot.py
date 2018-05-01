@@ -1,6 +1,4 @@
-import asyncio
 import os
-import re
 import discord
 import lamdabotweb.settings as config
 from django.core.management import BaseCommand
@@ -64,15 +62,14 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_command_error(ctx: DiscordContext, exc):
-            msg = None
             if isinstance(exc, CommandOnCooldown):
                 msg = "You're memeing too fast! Please wait {} seconds.".format(int(exc.retry_after))
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc)
                 msg = "error :cry:"
-            elif ctx.channel_data is not None:
+            else:
                 msg = str(exc) or "error :cry:"
-            if msg:
+            if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
                 await ctx.send("{} :x: {}".format(ctx.author.mention, msg))
 
         print('loading cogs: ', end='')

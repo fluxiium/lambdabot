@@ -1,6 +1,6 @@
 from discord import Message
 from discord.ext import commands
-from discord.ext.commands import BadArgument, Command, CheckFailure, NoPrivateMessage, MissingPermissions
+from discord.ext.commands import BadArgument, Command, NoPrivateMessage, MissingPermissions
 from discordbot.models import DiscordContext, DiscordServer
 from memeviewer.models import MemeImagePool, MemeTemplate
 
