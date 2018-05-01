@@ -142,29 +142,21 @@ class DiscordMeem(models.Model):
 
 class DiscordContext(commands.Context):
     __images = None
-    __server_data = None
-    __channel_data = None
-    __user_data = None
 
     @property
     def server_data(self):
         if not self.guild:
             return None
-        if self.__server_data:
-            return self.__server_data
         server, cr = DiscordServer.objects.get_or_create(server_id=self.guild.id, defaults={'name': self.guild.name})
         if not cr and not server.name:
             server.name = self.guild.name
             server.save()
-        self.__server_data = server
         return server
 
     @property
     def channel_data(self):
         if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
             return None
-        if self.__channel_data:
-            return self.__channel_data
         chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
         channel, cr = DiscordChannel.objects.get_or_create(channel_id=self.channel.id, defaults={'name': chname})
         if not cr:
@@ -174,18 +166,14 @@ class DiscordContext(commands.Context):
             if self.guild and not channel.server:
                 channel.server = self.server_data
                 channel.save()
-        self.__channel_data = channel
         return channel
 
     @property
     def user_data(self):
-        if self.__user_data:
-            return self.__user_data
         user, cr = DiscordUser.objects.get_or_create(user_id=self.author.id, defaults={'name': self.author.name})
         if not cr and not user.name:
             user.name = self.author.name
             user.save()
-        self.__user_data = user
         return user
 
     @property
