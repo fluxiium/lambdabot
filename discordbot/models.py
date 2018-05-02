@@ -158,29 +158,45 @@ class DiscordMeem(models.Model):
 
 class DiscordContext(commands.Context):
     __images = None
+    __is_manager = None
+    __server_data = None
+    __channel_data = None
+    __user_data = None
+
+    @property
+    def is_manager(self):
+        if self.__is_manager is None:
+            self.__is_manager = getattr(self.channel.permissions_for(self.author), 'manage_guild', None) or self.author.id == 257499042039332866
+        return self.__is_manager
 
     @property
     def server_data(self):
         if not self.guild:
             return None
-        return DiscordServer.objects.update_or_create(server_id=str(self.guild.id), defaults={
-            'name': self.guild.name
-        })[0]
+        if self.__server_data is None:
+            self.__server_data = DiscordServer.objects.update_or_create(server_id=str(self.guild.id), defaults={
+                'name': self.guild.name
+            })[0]
+        return self.__server_data
 
     @property
     def channel_data(self):
         if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
             return None
-        return DiscordChannel.objects.update_or_create(channel_id=str(self.channel.id), defaults={
-            'name': self.guild and self.channel.name or 'DM-' + str(self.channel.id),
-            'server': self.server_data
-        })[0]
+        if self.__channel_data is None:
+            self.__channel_data = DiscordChannel.objects.update_or_create(channel_id=str(self.channel.id), defaults={
+                'name': self.guild and self.channel.name or 'DM-' + str(self.channel.id),
+                'server': self.server_data
+            })[0]
+        return self.__channel_data
 
     @property
     def user_data(self):
-        return DiscordUser.objects.update_or_create(user_id=str(self.author.id), defaults={
-            'name': self.author.name
-        })[0]
+        if self.__user_data is None:
+            self.__user_data = DiscordUser.objects.update_or_create(user_id=str(self.author.id), defaults={
+                'name': self.author.name
+            })[0]
+        return self.__user_data
 
     @property
     def images(self):

@@ -24,13 +24,10 @@ def command_enabled(cmd, ctx: DiscordContext):
 def discord_command(name, parent=None, group=False, management=False, guild_only=False, image_required=False,
                     invoke_without_command=True, enabled=command_enabled, pass_context=True, hidden=None, **attrs):
 
-    def is_manager(ctx: DiscordContext):
-        return getattr(ctx.channel.permissions_for(ctx.author), 'manage_guild', None) or ctx.author.id == 257499042039332866
-
     async def predicate(ctx: DiscordContext):
         if (guild_only or management) and ctx.guild is None:
             raise NoPrivateMessage('This command cannot be used in private messages.')
-        if management and not is_manager(ctx):
+        if management and not ctx.is_manager:
             raise MissingPermissions(['manage_server'])
         if image_required and len(ctx.images) == 0:
             raise BadArgument('an image is required')
@@ -39,7 +36,7 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
     if hidden is None:
         if management:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx) or ctx.guild is None or not is_manager(ctx)
+                return not command_enabled(name, ctx) or ctx.guild is None or not ctx.is_manager
         elif guild_only:
             def hidden(_, ctx):
                 return not command_enabled(name, ctx) or ctx.guild is None
