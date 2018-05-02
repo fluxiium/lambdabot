@@ -13,7 +13,7 @@ from discordbot.util import discord_command
 from util import headers
 from discordbot.models import DiscordImage
 
-_IMG_ARCHIVE_CHANNEL = 395615705048809492
+_IMG_ARCHIVE_CHANNEL = 441204229902827535
 if config.DEBUG:
     _SERVER_ID = 395615515101495299
     _LOG_CHANNEL = 395616760302141450
