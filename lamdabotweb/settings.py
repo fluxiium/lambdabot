@@ -14,7 +14,7 @@ DB_PORT = os.getenv('DB_PORT')
 
 if DEBUG:
     WEBSITE_URL = 'http://127.0.0.1:8000/'
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '192.168.0.20']
     STATIC_ROOT = None
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
