@@ -117,7 +117,7 @@ class ExtraCmdCog:
         async with ctx.typing():
             for lang in langs:
                 text = translator.translate(text, dest=lang).text
-        await ctx.send('{} **{}** ```{}```'.format(ctx.author.mention, ' ➔ '.join([start] + langs), text))
+        await ctx.send('{} **{}** ```{} ```'.format(ctx.author.mention, ' ➔ '.join([start] + langs), text))
 
 
 def setup(bot: Bot):
