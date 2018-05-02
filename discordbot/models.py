@@ -163,34 +163,24 @@ class DiscordContext(commands.Context):
     def server_data(self):
         if not self.guild:
             return None
-        server, cr = DiscordServer.objects.get_or_create(server_id=str(self.guild.id), defaults={'name': self.guild.name})
-        if not cr and not server.name:
-            server.name = self.guild.name
-            server.save()
-        return server
+        return DiscordServer.objects.update_or_create(server_id=str(self.guild.id), defaults={
+            'name': self.guild.name
+        })[0]
 
     @property
     def channel_data(self):
         if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
             return None
-        chname = self.guild and self.channel.name or 'DM-' + str(self.channel.id)
-        channel, cr = DiscordChannel.objects.get_or_create(channel_id=str(self.channel.id), defaults={'name': chname})
-        if not cr:
-            if not channel.name:
-                channel.name = chname
-                channel.save()
-            if self.guild and not channel.server:
-                channel.server = self.server_data
-                channel.save()
-        return channel
+        return DiscordChannel.objects.update_or_create(channel_id=str(self.channel.id), defaults={
+            'name': self.guild and self.channel.name or 'DM-' + str(self.channel.id),
+            'server': self.server_data
+        })[0]
 
     @property
     def user_data(self):
-        user, cr = DiscordUser.objects.get_or_create(user_id=str(self.author.id), defaults={'name': self.author.name})
-        if not cr and not user.name:
-            user.name = self.author.name
-            user.save()
-        return user
+        return DiscordUser.objects.update_or_create(user_id=str(self.author.id), defaults={
+            'name': self.author.name
+        })[0]
 
     @property
     def images(self):
