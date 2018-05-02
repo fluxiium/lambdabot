@@ -107,6 +107,7 @@ class ExtraCmdCog:
             howmany = max(1, min(10, int(num)))
         except ValueError:
             howmany = 4
+        text = text.replace('`', '')
         start = translator.detect(text).lang
         try:
             langs.remove(start)
