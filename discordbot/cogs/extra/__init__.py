@@ -1,6 +1,8 @@
+import random
 import re
 import requests
 import shutil
+from googletrans import Translator
 import lamdabotweb.settings as config
 import discord
 from bs4 import BeautifulSoup
@@ -88,6 +90,33 @@ class ExtraCmdCog:
             tmpdir = dance(text)
         await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
         shutil.rmtree(tmpdir)
+
+    @discord_command(name='googletrans', aliases=['gt'], usage='[num] (text)')
+    async def _cmd_googletrans(self, ctx, num, *, text=''):
+        langs = ["af", "sq", "ar", "be", "bg", "ca", "zh-CN", "zh-TW", "hr",
+                 "cs", "da", "nl", "et", "tl", "fi", "fr", "gl", "de", "en",
+                 "el", "iw", "hi", "hu", "is", "id", "ga", "it", "ja", "ko",
+                 "lv", "lt", "mk", "ms", "mt", "no", "fa", "pl", "pt", "ro",
+                 "ru", "sr", "sk", "sl", "es", "sw", "sv", "th", "tr", "uk",
+                 "vi", "cy", "yi"]
+        translator = Translator()
+        if not text:
+            text = num
+            num = ''
+        try:
+            howmany = max(1, min(10, int(num)))
+        except ValueError:
+            howmany = 4
+        start = translator.detect(text).lang
+        try:
+            langs.remove(start)
+        except ValueError:
+            pass
+        langs = random.sample(langs, howmany - 1) + ['en']
+        async with ctx.typing():
+            for lang in langs:
+                text = translator.translate(text, dest=lang).text
+        await ctx.send('{} **{}** ```{}```'.format(ctx.author.mention, ' ➔ '.join([start] + langs), text))
 
 
 def setup(bot: Bot):
