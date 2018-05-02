@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError, CommandOnCooldown
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown, DisabledCommand
 from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel, DiscordImage
 from util import log, log_exc
 
@@ -64,6 +64,8 @@ class Command(BaseCommand):
         async def on_command_error(ctx: DiscordContext, exc):
             if isinstance(exc, CommandOnCooldown):
                 msg = "You're memeing too fast! Please wait {} seconds.".format(int(exc.retry_after))
+            elif isinstance(exc, DisabledCommand):
+                msg = "`{}` is disabled here".format(ctx.command)
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc)
                 msg = "error :cry:"
