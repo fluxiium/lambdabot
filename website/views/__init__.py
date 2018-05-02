@@ -1,11 +1,13 @@
+import website.views.oauth2
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
 from memeviewer.models import Meem, MemeImagePool, MemeTemplate
+from django.shortcuts import render
 
+def homepage(request):
 
-def home_view(request):
-    return render(request, 'memeviewer/home.html')
+    # return HttpResponse(oauth.get('https://discordapp.com/api/users/@me'))
+    return render(request, 'website/home.html')
 
 
 def meme_info_view(request, meme_id):
@@ -17,13 +19,13 @@ def meme_info_view(request, meme_id):
     except Meem.DoesNotExist:
         raise Http404("Invalid meme ID")
 
-    return render(request, 'memeviewer/meme_info_view.html', {
+    return render(request, 'website/meme_info_view.html', {
         'meme': meme,
     })
 
 
 @staff_member_required
-def preview_view(request, template=None):
+def meme_preview(request, template=None):
     pools = MemeImagePool.objects.filter(name__in=request.GET.get('pools', '').split())
     try:
         template = template is not None and MemeTemplate.objects.get(name=template) or None

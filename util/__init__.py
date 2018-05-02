@@ -1,3 +1,4 @@
+import util.discord_api
 import traceback
 import uuid
 from urllib.parse import urlparse

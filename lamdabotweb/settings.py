@@ -6,6 +6,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = bool(int(os.getenv('DEBUG', False)))
 SECRET_KEY = os.getenv('SECRET_KEY')
+
 DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
@@ -53,6 +54,15 @@ else:
     }
     IMAGEMAGICK_PATH = '/usr/bin/convert'
 
+OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
+OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
+
+DISCORD_API_ROOT = 'https://discordapp.com/api'
+OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
+OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
+OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
+OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,6 +74,7 @@ INSTALLED_APPS = [
     'facebookbot',
     'twitterbot',
     'memeviewer',
+    'website',
     'django.contrib.admin',
 ]
 
@@ -75,6 +86,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'website.middleware.discord_oauth2_middleware',
 ]
 
 ROOT_URLCONF = 'lamdabotweb.urls'
