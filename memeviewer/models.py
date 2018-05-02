@@ -40,7 +40,7 @@ class MemeImagePool(models.Model):
     class Meta:
         verbose_name = 'Image pool'
         indexes = [models.Index(fields=['name'], name='idx_imgpool')]
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, unique=True)
 
     def __str__(self):
         return self.name
