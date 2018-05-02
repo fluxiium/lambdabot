@@ -17,8 +17,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        print('source images --------------------------')
-
         deldir = os.path.join(SOURCEIMG_DIR, "deleted")
         os.makedirs(deldir, exist_ok=True)
 
@@ -27,10 +25,7 @@ class Command(BaseCommand):
                 try:
                     MemeSourceImage.objects.get(image_file='sourceimg/' + file)
                 except MemeSourceImage.DoesNotExist:
-                    print(file)
                     os.rename(os.path.join(SOURCEIMG_DIR, file), os.path.join(deldir, file))
-
-        print('templates --------------------------')
 
         deldir = os.path.join(TEMPLATE_DIR, "deleted")
         os.makedirs(deldir, exist_ok=True)
@@ -40,5 +35,4 @@ class Command(BaseCommand):
                 try:
                     MemeTemplate.objects.get(Q(image_file='templates/' + file) | Q(bg_image_file='templates/' + file))
                 except MemeTemplate.DoesNotExist:
-                    print(file)
                     os.rename(os.path.join(TEMPLATE_DIR, file), os.path.join(deldir, file))
