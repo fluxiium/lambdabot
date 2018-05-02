@@ -75,14 +75,10 @@ class MeemAdmin(admin.ModelAdmin):
     search_fields = ('number', 'meme_id', 'template_link__name', 'source_images')
     ordering = ('-number',)
     inlines = [FacebookInline, TwitterInline, DiscordInline]
-    fields = readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'gen_date', 'image', 'meme_url')
+    fields = readonly_fields = ('number', 'meme_id', 'template_admin_url', 'sourceimg_admin_urls', 'gen_date', 'image')
 
     def has_add_permission(self, request):
         return False
-
-    def meme_url(self, obj: Meem):
-        return ahref(obj.info_url, "Go")
-    meme_url.short_description = 'Meme info page'
 
     def image(self, obj: Meem):
         return ahref(obj.url, htmlimg(obj.url, mw=600, mh=400))

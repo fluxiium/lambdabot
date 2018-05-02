@@ -319,6 +319,9 @@ class Meem(models.Model):
     def info_url(self):
         return config.WEBSITE_URL + 'meme/' + self.meme_id
 
+    def get_absolute_url(self):
+        return self.info_url
+
     @property
     def admin_link(self):
         return object_url(Meem, self.meme_id, 'Admin')
