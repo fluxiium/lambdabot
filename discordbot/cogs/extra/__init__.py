@@ -7,7 +7,7 @@ import lamdabotweb.settings as config
 import discord
 from bs4 import BeautifulSoup
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, BucketType, guild_only
+from discord.ext.commands import Bot, CommandError, Context, BucketType
 from discordbot.cogs.extra.dance import dance
 from discordbot.util import discord_command
 from util import headers
@@ -108,7 +108,10 @@ class ExtraCmdCog:
         except ValueError:
             howmany = 4
         text = text.replace('`', '')
-        start = translator.detect(text).lang
+        try:
+            start = translator.detect(text).lang
+        except ValueError:
+            start = 'en'
         try:
             langs.remove(start)
         except ValueError:
