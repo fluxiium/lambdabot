@@ -5,7 +5,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = bool(int(os.getenv('DEBUG', False)))
-SECRET_KEY = os.getenv('SECRET_KEY')
 
 DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
@@ -54,14 +53,8 @@ else:
     }
     IMAGEMAGICK_PATH = '/usr/bin/convert'
 
-OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
-OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
-
-DISCORD_API_ROOT = 'https://discordapp.com/api'
-OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
-OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
-OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
-OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+# django settings
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 INSTALLED_APPS = [
     'django.contrib.auth',
@@ -114,7 +107,6 @@ FIXTURE_DIRS = {
 
 WSGI_APPLICATION = 'lamdabotweb.wsgi.application'
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -136,10 +128,23 @@ USE_I18N = False
 USE_L10N = True
 USE_TZ = True
 
+# discord api stuff for website
+OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
+OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
+
+DISCORD_API_ROOT = 'https://discordapp.com/api'
+OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
+OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
+OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
+OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+
+# meme generator settings
 IMG_QUEUE_LENGTH = 100
 MAX_SRCIMG_SIZE = 1500000
 RECENT_THRESHOLD = 10
+MEEM_CLEANUP_DAYS = 30
 
+# discord bot settings
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_STATUS = '!help'
 DISCORD_MEME_LIMIT = 5
