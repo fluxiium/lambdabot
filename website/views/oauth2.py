@@ -7,7 +7,7 @@ from util import struuid4
 
 def login(request):
     state = struuid4()
-    scope = 'identify'
+    scope = 'identify guilds'
     request.session['oauth2_state'] = state
     return redirect('https://discordapp.com/api/oauth2/authorize?client_id={0}&redirect_uri={1}&response_type=code&scope={2}&state={3}'.format(
         config.OAUTH2_CLIENT_ID, config.OAUTH2_REDIRECT_URI, scope, state
