@@ -25,8 +25,8 @@ def next_meme_number():
 IMAGE_TYPE_SRCIMG = 0
 IMAGE_TYPE_TEMPLATE = 1
 IMAGE_TYPES = (
-    (0, 'Source image'),
-    (1, 'Template')
+    (IMAGE_TYPE_SRCIMG, 'Source image'),
+    (IMAGE_TYPE_TEMPLATE, 'Template')
 )
 
 class MemeGeneratorException(Exception):

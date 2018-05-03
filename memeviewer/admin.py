@@ -184,7 +184,7 @@ class MemeTemplateAdmin(MemeImageAdmin):
 @admin.register(MemeImagePool)
 class MemeImagePoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'memeimagepoolownership')
-    list_filter = ('memeimagepoolownership__publish_requested',)
+    list_filter = ('memeimagepoolownership__status',)
     fields = ('name', 'srcimgs_admin_url', 'templates_admin_url')
     readonly_fields = ('srcimgs_admin_url', 'templates_admin_url')
     ordering = ('name',)

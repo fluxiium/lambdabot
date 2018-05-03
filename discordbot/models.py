@@ -124,6 +124,17 @@ class DiscordUser(models.Model):
         return self.name or "?"
 
 
+POOL_PRIVATE = 0
+POOL_PENDING = 1
+POOL_REJECTED = 2
+POOL_PUBLIC = 3
+POOL_STATUS = (
+    (POOL_PRIVATE, 'Private'),
+    (POOL_PENDING, 'Pending approval'),
+    (POOL_REJECTED, 'Private (Rejected)'),
+    (POOL_PUBLIC, 'Public'),
+)
+
 class MemeImagePoolOwnership(models.Model):
     class Meta:
         indexes = []
@@ -132,7 +143,7 @@ class MemeImagePoolOwnership(models.Model):
     image_pool = models.OneToOneField(MemeImagePool, on_delete=models.CASCADE)
     shared_with = models.ManyToManyField(DiscordUser, blank=True, related_name='shared_image_pool')
     moderators = models.ManyToManyField(DiscordUser, blank=True, related_name='moderated_image_pool')
-    publish_requested = models.NullBooleanField(default=None)
+    status = models.IntegerField(choices=POOL_STATUS, default=POOL_PRIVATE)
 
     def __str__(self):
         return str(self.owner)
