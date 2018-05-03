@@ -146,7 +146,7 @@ class MemeImagePoolOwnership(models.Model):
     status = models.IntegerField(choices=POOL_STATUS, default=POOL_PRIVATE)
 
     def __str__(self):
-        return str(self.owner)
+        return '{} ({})'.format(str(self.owner), self.get_status_display())
 
 
 class DiscordSourceImgSubmission(models.Model):
