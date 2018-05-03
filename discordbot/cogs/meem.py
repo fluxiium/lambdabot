@@ -35,7 +35,7 @@ class MemeGeneratorCog:
                     ctx.author.mention
                 )
         except NotEnoughImages:
-            raise CommandError('no image pools enabled in this channel.')
+            raise CommandError('not enough source images or templates available (please enable more image pools)')
 
         await ctx.send(msgstr, file=discord.File(meme.local_path))
 

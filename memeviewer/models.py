@@ -58,6 +58,7 @@ class MemeImage(models.Model):
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
     random_usages = models.IntegerField(default=0)
+    quartile = models.IntegerField(default=1)  # updated off-line based on random_usages
     image_type = None
 
     def clean(self):
@@ -89,15 +90,17 @@ class MemeImage(models.Model):
         # if empty, make new queue
         if result.count() == 0:
 
-            queue_length = config.IMG_QUEUE_LENGTH
-            recent_threshold = config.RECENT_THRESHOLD
+            all_imgs = cls.objects.filter(accepted=True).filter(image_pool__in=image_pools).order_by('?')
+            all_count = all_imgs.count()
+            select_count = min(100, int(all_count * 0.5) or all_count)
 
-            img_queue_db = cls.objects.filter(accepted=True).filter(image_pool__in=image_pools).order_by('?')
-            img_count = min(queue_length, img_queue_db.count())
-            img_queue_recent = img_queue_db.filter(random_usages__lte=recent_threshold)[0:(img_count / 2)]
-            img_queue_any = img_queue_db[0:(img_count - img_queue_recent.count())]
+            # this looks ugly asf but it's a great way to make the bot prioritize images that have been used less
+            q1_imgs = all_imgs.filter(quartile=1)[0:1 + int(select_count * 0.5)]
+            q2_imgs = all_imgs.filter(quartile=2)[0:1 + int(select_count * 0.3) + int(select_count * 0.5) - q1_imgs.count()]
+            q3_imgs = all_imgs.filter(quartile=3)[0:1 + int(select_count * 0.15) + int(select_count * 0.5) - q1_imgs.count() + int(select_count * 0.3) - q2_imgs.count()]
+            q4_imgs = all_imgs.filter(quartile=4)[0:1 + int(select_count * 0.05) + int(select_count * 0.5) - q1_imgs.count() + int(select_count * 0.3) - q2_imgs.count() + int(select_count * 0.15) - q3_imgs.count()]
 
-            queue_list = list(img_queue_recent) + list(img_queue_any)
+            queue_list = list(q1_imgs) + list(q2_imgs) + list(q3_imgs) + list(q4_imgs)
 
             if len(queue_list) == 0:
                 raise NotEnoughImages('No images found')

@@ -19,20 +19,6 @@ if DEBUG:
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
-    DATABASES = {
-        # 'default': {
-        #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        #     'NAME': DB_NAME,
-        #     'USER': DB_USER,
-        #     'PASSWORD': DB_PASSWORD,
-        #     'HOST': DB_HOST,
-        #     'PORT': DB_PORT,
-        # },
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-    }
     IMAGEMAGICK_PATH = "C:\Program Files\ImageMagick-7.0.4-Q16\convert.exe"
 else:
     WEBSITE_URL = 'https://lambdabot.morchkovalski.com/'
@@ -41,20 +27,19 @@ else:
     STATIC_URL = 'https://static.morchkovalski.com/'
     MEDIA_ROOT = '/srv/media.morchkovalski.com/lambdabot'
     MEDIA_URL = 'https://media.morchkovalski.com/lambdabot/'
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-        },
-    }
     IMAGEMAGICK_PATH = '/usr/bin/convert'
 
 # django settings
 SECRET_KEY = os.getenv('SECRET_KEY')
+ROOT_URLCONF = 'lamdabotweb.urls'
+FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
+WSGI_APPLICATION = 'lamdabotweb.wsgi.application'
+AUTH_PASSWORD_VALIDATORS = []
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = False
+USE_L10N = True
+USE_TZ = True
 
 INSTALLED_APPS = [
     'django.contrib.auth',
@@ -82,13 +67,21 @@ MIDDLEWARE = [
     'website.middleware.discord_oauth2_middleware',
 ]
 
-ROOT_URLCONF = 'lamdabotweb.urls'
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+    },
+}
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'memeviewer/../templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'memeviewer/../templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -101,33 +94,6 @@ TEMPLATES = [
     },
 ]
 
-FIXTURE_DIRS = {
-    os.path.join(BASE_DIR, "fixtures"),
-}
-
-WSGI_APPLICATION = 'lamdabotweb.wsgi.application'
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = False
-USE_L10N = True
-USE_TZ = True
-
 # discord api stuff for website
 OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
 OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
@@ -139,9 +105,7 @@ OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
 OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
 
 # meme generator settings
-IMG_QUEUE_LENGTH = 100
 MAX_SRCIMG_SIZE = 1500000
-RECENT_THRESHOLD = 10
 MEEM_CLEANUP_DAYS = 30
 
 # discord bot settings
