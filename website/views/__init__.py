@@ -12,7 +12,7 @@ def homepage(request):
         'template_count': MemeTemplate.objects.filter(accepted=True).count(),
         'users_count': DiscordMeem.objects.values_list('discord_user__user_id', flat=True).distinct().count(),
         'servers_count': DiscordServer.objects.count(),
-        'meme_count': Meem.objects.count(),
+        'meme_count': Meem.objects.order_by('-gen_date').first().number,
     })
 
 
