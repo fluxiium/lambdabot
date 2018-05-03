@@ -98,7 +98,7 @@ class DiscordUser(models.Model):
     blacklisted = models.BooleanField(default=False)
 
     def available_pools(self, channel_data: DiscordChannel=None):
-        avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
+        avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__status=POOL_PUBLIC) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
         if channel_data:
             avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_data.image_pools.values_list('pk', flat=True)))
         return avail
