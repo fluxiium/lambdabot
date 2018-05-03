@@ -50,7 +50,7 @@ class MemeGeneratorCog:
         async with ctx.typing():
             for img in ctx.images:
                 submitted_file = img.save()
-                submission = ctx.user_data.submit_sourceimg(channel=ctx.channel_data, path=submitted_file, filename=img.filename)
+                submission = ctx.user_data.submit_sourceimg(channel=ctx.channel_data, path=submitted_file, friendly_name=img.filename)
                 img.cleanup()
                 if submission is not None:
                     added += 1

@@ -107,7 +107,7 @@ class MemeImageAdmin(admin.ModelAdmin):
     list_display = ('accepted', 'thumbnail', '__str__', 'image_pool', 'random_usages', 'change_date')
     list_display_links = ('thumbnail', '__str__')
     list_filter = ('accepted', 'image_pool')
-    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'random_usages', 'memes_link', 'image_file')
+    fields = ('name', 'friendly_name', 'image', 'image_pool', 'accepted', 'add_date', 'change_date', 'random_usages', 'quartile', 'memes_link', 'image_file')
     readonly_fields = ('image', 'memes_link')
     search_fields = ('name', 'friendly_name')
     ordering = ('-change_date',)

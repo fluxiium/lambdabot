@@ -116,8 +116,8 @@ class DiscordUser(models.Model):
         return discord_meme
 
     @transaction.atomic
-    def submit_sourceimg(self, channel: DiscordChannel, path, filename=None):
-        submission = MemeSourceImage.submit(channel.submission_pool, path, filename)
+    def submit_sourceimg(self, channel: DiscordChannel, path, friendly_name=''):
+        submission = MemeSourceImage.submit(channel.submission_pool, path, friendly_name)
         return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self, discord_channel=channel)
 
     def __str__(self):
