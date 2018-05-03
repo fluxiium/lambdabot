@@ -13,7 +13,7 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 
 if DEBUG:
-    WEBSITE_URL = 'http://127.0.0.1:8000/'
+    WEBSITE_URL = 'http://192.168.0.20:8000/'
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '192.168.0.20']
     STATIC_ROOT = None
     STATIC_URL = '/static/'

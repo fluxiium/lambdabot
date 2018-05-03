@@ -7,6 +7,7 @@ from util.discord_api import revoke_discord_api_token, refresh_discord_api_token
 
 def discord_oauth2_middleware(get_response):
     def middleware(request):
+        request.website_url = config.WEBSITE_URL
         oauth2_session = request.session.get('oauth2_session')
         discord_data = request.session.get('discord_data')
 
