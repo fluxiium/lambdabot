@@ -206,7 +206,7 @@ class MemeTemplate(MemeImage):
 
     @property
     def preview_url(self):
-        return self.pk and reverse('memeviewer:meme_preview_template', kwargs={'template': self.name}) + '?pools=halflife' or ''
+        return self.pk and reverse('website:meme_preview_template', kwargs={'template': self.name}) + '?pools=halflife' or ''
 
     @property
     def image_url(self):
