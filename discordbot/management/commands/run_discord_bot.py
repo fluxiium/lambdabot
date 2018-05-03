@@ -5,7 +5,8 @@ from django.core.management import BaseCommand
 from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError, CommandOnCooldown, DisabledCommand
+from discord.ext.commands import CommandInvokeError, CommandOnCooldown, DisabledCommand, MissingPermissions, \
+    BotMissingPermissions
 from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel, DiscordImage
 from util import log, log_exc
 
@@ -64,6 +65,10 @@ class Command(BaseCommand):
                 msg = "You're memeing too fast! Please wait {} seconds.".format(int(exc.retry_after))
             elif isinstance(exc, DisabledCommand):
                 msg = "`{}` is disabled here".format(ctx.command)
+            elif isinstance(exc, MissingPermissions):
+                msg = "You need the following permissions to use this command: `{}`".format(', '.join(exc.missing_perms))
+            elif isinstance(exc, BotMissingPermissions):
+                msg = "The bot needs the following permissions for this command: `{}`".format(', '.join(exc.missing_perms))
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc)
                 msg = "error :cry:"
@@ -72,7 +77,7 @@ class Command(BaseCommand):
                     log_exc(exc)
                 msg = str(exc) or "error :cry:"
             if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
-                await ctx.send("{} :x: {}".format(ctx.author.mention, msg))
+                await ctx.send("{} :warning: {}".format(ctx.author.mention, msg))
 
         print('loading cogs: ', end='')
         for cog_name in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'cogs')):

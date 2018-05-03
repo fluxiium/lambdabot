@@ -25,34 +25,34 @@ class ManagementCog:
             if cmd.name not in ['svcmd', 'cmd']:
                 cmd_names.append(cmd.name)
                 data.toggle_command(cmd.name, enable)
-        await ctx.send("{} the following commands have been {}abled{}: ```{}```".format(
+        await ctx.send("{} the following commands have been {}abled{}: ```{} ```".format(
             ctx.author.mention,
             enable and 'en' or 'dis',
             isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
             ' '.join(cmd_names),
         ))
 
-    @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True)
+    @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
     async def _cmd_svcmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.server_data)
 
-    @discord_command(parent=_cmd_svcmd, name='on', management=True)
+    @discord_command(parent=_cmd_svcmd, name='on', management=True, enabled=True)
     async def _cmd_svcmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, True)
 
-    @discord_command(parent=_cmd_svcmd, name='off', management=True)
+    @discord_command(parent=_cmd_svcmd, name='off', management=True, enabled=True)
     async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
 
-    @discord_command(name='cmd', usage='[on <commands> | off <commands>]', group=True, management=True)
+    @discord_command(name='cmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
     async def _cmd_cmd(self, ctx: DiscordContext):
         await self.__list_cmds(ctx, ctx.channel_data)
 
-    @discord_command(parent=_cmd_cmd, name='on', management=True)
+    @discord_command(parent=_cmd_cmd, name='on', management=True, enabled=True)
     async def _cmd_cmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.channel_data, True)
 
-    @discord_command(parent=_cmd_cmd, name='off', management=True)
+    @discord_command(parent=_cmd_cmd, name='off', management=True, enabled=True)
     async def _cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.channel_data, False)
 

@@ -89,7 +89,7 @@ class MemeGeneratorCog:
                 ctx.channel_data.image_pools.add(pool)
             else:
                 ctx.channel_data.image_pools.remove(pool)
-        await ctx.send("{} the following image pools are now {}abled in `#{}`: ```{}```".format(
+        await ctx.send("{} the following image pools are now {}abled in `#{}`: ```{} ```".format(
             ctx.author.mention,
             enable and 'en' or 'dis',
             ctx.channel.name,
@@ -111,7 +111,7 @@ class MemeGeneratorCog:
             avail = ctx.user_data.available_pools().values_list('name', flat=True)
             if ctx.channel_data.submission_pool:
                 avail = avail.exclude(pk=ctx.channel_data.submission_pool.pk)
-            return await ctx.send("{} current submission pool for `#{}`: ```{}```\navailable pools: ```{} ```".format(
+            return await ctx.send("{} current submission pool for `#{}`: ```{} ```\navailable pools: ```{} ```".format(
                 ctx.author.mention,
                 ctx.channel.name,
                 ctx.channel_data.submission_pool or '',
