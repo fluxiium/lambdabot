@@ -1,8 +1,5 @@
-cool discord bot (and facebook/twitter bot to some extent)
+lambdabot's main purpose: generating random memes by combining one or more source images with a meme template
 
-main purpose: generating random memes by combining one or more source images with a meme template (it also does some other things)
+also does some other things
 
-you can see the bot in action here:
-* https://discord.gg/halflife
-* https://fb.com/lambdabot
-* https://twitter.com/lambdabot3883
+you can see the bot in action or contact me for support in my server: https://discord.gg/J85Rhhd
