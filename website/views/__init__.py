@@ -1,15 +1,15 @@
 import website.views.oauth2
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
-from discordbot.models import DiscordUser, DiscordMeem, DiscordServer
+from discordbot.models import DiscordMeem, DiscordServer
 from memeviewer.models import Meem, MemeImagePool, MemeTemplate, MemeSourceImage
 from django.shortcuts import render
 
 def homepage(request):
     return render(request, 'website/home.html', {
         'discord_meme_count': DiscordMeem.objects.count(),
-        'sourceimg_count': MemeSourceImage.objects.count(),
-        'template_count': MemeTemplate.objects.count(),
+        'sourceimg_count': MemeSourceImage.objects.filter(accepted=True).count(),
+        'template_count': MemeTemplate.objects.filter(accepted=True).count(),
         'users_count': DiscordMeem.objects.values_list('discord_user__user_id', flat=True).distinct().count(),
         'servers_count': DiscordServer.objects.count(),
         'meme_count': Meem.objects.count(),
