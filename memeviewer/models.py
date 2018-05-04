@@ -29,6 +29,15 @@ IMAGE_TYPES = (
     (IMAGE_TYPE_TEMPLATE, 'Template')
 )
 
+POOL_TYPE_SRCIMGS = 0
+POOL_TYPE_TEMPLATES = 1
+POOL_TYPE_ALL = 2
+POOL_TYPES = (
+    (POOL_TYPE_ALL, 'Any'),
+    (POOL_TYPE_SRCIMGS, 'Source images'),
+    (POOL_TYPE_TEMPLATES, 'Templates'),
+)
+
 class MemeGeneratorException(Exception):
     pass
 
@@ -40,10 +49,12 @@ class MemeImagePool(models.Model):
     class Meta:
         verbose_name = 'Image pool'
         indexes = [models.Index(fields=['name'], name='idx_imgpool')]
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=64, unique=True, verbose_name='Unique ID')
+    friendly_name = models.CharField(max_length=64, default='', verbose_name='Description')
+    pool_type = models.IntegerField(choices=POOL_TYPES, default=POOL_TYPE_ALL)
 
     def __str__(self):
-        return self.name
+        return '{} ({})'.format(self.name, self.friendly_name)
 
 
 class MemeImage(models.Model):
@@ -52,7 +63,7 @@ class MemeImage(models.Model):
         abstract = True
 
     name = models.CharField(max_length=256, primary_key=True, verbose_name='Unique ID', default=struuid4)
-    friendly_name = models.CharField(max_length=64, default='', blank=True)
+    friendly_name = models.CharField(max_length=64, default='', verbose_name='Name')
     image_pool = models.ForeignKey(MemeImagePool, on_delete=models.CASCADE)
     accepted = models.NullBooleanField(default=None, blank=True, null=True)
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
@@ -140,6 +151,11 @@ class MemeSourceImage(MemeImage):
     image_file = models.ImageField(upload_to='sourceimg/', max_length=256)
     image_type = IMAGE_TYPE_SRCIMG
 
+    def clean(self):
+        if self.image_pool.pool_type not in [POOL_TYPE_SRCIMGS, POOL_TYPE_ALL]:
+            raise ValidationError(_('Not a source image pool: %(pool)s'), code='invalid_pool', params={'pool': self.image_pool})
+        super(MemeSourceImage, self).clean()
+
     @property
     def image_url(self):
         return self.image_file and self.image_file.url or''
@@ -174,9 +190,11 @@ class MemeTemplate(MemeImage):
 
     def clean(self):
         if not self.bg_image_file and not self.image_file:
-            raise ValidationError('Please upload a template background and/or overlay image')
+            raise ValidationError(_('Please upload a template background and/or overlay image'))
         if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
-            raise ValidationError('The background and overlay images have to have the same dimensions')
+            raise ValidationError(_('The background and overlay images have to have the same dimensions'))
+        if self.image_pool.pool_type not in [POOL_TYPE_TEMPLATES, POOL_TYPE_ALL]:
+            raise ValidationError(_('Not a template pool: %(pool)s'), code='invalid_pool', params={'pool': self.image_pool})
         super(MemeTemplate, self).clean()
 
     @classmethod

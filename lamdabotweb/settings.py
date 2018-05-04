@@ -20,6 +20,8 @@ if DEBUG:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
     IMAGEMAGICK_PATH = "C:\Program Files\ImageMagick-7.0.4-Q16\convert.exe"
+    BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347870501194170368&permissions=51264&scope=bot'
+    DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 else:
     WEBSITE_URL = 'https://lambdabot.morchkovalski.com/'
     ALLOWED_HOSTS = ['lambdabot.morchkovalski.com']
@@ -28,6 +30,7 @@ else:
     MEDIA_ROOT = '/srv/media.morchkovalski.com/lambdabot'
     MEDIA_URL = 'https://media.morchkovalski.com/lambdabot/'
     IMAGEMAGICK_PATH = '/usr/bin/convert'
+    BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347798135214702603&permissions=51264&scope=bot'
 
 # django settings
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -52,6 +55,7 @@ INSTALLED_APPS = [
     'facebookbot',
     'twitterbot',
     'memeviewer',
+    'captcha',
     'website',
     'django.contrib.admin',
 ]
@@ -103,6 +107,12 @@ OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
 OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
 OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
 OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+
+DISCORD_SERVER_URL = 'https://discord.gg/J85Rhhd'
+
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_SITE_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
+NOCAPTCHA = True
 
 # meme generator settings
 MAX_SRCIMG_SIZE = 1500000

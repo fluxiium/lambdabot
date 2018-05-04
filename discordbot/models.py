@@ -1,4 +1,5 @@
 import shutil
+from typing import List, Union
 import lamdabotweb.settings as config
 import discord
 import requests
@@ -63,8 +64,10 @@ class DiscordChannel(CommandContext):
                                         related_name='submission_channel')
     recent_template = models.ForeignKey(MemeTemplate, null=True, default=None, on_delete=models.SET_NULL)
     recent_image = models.TextField(blank=True, default='')
+    discord_users = models.ManyToManyField('DiscordUser', through='DiscordChannelUser')
 
     def __str__(self):
+
         return '#{0} ({1})'.format(self.name or '?', self.server)
 
 
@@ -97,10 +100,13 @@ class DiscordUser(models.Model):
     name = models.CharField(max_length=64, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
-    def available_pools(self, channel_data: DiscordChannel=None):
+    def available_pools(self, channel_data: Union[DiscordChannel, List[DiscordChannel]]=None):
+        if isinstance(channel_data, DiscordChannel):
+            channel_data = [channel_data]
         avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__status=POOL_PUBLIC) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
         if channel_data:
-            avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_data.image_pools.values_list('pk', flat=True)))
+            channel_avail = MemeImagePool.objects.filter(discordchannel__in=channel_data)
+            avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_avail.values_list('pk', flat=True)))
         return avail
 
     @property
@@ -122,6 +128,11 @@ class DiscordUser(models.Model):
 
     def __str__(self):
         return self.name or "?"
+
+
+class DiscordChannelUser(models.Model):
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE)
+    discord_channel = models.ForeignKey(DiscordChannel, on_delete=models.CASCADE)
 
 
 POOL_PRIVATE = 0
@@ -199,6 +210,7 @@ class DiscordContext(commands.Context):
                 'name': self.guild and self.channel.name or 'DM-' + str(self.channel.id),
                 'server': self.server_data
             })[0]
+            DiscordChannelUser.objects.get_or_create(discord_channel=self.__channel_data, discord_user=self.user_data)
         return self.__channel_data
 
     @property

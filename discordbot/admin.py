@@ -49,8 +49,9 @@ class DiscordServerAdmin(admin.ModelAdmin):
 class MemeImagePoolOwnershipInline(admin.TabularInline):
     model = MemeImagePoolOwnership
     extra = 0
-    fields = ('owner', 'image_pool', 'shared_with', 'moderators', 'status')
-    filter_vertical = ('shared_with', 'moderators')
+    # fields = ('owner', 'image_pool', 'shared_with', 'moderators', 'status')
+    # filter_vertical = ('shared_with', 'moderators')
+    fields = ('owner', 'image_pool', 'status')
 
 
 @admin.register(DiscordUser)
