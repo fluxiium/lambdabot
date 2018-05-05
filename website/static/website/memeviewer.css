@@ -5,8 +5,8 @@
 
 body {
     font-family: 'PT Sans', sans-serif;
-    background-color: #222;
-    color: #ddd;
+    background-color: #23272A;
+    color: #FFFFFF;
     text-align: center;
     padding-top: 20px;
     padding-bottom: 20px;
@@ -17,20 +17,12 @@ img {
     max-height: 400px;
     max-width: 100%;
     vertical-align: bottom;
-    margin-bottom: 10px;
+    margin: 10px 0;
 }
 
-table {
+div.memeinfo {
     max-width: 700px;
     margin: 0 auto;
-}
-
-table, td, th {
-    overflow: hidden;
-}
-
-th {
-    padding: 10px 0 20px;
 }
 
 h1 {
@@ -42,13 +34,21 @@ h2 {
 }
 
 h3 {
-    color: #aaa;
+    color: #99AAB5;
     margin: 5px;
+}
+
+h4 {
+    padding: 10px;
 }
 
 p {
     font-size: 14px;
-    margin-bottom: 10px;
+    margin: 10px 0;
+}
+
+p#login_info {
+    color: #99AAB5;
 }
 
 #date {
@@ -61,7 +61,7 @@ p {
 
 #social {
     height: 44px;
-    padding-top: 10px;
+    margin-top: 10px;
 }
 
 #social a {
@@ -77,6 +77,39 @@ p {
 
 #social a:hover {
     opacity: 1;
+}
+
+#big_ass_button {
+    margin-top: 15px;
+}
+
+#big_ass_button a, button {
+    display: inline-block;
+    width: 210px;
+    line-height: 44px;
+    vertical-align: center;
+    font-weight: bold;
+    border-radius: 22px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+a#add_to_discord {
+    background-color: #7289DA;
+    color: #FFFFFF;
+}
+
+a#add_to_discord:hover {
+    background-color: #7d94e6;
+}
+
+a#submit_link, button {
+    background-color: #99AAB5;
+    color: #23272A;
+}
+
+a#submit_link:hover, button:hover {
+    background-color: #a6b7c2;
 }
 
 #fb_icon { background-image: url("img/fb.png"); }
@@ -95,4 +128,78 @@ a:hover {
 
 a:active {
     color: #fff;
+}
+
+input, select, button {
+    font-family: 'PT Sans', sans-serif;
+    border: none;
+    margin: 10px 0;
+}
+
+#file_drop_area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2C2F33;
+    width: 100%;
+    min-height: 300px;
+    min-width: 300px;
+}
+
+#file_drop_area img {
+    margin: 0;
+}
+
+#file_drop_wrapper {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+    max-width: 700px;
+    margin-bottom: 10px;
+}
+
+#submission_info {
+    display: none;
+}
+
+input, select {
+    width: 300px;
+    height: 20px;
+    border-radius: 5px;
+    padding: 5px 0;
+    text-indent: 15px;
+    box-sizing: content-box;
+    margin: 0 0 10px;
+}
+
+input[type=file] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.fileChosen input[type=file] {
+    display: none;
+}
+
+.fileChosen #file_drop_area {
+    min-height: 0;
+    min-width: 0;
+}
+
+#reset_file {
+    position: absolute;
+    top: 0;
+}
+
+.g-recaptcha > div {
+    margin: 0 auto;
 }

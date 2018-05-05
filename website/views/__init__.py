@@ -1,9 +1,12 @@
 import website.views.oauth2
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
-from discordbot.models import DiscordMeem, DiscordServer
+from discordbot.models import DiscordMeem, DiscordServer, DiscordChannel, DiscordSourceImgSubmission
 from memeviewer.models import Meem, MemeImagePool, MemeTemplate, MemeSourceImage
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from website.discord_api import discord_login_required
+from website.forms import MemeSourceImageForm
+
 
 def homepage(request):
     return render(request, 'website/home.html', {
@@ -41,3 +44,25 @@ def meme_preview(request, template=None):
     response = HttpResponse(content_type='image/jpeg')
     meme.make_img(saveme=False).save(response, "JPEG")
     return response
+
+
+@discord_login_required
+def submit(request, channel_id=None):
+    channel = None
+    if channel_id:
+        try:
+            channel = request.user_data.discordchannel_set.get(channel_id=channel_id)
+        except DiscordChannel.DoesNotExist:
+            return redirect('website:submit')  # todo: error msg
+    if request.method == 'POST':
+        form = MemeSourceImageForm(request.user_data, channel, request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            DiscordSourceImgSubmission.objects.create(sourceimg=form.instance, discord_user=request.user_data, discord_channel=channel)
+            return render(request, 'website/submit.html', {'success': True})  # todo: dank u msg
+        else:
+            print(form.errors)
+            return render(request, 'website/submit.html', {'form': form, 'success': False})  # todo: errors
+    else:
+        form = MemeSourceImageForm(request.user_data, channel)
+    return render(request, 'website/submit.html', {'form': form})

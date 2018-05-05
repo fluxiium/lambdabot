@@ -1,0 +1,54 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block head_extra %}
+    <title>LambdaBot - submit image</title>
+    <script>
+        var no_img = "{% static 'website/img/image.png' %}";
+    </script>
+    <script src="{% static 'website/js/imageupload.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    {% if success %}
+        <h2>Nice 👍</h2>
+        <p>Your image will be added once it's approved.</p>
+        <div id="big_ass_button">
+            <a id="submit_link" href="{% url 'website:submit' %}">ANOTHER ONE</a>
+        </div>
+    {% elif form.errors %}
+        <h2>Oh no 😢</h2>
+        {% if form.image_file.errors %}
+            <p>{{ form.image_file.errors }}</p>
+        {% elif form.captcha.errors %}
+            <p>Captcha verification failed!</p>
+        {% else %}
+            <p>Something went wrong!</p>
+        {% endif %}
+        <div id="big_ass_button">
+            <a id="submit_link" href="{% url 'website:submit' %}">TRY AGAIN</a>
+        </div>
+    {% else %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="memeinfo">
+                <br>
+                <h3 id="drop_file_info">choose / drop image below</h3>
+                <div id="file_drop_wrapper">
+                    <div id="file_drop_area">
+                        <img id="submission_preview" src="{% static 'website/img/image.png' %}"><br>
+                    </div>
+                    {{ form.image_file }}
+                </div>
+                <div id="submission_info">
+                    <p>{{ form.friendly_name }}</p>
+                    <p title="image pool">{{ form.image_pool }}</p>
+                    {{ form.captcha.errors }}
+                    {{ form.captcha }}
+                    <button type="submit">SUBMIT</button>
+                    <p><a href=".">cancel</a></p>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
