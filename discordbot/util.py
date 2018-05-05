@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import BadArgument, Command, NoPrivateMessage, MissingPermissions
 from discordbot.models import DiscordContext, DiscordServer
 from memeviewer.models import MemeImagePool, MemeTemplate
+from util import is_url
 
 
 def get_prefix(_, msg: Message):
@@ -62,12 +63,15 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
 
 
 class ImagePoolParam(commands.Converter):
-    def __init__(self, many=False, avail_only=False, moderated_only=False):
+    def __init__(self, many=False, avail_only=False, moderated_only=False, ignore_urls=False):
         self.__many = many
         self.__avail_only = avail_only
         self.__moderated_only = moderated_only
+        self.__ignore_urls = ignore_urls
 
     async def convert(self, ctx: DiscordContext, argument):
+        if is_url(argument) and self.__ignore_urls:
+            return self.__many and [] or None
         if self.__many:
             pool_names = argument.split()
         else:
@@ -87,6 +91,7 @@ class ImagePoolParam(commands.Converter):
 class MemeTemplateParam(commands.Converter):
     async def convert(self, ctx: DiscordContext, argument):
         template = None
+        argument = argument.replace('`', '')
         if argument == '^':
             template = ctx.channel_data.recent_template
         elif argument:

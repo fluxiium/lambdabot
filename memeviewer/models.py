@@ -72,10 +72,6 @@ class MemeImage(models.Model):
     quartile = models.IntegerField(default=1)  # updated off-line based on random_usages
     image_type = None
 
-    def clean(self):
-        self.change_date = timezone.now()
-        self.save()
-
     @transaction.atomic
     def enqueue(self, queue_id):
         if self.accepted:
@@ -89,6 +85,10 @@ class MemeImage(models.Model):
     def inc_counter(self):
         self.random_usages += 1
         self.save()
+
+    def save(self, *args, **kwargs):
+        self.change_date = timezone.now()
+        super(MemeImage, self).save(*args, **kwargs)
 
     @classmethod
     @transaction.atomic
@@ -152,22 +152,14 @@ class MemeSourceImage(MemeImage):
     image_type = IMAGE_TYPE_SRCIMG
 
     def clean(self):
+        # todo: check file size
         if self.image_pool.pool_type not in [POOL_TYPE_SRCIMGS, POOL_TYPE_ALL]:
-            raise ValidationError(_('Not a source image pool: %(pool)s'), code='invalid_pool', params={'pool': self.image_pool})
+            raise ValidationError('Not a source image pool: %(pool)s', params={'pool': self.image_pool}, code='invalid_pool')
         super(MemeSourceImage, self).clean()
 
     @property
     def image_url(self):
         return self.image_file and self.image_file.url or''
-
-    @classmethod
-    @transaction.atomic
-    def submit(cls, image_pool, filepath, friendly_name=''):
-        imgid = struuid4()
-        srcimg = MemeSourceImage(image_pool=image_pool, name=imgid, friendly_name=friendly_name, quartile=1)
-        srcimg.image_file.save(imgid, File(open(filepath, "rb")))
-        srcimg.save()
-        return srcimg
 
 
 class MemeTemplate(MemeImage):
@@ -190,11 +182,11 @@ class MemeTemplate(MemeImage):
 
     def clean(self):
         if not self.bg_image_file and not self.image_file:
-            raise ValidationError(_('Please upload a template background and/or overlay image'))
+            raise ValidationError('Please upload a template background and/or overlay image', code='missing_image')
         if self.bg_image_file and self.image_file and (self.bg_image_file.width != self.image_file.width or self.bg_image_file.height != self.image_file.height):
-            raise ValidationError(_('The background and overlay images have to have the same dimensions'))
+            raise ValidationError('The background and overlay images have to have the same dimensions', code='mismatched_dimensions')
         if self.image_pool.pool_type not in [POOL_TYPE_TEMPLATES, POOL_TYPE_ALL]:
-            raise ValidationError(_('Not a template pool: %(pool)s'), code='invalid_pool', params={'pool': self.image_pool})
+            raise ValidationError('Not a template pool: %(pool)s', params={'pool': self.image_pool}, code='invalid_pool')
         super(MemeTemplate, self).clean()
 
     @classmethod

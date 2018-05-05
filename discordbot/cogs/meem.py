@@ -1,11 +1,12 @@
+from django.core.files import File
 import discord
 import lamdabotweb.settings as config
 from typing import List
 from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
 from discordbot.util import MemeTemplateParam, ImagePoolParam, discord_command
-from discordbot.models import log, DiscordContext
-from memeviewer.models import NotEnoughImages, MemeImagePool
+from discordbot.models import log, DiscordContext, DiscordSourceImgSubmission
+from memeviewer.models import NotEnoughImages, MemeImagePool, MemeSourceImage, POOL_TYPE_SRCIMGS, POOL_TYPE_ALL
 
 
 class MemeGeneratorCog:
@@ -41,20 +42,27 @@ class MemeGeneratorCog:
 
     @discord_command(name='submit', usage='<image>', guild_only=True, image_required=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
-    async def _cmd_submit(self, ctx: DiscordContext):
-        if ctx.channel_data.submission_pool is None:
-            raise CommandError('submission pool is not set for this channel')
+    async def _cmd_submit(self, ctx: DiscordContext, pool: ImagePoolParam(avail_only=True, ignore_urls=True) = None):
         """
         submit a source image
         you can specify an image pool to submit to (use !pool to see a list)
         otherwise, the channel's default pool will be used
         """
+        if pool is None:
+            pool = ctx.channel_data.submission_pool
+            if pool is None:
+                raise CommandError('no default submission pool is set for this channel, please specify')
+        if pool.pool_type not in [POOL_TYPE_SRCIMGS, POOL_TYPE_ALL]:
+            raise CommandError('source images cannot be added to this image pool')
         added = 0
         imgcount = len(ctx.images)
         async with ctx.typing():
             for img in ctx.images:
                 submitted_file = img.save()
-                submission = ctx.user_data.submit_sourceimg(channel=ctx.channel_data, path=submitted_file, friendly_name=img.filename)
+                srcimg = MemeSourceImage(image_pool=pool, friendly_name=img.filename)
+                srcimg.image_file.save(srcimg.name + '.jpg', File(open(submitted_file, "rb")))
+                srcimg.save()
+                submission = DiscordSourceImgSubmission.objects.create(sourceimg=srcimg, discord_user=ctx.user_data, discord_channel=ctx.channel_data)
                 img.cleanup()
                 if submission is not None:
                     added += 1
@@ -62,16 +70,16 @@ class MemeGeneratorCog:
 
         if added == imgcount:
             if imgcount == 1:
-                await ctx.send("{} thanks! The source image will be added once it's approved.".format(ctx.author.mention))
+                await ctx.send("{} thanks! The source image will be added to the pool `{}` once it's approved.".format(ctx.author.mention, pool))
             else:
-                await ctx.send("{} thanks! The source images will be added once they're approved.".format(ctx.author.mention))
+                await ctx.send("{} thanks! The source images will be added to the pool `{}` once they're approved.".format(ctx.author.mention, pool))
         else:
             if imgcount == 1:
                 raise BadArgument("the image is too big or invalid format! (supported jpeg/png < {} KB)".format(config.MAX_SRCIMG_SIZE / 1000))
             else:
                 raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, config.MAX_SRCIMG_SIZE / 1000))
 
-    @discord_command(name='pool', usage='[add <pools> | remove <pools>]', management=True, group=True)
+    @discord_command(name='pool', usage='[add <pools> | remove <pools>]', guild_only=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):
         """
         select which image pools are used to make memes in this channel
@@ -79,11 +87,11 @@ class MemeGeneratorCog:
         """
         pools = ctx.channel_data.image_pools.values_list('name', flat=True)
         avail = ctx.user_data.available_pools().exclude(name__in=pools).values_list('name', flat=True)
-        return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
+        return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```{}".format(
             ctx.author.mention,
             ctx.channel.name,
             ' '.join(pools),
-            ' '.join(avail),
+            ctx.is_manager and '\navailable pools: ```{} ```'.format(' '.join(avail)) or '',
         ))
 
     @staticmethod

@@ -105,7 +105,7 @@ class DiscordUser(models.Model):
             channel_data = [channel_data]
         avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__status=POOL_PUBLIC) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
         if channel_data:
-            channel_avail = MemeImagePool.objects.filter(discordchannel__in=channel_data)
+            channel_avail = MemeImagePool.objects.filter(Q(discordchannel__in=channel_data) | Q(pk__in=map(lambda c: c.submission_pool.pk, channel_data)))
             avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_avail.values_list('pk', flat=True)))
         return avail
 
@@ -120,11 +120,6 @@ class DiscordUser(models.Model):
         channel.save()
         discord_meme = DiscordMeem.objects.create(meme=meme, discord_user=self, discord_channel=channel)
         return discord_meme
-
-    @transaction.atomic
-    def submit_sourceimg(self, channel: DiscordChannel, path, friendly_name=''):
-        submission = MemeSourceImage.submit(channel.submission_pool, path, friendly_name)
-        return DiscordSourceImgSubmission.objects.create(sourceimg=submission, discord_user=self, discord_channel=channel)
 
     def __str__(self):
         return self.name or "?"
