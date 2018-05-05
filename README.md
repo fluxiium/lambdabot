@@ -1,6 +1,6 @@
 # LambdaBot
 
-This is a discord bot written using [discord.py](https://github.com/morchkovalski/discord.py) whose main purpose is generating random Half-Life memes by combining one or more source images with a meme template (inspired by [ShitpostBot 5000](https://www.shitpostbot.com/)). It can do a whole bunch of other things as well.
+This is a discord bot written using [discord.py](https://github.com/morchkovalski/discord.py) and [django](https://www.djangoproject.com/) whose main purpose is generating random Half-Life memes by combining one or more source images with a meme template (inspired by [ShitpostBot 5000](https://www.shitpostbot.com/)). It can do a whole bunch of other things as well.
 
 The bot is in constant development, so there may be bugs here and there, but for the most part it works *pretty well*™. Once added to the server, no further configuration is required.
 
