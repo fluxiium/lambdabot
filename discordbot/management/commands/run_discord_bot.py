@@ -48,6 +48,8 @@ class Command(BaseCommand):
         @bot.event
         async def on_message(msg: discord.Message):
             ctx = await bot.get_context(msg, cls=DiscordContext)
+            if ctx.user_data.blacklisted or ctx.channel_data.blacklisted or ctx.server_data.blacklisted:
+                return
             if len(ctx.images) > 0:
                 DiscordChannel.objects.filter(channel_id=ctx.channel.id).update(recent_image=ctx.images[0].url)
             if ctx.valid:
@@ -55,6 +57,9 @@ class Command(BaseCommand):
 
         @bot.event
         async def on_message_edit(_, msg: discord.Message):
+            ctx = await bot.get_context(msg, cls=DiscordContext)
+            if ctx.user_data.blacklisted or ctx.channel_data.blacklisted or ctx.server_data.blacklisted:
+                return
             image = DiscordImage.from_message(msg, just_one=True)
             if image:
                 DiscordChannel.objects.filter(channel_id=msg.channel.id).update(recent_image=image.url)

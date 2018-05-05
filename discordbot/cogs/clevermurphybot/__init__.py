@@ -1,6 +1,6 @@
 import discord
 from discord.ext.commands import Bot
-from discordbot.models import DiscordImage
+from discordbot.models import DiscordImage, DiscordContext
 from util import log
 from discordbot.cogs.clevermurphybot import murphybot as murphy
 from discordbot.cogs.clevermurphybot import cleverbot as cleverboi
@@ -11,6 +11,10 @@ class CleverMurphyBot:
         self.bot = bot
 
     async def on_message(self, msg: discord.Message):
+        ctx = await self.bot.get_context(msg, cls=DiscordContext)
+        if ctx.user_data.blacklisted or ctx.channel_data.blacklisted or ctx.server_data.blacklisted:
+            return
+
         msg_text = msg.content.strip()
         dm = False
 
