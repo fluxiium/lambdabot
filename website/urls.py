@@ -15,7 +15,6 @@ urlpatterns = [
     path('oauth2_logout/', views.oauth2.logout, name='oauth2_logout'),
     path('oauth2_callback/', views.oauth2.callback, name='oauth2_callback'),
     path('invite/', RedirectView.as_view(url=config.BOT_INVITE_URL, permanent=True), name='bot_invite'),
-    path('discord/', RedirectView.as_view(url=config.DISCORD_SERVER_URL, permanent=True), name='discord_server'),
     path('submit/', views.submit, name='submit'),
     path('submit/<slug:channel_id>/', views.submit, name='submit_to_channel'),
 ]
