@@ -249,7 +249,7 @@ class DiscordImage:
         for url, filename in images.items():
             try:
                 r = requests.head(url, headers=headers)
-            except (ValueError, ConnectionError):
+            except (ValueError, requests.exceptions.ConnectionError):
                 continue
             contenttype = r.headers.get('content-type')
             contentlength = r.headers.get('content-length')
