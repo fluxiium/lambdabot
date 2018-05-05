@@ -27,6 +27,7 @@ else:
     ALLOWED_HOSTS = ['lambdabot.morchkovalski.com']
     STATIC_ROOT = '/srv/static.morchkovalski.com'
     STATIC_URL = 'https://static.morchkovalski.com/'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     MEDIA_ROOT = '/srv/media.morchkovalski.com/lambdabot'
     MEDIA_URL = 'https://media.morchkovalski.com/lambdabot/'
     IMAGEMAGICK_PATH = '/usr/bin/convert'
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
