@@ -56,6 +56,7 @@ class CustomHelpFormatter(HelpFormatter):
                 self._paginator.add_line('Commands:')
                 self._add_subcommands_to_page(0, filtered)
 
+        self._paginator.add_line('Visit lambdabot.morchkovalski.com for more info')
         return self._paginator.pages
 
 @discord_command(name='invite')
