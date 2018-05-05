@@ -32,7 +32,7 @@ class ManagementCog:
             ' '.join(cmd_names),
         ))
 
-    @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
+    @discord_command(name='svcmd', usage='[on <commands...> | off <commands...>]', group=True, management=True, enabled=True)
     async def _cmd_svcmd(self, ctx: DiscordContext):
         """
         enable/disable commands in this server
@@ -48,7 +48,7 @@ class ManagementCog:
     async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
         await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
 
-    @discord_command(name='cmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
+    @discord_command(name='cmd', usage='[on <commands...> | off <commands...>]', group=True, management=True, enabled=True)
     async def _cmd_cmd(self, ctx: DiscordContext):
         """
         enable/disable commands in this channel

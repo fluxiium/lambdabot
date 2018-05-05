@@ -40,7 +40,7 @@ class MemeGeneratorCog:
 
         await ctx.send(msgstr, file=discord.File(meme.local_path))
 
-    @discord_command(name='submit', usage='<image>', guild_only=True, image_required=True)
+    @discord_command(name='submit', usage='[image pool] <images...>', guild_only=True, image_required=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
     async def _cmd_submit(self, ctx: DiscordContext, pool: ImagePoolParam(avail_only=True, ignore_urls=True) = None):
         """
@@ -79,7 +79,7 @@ class MemeGeneratorCog:
             else:
                 raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, config.MAX_SRCIMG_SIZE / 1000))
 
-    @discord_command(name='pool', usage='[add <pools> | remove <pools>]', guild_only=True, group=True)
+    @discord_command(name='pool', usage='[add <pools...> | remove <pools...>]', guild_only=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):
         """
         select which image pools are used to make memes in this channel
