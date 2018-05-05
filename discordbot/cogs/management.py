@@ -1,3 +1,7 @@
+import io
+import textwrap
+import traceback
+from contextlib import redirect_stdout
 from typing import Union, List
 from discord.ext.commands import Bot, Command
 from discordbot.models import DiscordContext, DiscordChannel, DiscordServer
@@ -9,6 +13,7 @@ class ManagementCog:
     def __init__(self, bot: Bot):
         self.cog_name = "Management"
         self.bot = bot
+        self._last_result = None
 
     @staticmethod
     async def __list_cmds(ctx: DiscordContext, data):
@@ -69,6 +74,54 @@ class ManagementCog:
         ctx.server_data.prefix = prefix
         ctx.server_data.save()
         await ctx.send('{} command prefix on this server is now set to `{}`'.format(ctx.author.mention, prefix))
+
+    # noinspection PyBroadException
+    @discord_command(name='epic', yack_only=True)
+    async def _eval(self, ctx, *, body: str):
+        """Evaluates a code"""
+
+        env = {
+            'bot': self.bot,
+            'ctx': ctx,
+            'channel': ctx.channel,
+            'author': ctx.author,
+            'guild': ctx.guild,
+            'message': ctx.message,
+            '_': self._last_result
+        }
+
+        env.update(globals())
+
+        if body.startswith('```') and body.endswith('```'):
+            return '\n'.join(body.split('\n')[1:-1])
+
+        body = body.strip('` \n')
+        stdout = io.StringIO()
+
+        to_compile = 'async def func():\n{}'.format(textwrap.indent(body, "  "))
+
+        try:
+            exec(to_compile, env)
+        except Exception as e:
+            return await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
+
+        func = env['func']
+        try:
+            with redirect_stdout(stdout):
+                ret = await func()
+        except Exception:
+            value = stdout.getvalue()
+            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
+        else:
+            value = stdout.getvalue()
+
+            if ret is None:
+                if value:
+                    await ctx.send('```py\n{}\n```'.format(value))
+            else:
+                self._last_result = ret
+                await ctx.send('```py\n{}{}\n```'.format(value, ret))
+
 
 def setup(bot: Bot):
     bot.add_cog(ManagementCog(bot))

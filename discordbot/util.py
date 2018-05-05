@@ -1,6 +1,6 @@
 from discord import Message
 from discord.ext import commands
-from discord.ext.commands import BadArgument, Command, NoPrivateMessage, MissingPermissions
+from discord.ext.commands import BadArgument, Command, NoPrivateMessage, MissingPermissions, CommandError
 from discordbot.models import DiscordContext, DiscordServer
 from memeviewer.models import MemeImagePool, MemeTemplate
 from util import is_url
@@ -22,10 +22,12 @@ def command_enabled(cmd, ctx: DiscordContext):
     return not ctx.server_data or (ctx.channel_data.command_enabled(name) and ctx.server_data.command_enabled(name))
 
 
-def discord_command(name, parent=None, group=False, management=False, guild_only=False, image_required=False,
+def discord_command(name, parent=None, group=False, management=False, guild_only=False, yack_only=False, image_required=False,
                     invoke_without_command=True, enabled=command_enabled, pass_context=True, hidden=None, **attrs):
 
     async def predicate(ctx: DiscordContext):
+        if yack_only and ctx.author.id != 257499042039332866:
+            raise CommandError("Hey, you've got the wrong airlock, Mr. Freeman. You know I can't let you through here.")
         if (guild_only or management) and ctx.guild is None:
             raise NoPrivateMessage('This command cannot be used in private messages.')
         if management and not ctx.is_manager:
@@ -35,7 +37,9 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
         return True
 
     if hidden is None:
-        if management:
+        if yack_only:
+            hidden = True
+        elif management:
             def hidden(_, ctx):
                 return not command_enabled(name, ctx) or ctx.guild is None or not ctx.is_manager
         elif guild_only:
