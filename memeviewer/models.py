@@ -86,10 +86,6 @@ class MemeImage(models.Model):
         self.random_usages += 1
         self.save()
 
-    def save(self, *args, **kwargs):
-        self.change_date = timezone.now()
-        super(MemeImage, self).save(*args, **kwargs)
-
     @classmethod
     @transaction.atomic
     def next(cls, image_pools, queue_id):
@@ -156,6 +152,7 @@ class MemeSourceImage(MemeImage):
         if self.image_pool.pool_type not in [POOL_TYPE_SRCIMGS, POOL_TYPE_ALL]:
             raise ValidationError('Not a source image pool: %(pool)s', params={'pool': self.image_pool}, code='invalid_pool')
         super(MemeSourceImage, self).clean()
+        self.change_date = timezone.now()
 
     @property
     def image_url(self):
@@ -188,6 +185,7 @@ class MemeTemplate(MemeImage):
         if self.image_pool.pool_type not in [POOL_TYPE_TEMPLATES, POOL_TYPE_ALL]:
             raise ValidationError('Not a template pool: %(pool)s', params={'pool': self.image_pool}, code='invalid_pool')
         super(MemeTemplate, self).clean()
+        self.change_date = timezone.now()
 
     @classmethod
     def find(cls, image_pools=None, name=None, allow_disabled=False):
