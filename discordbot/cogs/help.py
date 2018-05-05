@@ -1,10 +1,10 @@
 import asyncio
 import itertools
-
 from discord.ext.commands.bot import _default_help_command
 from discord.ext.commands.core import Command
-from discord.ext.commands import HelpFormatter, Bot, Paginator
+from discord.ext.commands import HelpFormatter, Bot, Paginator, Context
 from discordbot.util import discord_command
+import lamdabotweb.settings as config
 
 
 class CustomHelpFormatter(HelpFormatter):
@@ -58,9 +58,13 @@ class CustomHelpFormatter(HelpFormatter):
 
         return self._paginator.pages
 
+@discord_command(name='invite')
+async def _cmd_invite(ctx: Context):
+    await ctx.send('{} use this link to add the bot to your server: {}invite'.format(ctx.author.mention, config.WEBSITE_URL))
 
 def setup(bot: Bot):
     bot.remove_command('help')
     cmd_help = discord_command(name='help', help='show more info about command', usage='[command]')(_default_help_command)
     bot.add_command(cmd_help)
     bot.formatter = CustomHelpFormatter(show_check_failure=True)
+    bot.add_command(_cmd_invite)
