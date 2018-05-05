@@ -15,7 +15,7 @@ DB_PORT = os.getenv('DB_PORT')
 if DEBUG:
     WEBSITE_URL = 'http://192.168.0.20:8000/'
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '192.168.0.20']
-    STATIC_ROOT = None
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'compressor',
     'colorfield',
     'discordbot',
     'facebookbot',
@@ -99,6 +100,15 @@ TEMPLATES = [
         },
     },
 ]
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+]
+
+COMPRESS_OFFLINE = True
+COMPRESS_OFFLINE_CONTEXT = {}
 
 # discord api stuff for website
 OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
