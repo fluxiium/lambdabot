@@ -42,9 +42,13 @@ class MemeGeneratorCog:
     @discord_command(name='submit', usage='<image>', guild_only=True, image_required=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
     async def _cmd_submit(self, ctx: DiscordContext):
-        """ submit a source image """
         if ctx.channel_data.submission_pool is None:
             raise CommandError('submission pool is not set for this channel')
+        """
+        submit a source image
+        you can specify an image pool to submit to (use !pool to see a list)
+        otherwise, the channel's default pool will be used
+        """
         added = 0
         imgcount = len(ctx.images)
         async with ctx.typing():
@@ -69,7 +73,10 @@ class MemeGeneratorCog:
 
     @discord_command(name='pool', usage='[add <pools> | remove <pools>]', management=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):
-        """ edit image pools for this channel """
+        """
+        select which image pools are used to make memes in this channel
+        if no argument is given, shows a list of currently enabled image pools
+        """
         pools = ctx.channel_data.image_pools.values_list('name', flat=True)
         avail = ctx.user_data.available_pools().exclude(name__in=pools).values_list('name', flat=True)
         return await ctx.send("{} currently enabled image pools in `#{}`: ```{} ```\navailable pools: ```{} ```".format(
@@ -106,7 +113,7 @@ class MemeGeneratorCog:
 
     @discord_command(name='subpool', management=True)
     async def _cmd_subpool(self, ctx: DiscordContext, *, pool: ImagePoolParam()=None):
-        """ set the default image pool used for submissions """
+        """ set the default image pool used for submissions in this channel """
         if not pool:
             avail = ctx.user_data.available_pools().values_list('name', flat=True)
             if ctx.channel_data.submission_pool:

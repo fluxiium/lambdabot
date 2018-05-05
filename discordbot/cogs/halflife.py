@@ -37,6 +37,10 @@ class HalfLifeCog:
 
     @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
+        """
+        search the half-life overwiki
+        if no argument is given shows a random article
+        """
         wiki_url = 'http://combineoverwiki.net'
         article = None
         was_random = False

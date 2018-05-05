@@ -13,6 +13,10 @@ class GarfieldCog:
 
     @discord_command(name='gfwiki')
     async def _cmd_wiki(self, ctx: Context, *, query=None):
+        """
+        search the garfield wiki
+        if no argument is given shows a random article
+        """
         wiki_url = 'http://garfield.wikia.com'
         article_url = None
 

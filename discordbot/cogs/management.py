@@ -34,6 +34,10 @@ class ManagementCog:
 
     @discord_command(name='svcmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
     async def _cmd_svcmd(self, ctx: DiscordContext):
+        """
+        enable/disable commands in this server
+        if no argument is given, shows a list of currently disabled commands
+        """
         await self.__list_cmds(ctx, ctx.server_data)
 
     @discord_command(parent=_cmd_svcmd, name='on', management=True, enabled=True)
@@ -46,6 +50,10 @@ class ManagementCog:
 
     @discord_command(name='cmd', usage='[on <commands> | off <commands>]', group=True, management=True, enabled=True)
     async def _cmd_cmd(self, ctx: DiscordContext):
+        """
+        enable/disable commands in this channel
+        if no argument is given, shows a list of currently disabled commands
+        """
         await self.__list_cmds(ctx, ctx.channel_data)
 
     @discord_command(parent=_cmd_cmd, name='on', management=True, enabled=True)

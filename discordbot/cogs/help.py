@@ -12,11 +12,7 @@ class CustomHelpFormatter(HelpFormatter):
         for name, command in commands:
             if name in command.aliases:
                 continue
-            entry = '  {}{}{}'.format(
-                '{} {}'.format(command.name, command.parameter_help).strip(),
-                command.short_doc and ' - ' or '',
-                command.short_doc
-            )
+            entry = '  {} {}'.format(command.name, command.parameter_help)
             self._paginator.add_line(entry)
 
     @asyncio.coroutine
@@ -25,8 +21,10 @@ class CustomHelpFormatter(HelpFormatter):
 
         if isinstance(self.command, Command):
             # <signature portion>
-            signature = self.get_command_signature()
-            self._paginator.add_line(signature)
+            self._paginator.add_line('{} {}'.format(self.command.name, self.command.parameter_help))
+            if len(self.command.aliases) > 0:
+                self._paginator.add_line('aliases: ' + ', '.join(self.command.aliases))
+            self._paginator.add_line()
 
             # <long doc> section
             if self.command.help:

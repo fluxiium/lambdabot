@@ -21,6 +21,10 @@ class ExtraCmdCog:
 
     @discord_command(name='led')
     async def _cmd_led(self, ctx: Context, *, text):
+        """
+        generate an LED sign
+        (uses wigflip.com)
+        """
         async with ctx.typing():
             response = requests.post('http://wigflip.com/signbot/', data={
                 'T': text,
@@ -37,6 +41,10 @@ class ExtraCmdCog:
 
     @discord_command(name='mario', usage='[name] <first_line> <message>')
     async def _cmd_mario(self, ctx, first_line, message, arg3=''):
+        """
+        generate a mario GIF
+        (uses wigflip.com)
+        """
         if arg3:
             name = first_line
             title = message
@@ -64,6 +72,10 @@ class ExtraCmdCog:
 
     @discord_command(name='noviews')
     async def _cmd_noviews(self, ctx):
+        """
+        show a random youtube video with no views
+        (uses petittube.com)
+        """
         attempt = 0
         videourl = None
 
@@ -86,6 +98,10 @@ class ExtraCmdCog:
     @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
     @commands.bot_has_permissions(attach_files=True)
     async def _cmd_dance(self, ctx, *, text):
+        """
+        generate text using dancing letters
+        (uses gifs from artie.com)
+        """
         async with ctx.typing():
             tmpdir = dance(text)
         await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
@@ -93,6 +109,10 @@ class ExtraCmdCog:
 
     @discord_command(name='googletrans', aliases=['gt'], usage='[num] (text)')
     async def _cmd_googletrans(self, ctx, num, *, text=''):
+        """
+        google translate text num times into random languages and then back to english
+        (num = 4 by default)
+        """
         langs = ["af", "sq", "ar", "be", "bg", "ca", "zh-CN", "zh-TW", "hr",
                  "cs", "da", "nl", "et", "tl", "fi", "fr", "gl", "de", "en",
                  "el", "iw", "hi", "hu", "is", "id", "ga", "it", "ja", "ko",
