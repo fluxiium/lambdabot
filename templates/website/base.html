@@ -1,4 +1,5 @@
 {% load static %}
+{% load compress %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,10 +7,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+    {% compress %}
+    <link rel="stylesheet" type="text/css" href="{% static 'website/memeviewer.css' %}">
+    {% endcompress %}
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+        crossorigin="anonymous"></script>
+
     {% block head_extra %}{% endblock %}
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{% static 'website/memeviewer.css' %}?v=14">
 </head>
 <body>
 
