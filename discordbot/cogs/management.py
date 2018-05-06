@@ -76,7 +76,7 @@ class ManagementCog:
         await ctx.send('{} command prefix on this server is now set to `{}`'.format(ctx.author.mention, prefix))
 
     # noinspection PyBroadException
-    @discord_command(name='epic', yack_only=True)
+    @discord_command(name='eval', aliases=['epic'], yack_only=True)
     async def _eval(self, ctx, *, body: str):
         """Evaluates a code"""
 
