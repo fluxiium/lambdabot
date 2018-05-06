@@ -5,16 +5,15 @@ import re
 import lamdabotweb.settings as config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.core.files import File
 from functools import reduce
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
 from PIL import Image
 from PIL import ImageFilter
-from util import struuid4
+from util import struuid4, log_exc
 from util.admin_utils import object_url
 
 
@@ -300,7 +299,14 @@ class Meem(models.Model):
         if saveme:
             if template is None:
                 templ.inc_counter()
-            meem.save()
+            succ = False
+            while not succ:
+                try:
+                    meem.save()
+                    succ = True
+                except IntegrityError as exc:
+                    log_exc(exc)
+                    meem.number += 1
         return meem
 
     @property
