@@ -187,6 +187,10 @@ class DiscordContext(commands.Context):
         return self.__is_manager
 
     @property
+    def is_blacklisted(self):
+        return self.user_data.blacklisted or (self.channel_data and self.channel_data.blacklisted) or (self.server_data and self.server_data.blacklisted)
+
+    @property
     def server_data(self):
         if not self.guild:
             return None
