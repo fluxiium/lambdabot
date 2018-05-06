@@ -42,7 +42,6 @@ class Command(BaseCommand):
         @bot.event
         async def on_ready():
             log('Logged in as', bot.user.name, bot.user.id)
-            print('\n'.join(map(lambda x: '        {} {}'.format(x.id, x.name), bot.guilds)))
             await bot.change_presence(activity=discord.Game(name=config.DISCORD_STATUS))
 
         @bot.event
