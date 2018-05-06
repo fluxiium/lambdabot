@@ -52,7 +52,7 @@ class HalfLifeCog:
                     '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
                     headers=headers,
                 )
-                article_data = json.loads(response.content.decode('utf-8'))
+                article_data = json.loads(response.text)
                 article = next(iter(article_data['query']['pages'].values()))
 
             else:
@@ -60,7 +60,7 @@ class HalfLifeCog:
                     '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
                     headers=headers,
                 )
-                article_data = json.loads(response.content.decode('utf-8'))
+                article_data = json.loads(response.text)
                 if article_data.get('query') is not None:
                     article = next(iter(article_data['query']['pages'].values()))
 
@@ -73,7 +73,7 @@ class HalfLifeCog:
                     raise CommandError("article not found :cry:")
 
                 response = requests.get(article['fullurl'], headers=headers)
-                soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+                soup = BeautifulSoup(response.text, "html5lib")
 
                 heading = soup.select_one('#firstHeading')
                 if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
@@ -89,7 +89,7 @@ class HalfLifeCog:
                                 wiki_url, random_page),
                             headers=headers,
                         )
-                        article_data = json.loads(response.content.decode('utf-8'))
+                        article_data = json.loads(response.text)
                         if article_data.get('query') is not None:
                             article = next(iter(article_data['query']['pages'].values()))
 

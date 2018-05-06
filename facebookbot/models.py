@@ -43,9 +43,9 @@ class FacebookPage(models.Model):
         response = requests.get('{0}oauth/access_token?grant_type=fb_exchange_token&client_id={1}&client_secret={2}&fb_exchange_token={3}'.format(
             _API_URL, self.app_id, self.app_secret, temp_token
         ), headers=headers)
-        long_token = json.loads(response.content.decode('utf-8'))['access_token']
+        long_token = json.loads(response.text)['access_token']
         response = requests.get('{0}me/accounts?access_token={1}'.format(_API_URL, long_token), headers=headers)
-        for page in json.loads(response.content.decode('utf-8'))['data']:
+        for page in json.loads(response.text)['data']:
             if page['id'] == self.page_id:
                 self.token = page['access_token']
                 self.save()

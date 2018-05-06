@@ -26,14 +26,14 @@ class GarfieldCog:
                     '{0}/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json'.format(wiki_url),
                     headers=headers,
                 )
-                article_data = json.loads(response.content.decode('utf-8'))
+                article_data = json.loads(response.text)
                 article_id = article_data['query']['random'][0]['id']
 
                 response = requests.get(
                     '{0}/api/v1/Articles/Details?ids={1}'.format(wiki_url, article_id),
                     headers=headers,
                 )
-                article_data = json.loads(response.content.decode('utf-8'))
+                article_data = json.loads(response.text)
                 article_url = "{0}{1}".format(
                     wiki_url,
                     article_data['items'][str(article_id)]['url']
@@ -44,7 +44,7 @@ class GarfieldCog:
                     '{0}/api/v1/Search/List?query={1}&limit=1'.format(wiki_url, query),
                     headers=headers,
                 )
-                article_data = json.loads(response.content.decode('utf-8'))
+                article_data = json.loads(response.text)
                 if article_data.get('exception') is None:
                     article_url = article_data['items'][0]['url']
 

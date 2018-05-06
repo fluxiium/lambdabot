@@ -31,7 +31,7 @@ class ExtraCmdCog:
                 'S': 'L',
             }, headers=headers)
 
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+            soup = BeautifulSoup(response.text, "html5lib")
             img = soup.select_one('#output img')
 
         if img is not None:
@@ -62,7 +62,7 @@ class ExtraCmdCog:
                 'double': 'y',
             }, headers=headers)
 
-            soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+            soup = BeautifulSoup(response.text, "html5lib")
             img = soup.select_one('#output img')
 
         if img is not None:
@@ -84,7 +84,7 @@ class ExtraCmdCog:
                 # noinspection PyBroadException
                 try:
                     response = requests.get('http://www.petittube.com', headers=headers)
-                    soup = BeautifulSoup(response.content.decode('utf-8'), "html5lib")
+                    soup = BeautifulSoup(response.text, "html5lib")
                     videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
                 except Exception:
                     attempt += 1
