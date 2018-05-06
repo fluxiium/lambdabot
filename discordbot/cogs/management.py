@@ -1,8 +1,12 @@
+import asyncio
+import inspect
 import io
 import textwrap
 import traceback
 from contextlib import redirect_stdout
 from typing import Union, List
+
+import discord
 from discord.ext.commands import Bot, Command
 from discordbot.models import DiscordContext, DiscordChannel, DiscordServer
 from discordbot.util import discord_command, CommandParam
@@ -14,6 +18,7 @@ class ManagementCog:
         self.cog_name = "Management"
         self.bot = bot
         self._last_result = None
+        self._sessions = set()
 
     @staticmethod
     async def __list_cmds(ctx: DiscordContext, data):
@@ -77,7 +82,7 @@ class ManagementCog:
 
     # noinspection PyBroadException
     @discord_command(name='eval', aliases=['epic'], yack_only=True)
-    async def _eval(self, ctx, *, body: str):
+    async def _eval(self, ctx: DiscordContext, *, body: str):
         """Evaluates a code"""
 
         env = {
@@ -91,9 +96,6 @@ class ManagementCog:
         }
 
         env.update(globals())
-
-        if body.startswith('```') and body.endswith('```'):
-            return '\n'.join(body.split('\n')[1:-1])
 
         body = body.strip('` \n')
         stdout = io.StringIO()
@@ -121,6 +123,99 @@ class ManagementCog:
             else:
                 self._last_result = ret
                 await ctx.send('```py\n{}{}\n```'.format(value, ret))
+
+    # noinspection PyBroadException
+    @discord_command(name='py', yack_only=True)
+    async def _py(self, ctx: DiscordContext):
+        """Launches an interactive REPL session."""
+        variables = {
+            'ctx': ctx,
+            'bot': self.bot,
+            'message': ctx.message,
+            'guild': ctx.guild,
+            'channel': ctx.channel,
+            'author': ctx.author,
+            '_': None,
+        }
+
+        if ctx.channel.id in self._sessions:
+            await ctx.send('Already running a REPL session in this channel. Exit it with `quit`.')
+            return
+
+        self._sessions.add(ctx.channel.id)
+        await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
+
+        def check(m):
+            return m.author.id == ctx.author.id and \
+                   m.channel.id == ctx.channel.id and \
+                   m.content.startswith('`')
+
+        while True:
+            try:
+                response = await self.bot.wait_for('message', check=check, timeout=10.0 * 60.0)
+            except asyncio.TimeoutError:
+                await ctx.send('Exiting REPL session.')
+                self._sessions.remove(ctx.channel.id)
+                break
+
+            cleaned = response.content.strip('` \n')
+
+            if cleaned in ('quit', 'exit', 'exit()'):
+                await ctx.send('Exiting.')
+                self._sessions.remove(ctx.channel.id)
+                return
+
+            executor = exec
+            if cleaned.count('\n') == 0:
+                # single statement, potentially 'eval'
+                try:
+                    code = compile(cleaned, '<repl session>', 'eval')
+                except SyntaxError:
+                    pass
+                else:
+                    executor = eval
+
+            if executor is exec:
+                try:
+                    code = compile(cleaned, '<repl session>', 'exec')
+                except SyntaxError as e:
+                    if e.text is None:
+                        await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
+                    else:
+                        await ctx.send('```py\n{}{"^":>{}}\n{}: {}```'.format(e.text, e.offset, e.__class__.__name__,e))
+                    continue
+
+            variables['message'] = response
+
+            fmt = None
+            stdout = io.StringIO()
+
+            try:
+                with redirect_stdout(stdout):
+                    result = executor(code, variables)
+                    if inspect.isawaitable(result):
+                        result = await result
+            except Exception as e:
+                value = stdout.getvalue()
+                fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
+            else:
+                value = stdout.getvalue()
+                if result is not None:
+                    fmt = '```py\n{}{}\n```'.format(value, result)
+                    variables['_'] = result
+                elif value:
+                    fmt = '```py\n{}\n```'.format(value)
+
+            try:
+                if fmt is not None:
+                    if len(fmt) > 2000:
+                        await ctx.send('Content too big to be printed.')
+                    else:
+                        await ctx.send(fmt)
+            except discord.Forbidden:
+                pass
+            except discord.HTTPException as e:
+                await ctx.send('Unexpected error: `{}`'.format(e))
 
 
 def setup(bot: Bot):
