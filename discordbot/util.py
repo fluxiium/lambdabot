@@ -27,7 +27,8 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
 
     async def predicate(ctx: DiscordContext):
         if yack_only and ctx.author.id != 257499042039332866:
-            raise CommandError("Hey, you've got the wrong airlock, Mr. Freeman. You know I can't let you through here.")
+            return False
+            # raise CommandError("Hey, you've got the wrong airlock, Mr. Freeman. You know I can't let you through here.")
         if (guild_only or management) and ctx.guild is None:
             raise NoPrivateMessage('This command cannot be used in private messages.')
         if management and not ctx.is_manager:

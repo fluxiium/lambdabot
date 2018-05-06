@@ -6,7 +6,7 @@ from discordbot.util import get_prefix
 from lamdabotweb.settings import BASE_DIR
 from discord.ext import commands
 from discord.ext.commands import CommandInvokeError, CommandOnCooldown, DisabledCommand, MissingPermissions, \
-    BotMissingPermissions
+    BotMissingPermissions, CheckFailure
 from discordbot.models import DiscordServer, DiscordContext, DiscordUser, DiscordChannel, DiscordImage
 from util import log, log_exc
 
@@ -73,6 +73,8 @@ class Command(BaseCommand):
                 msg = "You need the following permissions to use this command: `{}`".format(', '.join(exc.missing_perms))
             elif isinstance(exc, BotMissingPermissions):
                 msg = "The bot needs the following permissions for this command: `{}`".format(', '.join(exc.missing_perms))
+            elif isinstance(exc, CheckFailure):
+                msg = ""
             elif isinstance(exc, CommandInvokeError):
                 log_exc(exc, ctx)
                 msg = "error :cry:"
