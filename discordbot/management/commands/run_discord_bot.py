@@ -16,7 +16,7 @@ class Command(BaseCommand):
     bot = None
 
     def handle(self, *args, **options):
-        bot = commands.Bot(command_prefix=get_prefix, description='I make memes.')
+        bot = commands.Bot(command_prefix=get_prefix, description='I make memes.', case_insensitive=True)
 
         @bot.event
         async def on_guild_join(server: discord.Guild):
