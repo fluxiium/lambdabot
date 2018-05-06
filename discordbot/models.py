@@ -42,7 +42,7 @@ class DiscordServer(CommandContext):
         indexes = [models.Index(fields=['name'], name='idx_ds_name')]
 
     server_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
-    name = models.CharField(max_length=64, blank=True, default='')
+    name = models.CharField(max_length=512, blank=True, default='')
     prefix = models.CharField(max_length=16, default='!')
 
     def __str__(self):
@@ -58,7 +58,7 @@ class DiscordChannel(CommandContext):
 
     channel_id = models.CharField(max_length=32, primary_key=True, verbose_name='ID')
     server = models.ForeignKey(DiscordServer, null=True, blank=True, default=None, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=64, blank=True, default='')
+    name = models.CharField(max_length=512, blank=True, default='')
     image_pools = models.ManyToManyField(MemeImagePool)
     submission_pool = models.ForeignKey(MemeImagePool, null=True, blank=True, default=None, on_delete=models.SET_NULL,
                                         related_name='submission_channel')
@@ -97,7 +97,7 @@ class DiscordUser(models.Model):
         indexes = [models.Index(fields=['name'], name='idx_du_name')]
 
     user_id = models.CharField(max_length=64, primary_key=True)
-    name = models.CharField(max_length=64, blank=True, default='')
+    name = models.CharField(max_length=512, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
     def available_pools(self, channel_data: Union[DiscordChannel, List[DiscordChannel]]=None):
