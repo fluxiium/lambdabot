@@ -74,11 +74,11 @@ class Command(BaseCommand):
             elif isinstance(exc, BotMissingPermissions):
                 msg = "The bot needs the following permissions for this command: `{}`".format(', '.join(exc.missing_perms))
             elif isinstance(exc, CommandInvokeError):
-                log_exc(exc)
+                log_exc(exc, ctx)
                 msg = "error :cry:"
             else:
                 if config.DEBUG:
-                    log_exc(exc)
+                    log_exc(exc, ctx)
                 msg = str(exc) or "error :cry:"
             if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
                 await ctx.send("{} :warning: {}".format(ctx.author.mention, msg))

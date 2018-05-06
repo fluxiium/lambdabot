@@ -3,7 +3,6 @@ import uuid
 from urllib.parse import urlparse
 from django.utils import timezone
 
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Cafari/537.36'
 }
@@ -30,8 +29,11 @@ def log(*args, tag=None):
     print(timezone.now(), tag, *args)
 
 
-def log_exc(exc: Exception):
+def log_exc(exc: Exception, ctx=None):
     log("--- ERROR ---")
+    if ctx:
+        print('{}, #{}, {}'.format(ctx.guild, ctx.channel, ctx.author))
+        print(ctx.message.content)
     print(exc)
     tb = traceback.format_exception(None, exc, exc.__traceback__)
     tb_str = ""
