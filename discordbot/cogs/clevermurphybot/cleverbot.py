@@ -13,9 +13,6 @@ _sessions = {}
 
 
 async def talk(msg: discord.Message, msg_text):
-    if not is_active():
-        return
-
     body = {
         'user': config.CLEVERBOT_USER,
         'key': config.CLEVERBOT_KEY,
@@ -41,9 +38,9 @@ async def talk(msg: discord.Message, msg_text):
         else:
             response = 'error :cry:'
 
-    logging.info(f"response to {msg.author}: {response}")
-
     if msg.guild:
         await msg.channel.send(f"{msg.author.mention} {response}")
     else:
         await msg.channel.send(response)
+
+    logging.info(f"cleverbot to {msg.author}: {response}")

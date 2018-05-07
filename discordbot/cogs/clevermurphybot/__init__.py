@@ -57,7 +57,7 @@ class CleverMurphyBot:
             else:
                 answered = False
 
-        if msg_text and (not answered or not murphy.is_active()) and cleverboi.is_active():
+        if msg_text and (not answered or not murphy.is_active()):
             await cleverboi.talk(msg, msg_text)
 
 

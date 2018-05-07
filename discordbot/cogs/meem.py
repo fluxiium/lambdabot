@@ -32,7 +32,7 @@ class MemeGeneratorCog:
         except NotEnoughImages:
             raise CommandError('not enough source images or templates available (please enable more image pools)')
 
-        logging.info(f'{ctx.author} - meme generated: {meme}')
+        logging.info(f'meme generated: {meme}')
         await ctx.send(f"{ctx.author.mention} here's a meme (using template `{meme.template_link}`)\n<{meme.info_url}>",
                        file=discord.File(meme.local_path))
 

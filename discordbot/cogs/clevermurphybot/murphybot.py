@@ -231,7 +231,7 @@ async def _process_request():
         return False
 
     elif _state == "1.2":
-        logging.debug("face accepted")
+        logging.info("murphy face accepted")
         _facepics[_request.channel.id] = _request.face_pic
         _facepics['current'] = _request.face_pic
         if not _request.question:
@@ -241,11 +241,11 @@ async def _process_request():
             return False
 
     elif _state == "2.2":
-        logging.debug("sending answer")
         tmpdir = mkdtemp(prefix="lambdabot_murphy_")
         output = _murphybot.download_media(_media, file=tmpdir)
         await _request.channel.send(_request.mention, file=discord.File(output))
         shutil.rmtree(tmpdir)
+        logging.info("murphy answer sent")
 
     elif _state == "3.2":
         logging.debug("face accepted, sending question")
@@ -265,10 +265,7 @@ async def _process_request():
 
     elif _state == "idk":
         logging.debug("idk")
-        if cleverbot.is_active():
-            await cleverbot.talk(_request.msg, _request.question)
-        else:
-            await _request.channel.send(f"{_request.mention} :thinking:")
+        await cleverbot.talk(_request.msg, _request.question)
 
     elif _state == "error":
         logging.debug("error")
