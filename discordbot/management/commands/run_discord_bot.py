@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         bot = commands.Bot(command_prefix=get_prefix, description='I make memes.', case_insensitive=True)
-        logging.basicConfig(level=config.DEBUG and logging.DEBUG or logging.INFO)
+        logging.basicConfig(level=logging.INFO)
 
         @bot.event
         async def on_guild_join(server: discord.Guild):
@@ -91,7 +91,7 @@ class Command(BaseCommand):
             else:
                 msg = ""
             if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
-                await ctx.send(f"{ctx.author.mention} :warning: {msg}".format)
+                await ctx.send(f"{ctx.author.mention} :warning: {msg}")
 
         print('loading cogs: ', end='')
         for cog_name in os.listdir(os.path.join(BASE_DIR, 'discordbot', 'cogs')):
