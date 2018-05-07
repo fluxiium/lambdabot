@@ -8,7 +8,7 @@ import discord
 import datetime
 import lamdabotweb.settings as config
 import util
-
+import logging
 from collections import deque
 from tempfile import mkdtemp
 from django.utils import timezone
@@ -35,10 +35,6 @@ _last_update = timezone.now()
 _channel_facepic = None
 _facepics = {}
 _request_queue = deque()
-
-
-def _log(*args):
-    util.log(*args, tag="murphy")
 
 
 def is_active():
@@ -69,7 +65,7 @@ def start(client):
     try:
         _murphybot.start()
     except Exception:
-        _log("authentication failed")
+        logging.error("authentication failed")
         _murphybot = None
         return
 
@@ -80,14 +76,14 @@ def start(client):
         _last_update = timezone.now()
 
         if event.photo is None:
-            _log("received message: {}".format(textwrap.shorten(event.raw_text, width=128)))
+            logging.debug(f"received message: {textwrap.shorten(event.raw_text, width=128)}")
 
             if event.raw_text.startswith(_MURPHYBOT_IGNORE_MSG):
                 return
 
             if _state in ["1", "3"]:
                 if event.raw_text.startswith("Thanks, I will keep this photo"):
-                    _state = "{}.2".format(_state)
+                    _state = f"{_state}.2"
                 else:
                     _state = "no face"
 
@@ -98,7 +94,7 @@ def start(client):
                     _state = "idk"
 
         else:
-            _log("received media")
+            logging.debug("received media")
 
             if _state == "1":
                 _media = event.photo
@@ -121,7 +117,7 @@ async def _murphy_task():
     while True:
 
         if _state != _prevstate:
-            _log("[ state {0} -> {1} ]".format(_prevstate, _state))
+            logging.debug(f"[ state {_prevstate} -> {_state} ]")
             _last_update = timezone.now()
             _prevstate = _state
 
@@ -149,10 +145,10 @@ async def _wait_for_request():
     _request = _request_queue.popleft()
     _channel_facepic = _facepics.get(_request.channel.id)
 
-    _log("processing request: {}".format(_request))
+    logging.debug(f"processing request: {_request}")
 
     if not _request.question and _request.face_pic and os.path.isfile(_request.face_pic):
-        _log("sending face pic")
+        logging.debug("sending face pic")
         try:
             _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
             _state = "1"
@@ -166,21 +162,21 @@ async def _wait_for_request():
         if not _request.face_pic:
 
             if not _channel_facepic:
-                _log("ERROR: channel face pic null")
+                logging.debug("ERROR: channel face pic null")
 
             elif _channel_facepic == _facepics.get('current'):
-                _log("channel face pic = current face pic, sending question")
+                logging.debug("channel face pic = current face pic, sending question")
                 _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
                 _state = "2"
                 return
 
             else:
-                _log("channel face pic =/= current face pic")
+                logging.debug("channel face pic =/= current face pic")
                 _state = "different channel face"
                 return
 
         elif os.path.isfile(_request.face_pic):
-            _log("sending face pic from request")
+            logging.debug("sending face pic from request")
             try:
                 _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
                 _state = "3"
@@ -189,12 +185,12 @@ async def _wait_for_request():
                 util.log_exc(ex)
 
         else:
-            _log("ERROR: request face pic file doesn't exist: {}".format(_request.face_pic))
+            logging.debug(f"ERROR: request face pic file doesn't exist: {_request.face_pic}")
 
         _state = "upload face"
 
     else:
-        _log("sending question")
+        logging.debug("sending question")
         _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
         _state = "2"
 
@@ -206,11 +202,11 @@ async def _process_request():
     if _state in ["reupload face", "different channel face"]:
 
         if _channel_facepic is None or not os.path.isfile(_channel_facepic):
-            _log("ERROR: can't read channel face pic: {}".format(_channel_facepic))
+            logging.debug(f"ERROR: can't read channel face pic: {_channel_facepic}")
             _state = "upload face"
 
         else:
-            _log("reuploading channel face pic")
+            logging.debug(f"reuploading channel face pic")
             try:
                 _murphybot.send_file(_MURPHYBOT_HANDLE, _channel_facepic)
                 _state = "1" if _state == "reupload face" else "3"
@@ -223,36 +219,36 @@ async def _process_request():
     elif _state in ["1", "3"]:
         await asyncio.sleep(1)
         if timezone.now() - datetime.timedelta(seconds=config.MURPHYBOT_TIMEOUT) > _last_update:
-            _log("state {} timeout".format(_state))
+            logging.debug(f"state {_state} timeout")
             _state = "no face"
         return False
 
     elif _state == "2":
         await asyncio.sleep(1)
         if timezone.now() - datetime.timedelta(seconds=config.MURPHYBOT_TIMEOUT) > _last_update:
-            _log("state 2 timeout")
+            logging.debug("state 2 timeout")
             _state = "idk"
         return False
 
     elif _state == "1.2":
-        _log("face accepted")
+        logging.debug("face accepted")
         _facepics[_request.channel.id] = _request.face_pic
         _facepics['current'] = _request.face_pic
         if not _request.question:
-            await _request.channel.send("{} face accepted :+1:".format(_request.mention))
+            await _request.channel.send(f"{_request.mention} face accepted :+1:")
         else:
             _state = "2.2"
             return False
 
     elif _state == "2.2":
-        _log("sending answer")
+        logging.debug("sending answer")
         tmpdir = mkdtemp(prefix="lambdabot_murphy_")
         output = _murphybot.download_media(_media, file=tmpdir)
         await _request.channel.send(_request.mention, file=discord.File(output))
         shutil.rmtree(tmpdir)
 
     elif _state == "3.2":
-        _log("face accepted, sending question")
+        logging.debug("face accepted, sending question")
         _facepics[_request.channel.id] = _request.face_pic
         _facepics['current'] = _request.face_pic
         _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
@@ -260,22 +256,22 @@ async def _process_request():
         return False
 
     elif _state == "upload face":
-        _log("no channel face pic")
-        await _request.channel.send("{} please upload a face first".format(_request.mention))
+        logging.debug("no channel face pic")
+        await _request.channel.send(f"{_request.mention} please upload a face first")
 
     elif _state == "no face":
-        _log("no face detected")
-        await _request.channel.send("{} no face detected :cry:".format(_request.mention))
+        logging.debug("no face detected")
+        await _request.channel.send(f"{_request.mention} no face detected :cry:")
 
     elif _state == "idk":
-        _log("idk")
+        logging.debug("idk")
         if cleverbot.is_active():
             await cleverbot.talk(_request.msg, _request.question)
         else:
-            await _request.channel.send("{} :thinking:".format(_request.mention))
+            await _request.channel.send(f"{_request.mention} :thinking:")
 
     elif _state == "error":
-        _log("error")
-        await _request.channel.send("{} error :cry:".format(_request.mention))
+        logging.debug("error")
+        await _request.channel.send(f"{_request.mention} error :cry:")
 
     return True

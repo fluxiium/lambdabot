@@ -12,8 +12,9 @@ from discord.ext import commands
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from tempfile import mkdtemp
-from util import log, headers, struuid4, is_url
+from util import headers, struuid4, is_url
 from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate, QueuedMemeImage
+import logging
 
 
 class CommandContext(models.Model):
@@ -68,7 +69,7 @@ class DiscordChannel(CommandContext):
 
     def __str__(self):
 
-        return '#{0} ({1})'.format(self.name or '?', self.server)
+        return f'#{self.name or "?"} ({self.server})'
 
 
 @receiver(m2m_changed, sender=DiscordChannel.image_pools.through)
@@ -152,7 +153,7 @@ class MemeImagePoolOwnership(models.Model):
     status = models.IntegerField(choices=POOL_STATUS, default=POOL_PRIVATE)
 
     def __str__(self):
-        return '{} ({})'.format(str(self.owner), self.get_status_display())
+        return f'{self.owner} ({self.get_status_display()})'
 
 
 class DiscordSourceImgSubmission(models.Model):
@@ -277,7 +278,7 @@ class DiscordImage:
         self.tmpdir = mkdtemp(prefix="lambdabot_attach_")
         filename = os.path.join(self.tmpdir, filename_override or self.filename)
         url = self.url
-        log('saving image: {0} -> {1}'.format(url, filename))
+        logging.info(f'saving image: {url} -> {filename}')
         attachment = requests.get(url, headers=headers)
         with open(filename, 'wb') as attachment_file:
             attachment_file.write(attachment.content)

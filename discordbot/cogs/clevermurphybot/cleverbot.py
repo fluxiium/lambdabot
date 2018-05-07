@@ -2,7 +2,7 @@ import discord
 import requests
 import json
 import lamdabotweb.settings as config
-from util import log
+import logging
 
 
 def is_active():
@@ -41,9 +41,9 @@ async def talk(msg: discord.Message, msg_text):
         else:
             response = 'error :cry:'
 
-    log("response to {}: {}".format(msg.author, response), tag="cleverbot")
+    logging.info(f"response to {msg.author}: {response}")
 
     if msg.guild:
-        await msg.channel.send("{0} {1}".format(msg.author.mention, response))
+        await msg.channel.send(f"{msg.author.mention} {response}")
     else:
         await msg.channel.send(response)

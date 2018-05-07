@@ -1,7 +1,7 @@
 import discord
 from discord.ext.commands import Bot
 from discordbot.models import DiscordImage, DiscordContext
-from util import log
+import logging
 from discordbot.cogs.clevermurphybot import murphybot as murphy
 from discordbot.cogs.clevermurphybot import cleverbot as cleverboi
 
@@ -34,7 +34,7 @@ class CleverMurphyBot:
         elif not dm:
             return
 
-        log("{0}, {1} talking: {2}".format(msg.guild or "DM", msg.author, msg_text))
+        logging.info(f"{msg.guild or 'DM'}, {msg.author} talking: {msg_text}")
 
         answered = False
 

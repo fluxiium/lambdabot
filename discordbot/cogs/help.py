@@ -12,7 +12,7 @@ class CustomHelpFormatter(HelpFormatter):
         for name, command in commands:
             if name in command.aliases:
                 continue
-            entry = '  {} {}'.format(command.name, command.parameter_help)
+            entry = f'  {command.name} {command.parameter_help}'
             self._paginator.add_line(entry)
 
     @asyncio.coroutine
@@ -21,7 +21,7 @@ class CustomHelpFormatter(HelpFormatter):
 
         if isinstance(self.command, Command):
             # <signature portion>
-            self._paginator.add_line('{} {}'.format(self.command.name, self.command.parameter_help))
+            self._paginator.add_line(f'{self.command.name} {self.command.parameter_help}')
             if len(self.command.aliases) > 0:
                 self._paginator.add_line('aliases: ' + ', '.join(self.command.aliases))
             self._paginator.add_line()
@@ -61,7 +61,7 @@ class CustomHelpFormatter(HelpFormatter):
 
 @discord_command(name='invite')
 async def _cmd_invite(ctx: Context):
-    await ctx.send('{} use this link to add the bot to your server: {}invite'.format(ctx.author.mention, config.WEBSITE_URL))
+    await ctx.send(f'{ctx.author.mention} use this link to add the bot to your server: {config.WEBSITE_URL}invite')
 
 def setup(bot: Bot):
     bot.remove_command('help')

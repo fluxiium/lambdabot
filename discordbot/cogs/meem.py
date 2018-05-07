@@ -1,11 +1,12 @@
 from django.core.files import File
 import discord
 import lamdabotweb.settings as config
+import logging
 from typing import List
 from discord.ext import commands
 from discord.ext.commands import Bot, BadArgument, BucketType, CommandError
 from discordbot.util import MemeTemplateParam, ImagePoolParam, discord_command
-from discordbot.models import log, DiscordContext, DiscordSourceImgSubmission
+from discordbot.models import DiscordContext, DiscordSourceImgSubmission
 from memeviewer.models import NotEnoughImages, MemeImagePool, MemeSourceImage, POOL_TYPE_SRCIMGS, POOL_TYPE_ALL
 
 
@@ -28,17 +29,12 @@ class MemeGeneratorCog:
             async with ctx.typing():
                 meme = ctx.user_data.generate_meme(template=template, channel=ctx.channel_data).meme
                 meme.make_img()
-                log(ctx.author, ' - meme generated:', meme)
-
-                msgstr = "{2} here's a meme (using template `{0}`)\n<{1}>".format(
-                    meme.template_link,
-                    meme.info_url,
-                    ctx.author.mention
-                )
         except NotEnoughImages:
             raise CommandError('not enough source images or templates available (please enable more image pools)')
 
-        await ctx.send(msgstr, file=discord.File(meme.local_path))
+        logging.info(f'{ctx.author} - meme generated: {meme}')
+        await ctx.send(f"{ctx.author.mention} here's a meme (using template `{meme.template_link}`)\n<{meme.info_url}>",
+                       file=discord.File(meme.local_path))
 
     @discord_command(name='submit', usage='[image pool] <images...>', guild_only=True, image_required=True)
     @commands.cooldown(config.DISCORD_MEME_LIMIT, config.DISCORD_MEME_COOLDOWN, BucketType.user)
@@ -66,18 +62,18 @@ class MemeGeneratorCog:
                 img.cleanup()
                 if submission is not None:
                     added += 1
-                    log(ctx.author, 'sourceimg submitted:', submission.sourceimg)
+                    logging.info(f'sourceimg submitted by {ctx.author}: {submission.sourceimg}')
 
         if added == imgcount:
             if imgcount == 1:
-                await ctx.send("{} thanks! The source image will be added to the pool `{}` once it's approved.".format(ctx.author.mention, pool))
+                await ctx.send(f"{ctx.author.mention} thanks! The source image will be added to the pool `{pool}` once it's approved.")
             else:
-                await ctx.send("{} thanks! The source images will be added to the pool `{}` once they're approved.".format(ctx.author.mention, pool))
+                await ctx.send(f"{ctx.author.mention} thanks! The source images will be added to the pool `{pool}` once they're approved.")
         else:
             if imgcount == 1:
-                raise BadArgument("the image is too big or invalid format! (supported jpeg/png < {} KB)".format(config.MAX_SRCIMG_SIZE / 1000))
+                raise BadArgument(f"the image is too big or invalid format! (supported jpeg/png < {config.MAX_SRCIMG_SIZE / 1000} KB)")
             else:
-                raise BadArgument("{}/{} images submitted. The rest is too big or invalid format! (supported jpeg/png < {} KB)".format(added, imgcount, config.MAX_SRCIMG_SIZE / 1000))
+                raise BadArgument(f"{added}/{imgcount} images submitted. The rest is too big or invalid format! (supported jpeg/png < {config.MAX_SRCIMG_SIZE / 1000} KB)")
 
     @discord_command(name='pool', usage='[add <pools...> | remove <pools...>]', guild_only=True, group=True)
     async def _cmd_pool(self, ctx: DiscordContext):
