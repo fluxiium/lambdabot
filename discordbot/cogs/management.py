@@ -24,7 +24,7 @@ class ManagementCog:
     async def __list_cmds(ctx: DiscordContext, data):
         return await ctx.send("{} currently disabled commands{}: ```{} ```".format(
             ctx.author.mention,
-            isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
+            isinstance(data, DiscordChannel) and f' in `#{ctx.channel.name}`' or '',
             ' '.join(data.disabled_cmds.strip().split('\n'))
         ))
 
@@ -38,7 +38,7 @@ class ManagementCog:
         await ctx.send("{} the following commands have been {}abled{}: ```{} ```".format(
             ctx.author.mention,
             enable and 'en' or 'dis',
-            isinstance(data, DiscordChannel) and ' in `#{}`'.format(ctx.channel.name) or '',
+            isinstance(data, DiscordChannel) and f' in `#{ctx.channel.name}`' or '',
             ' '.join(cmd_names),
         ))
 
@@ -78,7 +78,7 @@ class ManagementCog:
     async def _cmd_prefix(self, ctx: DiscordContext, prefix):
         ctx.server_data.prefix = prefix
         ctx.server_data.save()
-        await ctx.send('{} command prefix on this server is now set to `{}`'.format(ctx.author.mention, prefix))
+        await ctx.send(f'{ctx.author.mention} command prefix on this server is now set to `{prefix}`')
 
     # noinspection PyBroadException
     @discord_command(name='eval', aliases=['epic'], yack_only=True)
@@ -100,12 +100,12 @@ class ManagementCog:
         body = body.strip('` \n')
         stdout = io.StringIO()
 
-        to_compile = 'async def func():\n{}'.format(textwrap.indent(body, "  "))
+        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
 
         try:
             exec(to_compile, env)
         except Exception as e:
-            return await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
+            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
 
         func = env['func']
         try:
@@ -113,16 +113,16 @@ class ManagementCog:
                 ret = await func()
         except Exception:
             value = stdout.getvalue()
-            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
+            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
         else:
             value = stdout.getvalue()
 
             if ret is None:
                 if value:
-                    await ctx.send('```py\n{}\n```'.format(value))
+                    await ctx.send(f'```py\n{value}\n```')
             else:
                 self._last_result = ret
-                await ctx.send('```py\n{}{}\n```'.format(value, ret))
+                await ctx.send(f'```py\n{value}{ret}\n```')
 
     # noinspection PyBroadException
     @discord_command(name='py', yack_only=True)
@@ -180,9 +180,9 @@ class ManagementCog:
                     code = compile(cleaned, '<repl session>', 'exec')
                 except SyntaxError as e:
                     if e.text is None:
-                        await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
+                        await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
                     else:
-                        await ctx.send('```py\n{}{"^":>{}}\n{}: {}```'.format(e.text, e.offset, e.__class__.__name__,e))
+                        await ctx.send(f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```')
                     continue
 
             variables['message'] = response
@@ -197,14 +197,14 @@ class ManagementCog:
                         result = await result
             except Exception as e:
                 value = stdout.getvalue()
-                fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
+                fmt = f'```py\n{value}{traceback.format_exc()}\n```'
             else:
                 value = stdout.getvalue()
                 if result is not None:
-                    fmt = '```py\n{}{}\n```'.format(value, result)
+                    fmt = f'```py\n{value}{result}\n```'
                     variables['_'] = result
                 elif value:
-                    fmt = '```py\n{}\n```'.format(value)
+                    fmt = f'```py\n{value}\n```'
 
             try:
                 if fmt is not None:
@@ -215,7 +215,7 @@ class ManagementCog:
             except discord.Forbidden:
                 pass
             except discord.HTTPException as e:
-                await ctx.send('Unexpected error: `{}`'.format(e))
+                await ctx.send(f'Unexpected error: `{e}`')
 
 
 def setup(bot: Bot):
