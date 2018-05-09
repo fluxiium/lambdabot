@@ -54,23 +54,23 @@ def ask(msg: discord.Message, question=None, face_pic=None):
     _request_queue.append(_MurphyRequest(msg, question, face_pic))
 
 
-def start(client):
+async def start(client):
     global _murphybot
 
     if not config.TELEGRAM_API_ID:
         return
 
-    _murphybot = TelegramClient('murphy', config.TELEGRAM_API_ID, config.TELEGRAM_API_HASH, update_workers=1)
+    _murphybot = TelegramClient('murphy', config.TELEGRAM_API_ID, config.TELEGRAM_API_HASH)
     # noinspection PyBroadException
     try:
-        _murphybot.start()
+        await _murphybot.start()
     except Exception:
         logging.error("authentication failed")
         _murphybot = None
         return
 
     @_murphybot.on(events.NewMessage(chats="ProjectMurphy_bot", incoming=True))
-    def murphybot_handler(event):
+    async def murphybot_handler(event):
         global _state, _last_update, _media
 
         _last_update = timezone.now()
@@ -150,7 +150,7 @@ async def _wait_for_request():
     if not _request.question and _request.face_pic and os.path.isfile(_request.face_pic):
         logging.debug("sending face pic")
         try:
-            _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
+            await _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
             _state = "1"
         except Exception as ex:
             util.log_exc(ex)
@@ -166,7 +166,7 @@ async def _wait_for_request():
 
             elif _channel_facepic == _facepics.get('current'):
                 logging.debug("channel face pic = current face pic, sending question")
-                _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
+                await _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
                 _state = "2"
                 return
 
@@ -178,7 +178,7 @@ async def _wait_for_request():
         elif os.path.isfile(_request.face_pic):
             logging.debug("sending face pic from request")
             try:
-                _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
+                await _murphybot.send_file(_MURPHYBOT_HANDLE, _request.face_pic)
                 _state = "3"
                 return
             except Exception as ex:
@@ -191,7 +191,7 @@ async def _wait_for_request():
 
     else:
         logging.debug("sending question")
-        _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
+        await _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
         _state = "2"
 
 
@@ -208,7 +208,7 @@ async def _process_request():
         else:
             logging.debug(f"reuploading channel face pic")
             try:
-                _murphybot.send_file(_MURPHYBOT_HANDLE, _channel_facepic)
+                await _murphybot.send_file(_MURPHYBOT_HANDLE, _channel_facepic)
                 _state = "1" if _state == "reupload face" else "3"
             except Exception as ex:
                 util.log_exc(ex)
@@ -242,7 +242,7 @@ async def _process_request():
 
     elif _state == "2.2":
         tmpdir = mkdtemp(prefix="lambdabot_murphy_")
-        output = _murphybot.download_media(_media, file=tmpdir)
+        output = await _murphybot.download_media(_media, file=tmpdir)
         await _request.channel.send(_request.mention, file=discord.File(output))
         shutil.rmtree(tmpdir)
         logging.info("murphy answer sent")
@@ -251,7 +251,7 @@ async def _process_request():
         logging.debug("face accepted, sending question")
         _facepics[_request.channel.id] = _request.face_pic
         _facepics['current'] = _request.face_pic
-        _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
+        await _murphybot.send_message(_MURPHYBOT_HANDLE, _request.question)
         _state = "2"
         return False
 

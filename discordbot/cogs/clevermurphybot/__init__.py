@@ -60,7 +60,9 @@ class CleverMurphyBot:
         if msg_text and (not answered or not murphy.is_active()):
             await cleverboi.talk(msg, msg_text)
 
+    async def on_ready(self):
+        await murphy.start(self.bot)
+
 
 def setup(bot):
-    murphy.start(bot)
     bot.add_cog(CleverMurphyBot(bot))
