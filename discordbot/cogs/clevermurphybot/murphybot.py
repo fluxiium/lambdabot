@@ -64,7 +64,8 @@ async def start(client):
     # noinspection PyBroadException
     try:
         await _murphybot.start()
-    except Exception:
+    except Exception as exc:
+        util.log_exc(exc)
         logging.error("authentication failed")
         _murphybot = None
         return
