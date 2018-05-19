@@ -32,4 +32,4 @@ def log_exc(exc: Exception, ctx=None):
         tb_str += line
     tb_str = tb_str.strip().replace("\n\n", "\n")
     errstr += tb_str
-    logging.debug(errstr)
+    logging.error(errstr)
