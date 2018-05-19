@@ -17,3 +17,4 @@ whitenoise
 brotlipy
 django-compressor
 async_generator
+yarl<1.2
