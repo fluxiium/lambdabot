@@ -16,8 +16,8 @@ from discordbot.models import DiscordServer, DiscordContext, DiscordUser, Discor
 from discordbot.util import get_prefix
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 bot = commands.Bot(command_prefix=get_prefix, description='I make memes.', case_insensitive=True)
-logging.basicConfig(level=logging.INFO)
 
 @bot.event
 async def on_guild_join(server: discord.Guild):
