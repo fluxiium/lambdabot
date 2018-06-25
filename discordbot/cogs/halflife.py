@@ -7,19 +7,30 @@ import lamdabotweb.settings as config
 
 from bs4 import BeautifulSoup
 from discord import Embed, Message
-from discord.ext.commands import Context, CommandError, Bot
+from discord.ext import commands
+from discord.ext.commands import CommandError, Bot
 from django.utils import timezone
 from discordbot.util import discord_command
 from util import headers
-from discordbot.models import DiscordImage
+from discordbot.models import DiscordImage, DiscordContext
 
 _IMG_ARCHIVE_CHANNEL = 441204229902827535
 if config.DEBUG:
     _SERVER_ID = 395615515101495299
     _LOG_CHANNEL = 395616760302141450
+    _MODERATORS_ROLE = 460730783259426818
+    _CITIZEN_ROLE = 460730783259426818
 else:
     _SERVER_ID = 154305477323390976
     _LOG_CHANNEL = 154637540341710848
+    _MODERATORS_ROLE = 406968787343245312
+    _CITIZEN_ROLE = 460736996185341962
+
+
+def _moderator_only():
+    async def predicate(ctx):
+        return ctx.is_manager or _MODERATORS_ROLE in [r.id for r in ctx.author.roles]
+    return commands.check(predicate)
 
 
 class HalfLifeCog:
@@ -35,8 +46,14 @@ class HalfLifeCog:
     def __img_archive_channel(self):
         return self.bot.get_channel(_IMG_ARCHIVE_CHANNEL)
 
+    @_moderator_only()
+    @discord_command(name='verify', guild_only=True, hidden=True)
+    async def _cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
+        await user.add_roles(discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE))
+        await ctx.send('user verified')
+
     @discord_command(name='overwiki')
-    async def _cmd_wiki(self, ctx: Context, *, query=None):
+    async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
         """
         search the half-life overwiki
         if no argument is given shows a random article
