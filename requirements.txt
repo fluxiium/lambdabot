@@ -6,7 +6,7 @@ django-colorfield
 facebook-sdk==2.0.0
 html5lib
 Pillow
-psycopg2
+psycopg2-binary
 requests
 telethon-aio==1.0rc1
 python-twitter==3.4.1
