@@ -15,6 +15,8 @@ from util import headers
 from discordbot.models import DiscordImage, DiscordContext
 
 _IMG_ARCHIVE_CHANNEL = 441204229902827535
+_NO_LOG_CHANNELS = [460903023925788673, 381240135905312778, 436225212774613022, 407251146785292318, 406968735329419264,
+                    156833429143420928]
 if config.DEBUG:
     _SERVER_ID = 395615515101495299
     _LOG_CHANNEL = 395616760302141450
@@ -138,7 +140,7 @@ class HalfLifeCog:
         await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
 
     async def on_message_delete(self, message: Message):
-        if not message.guild or message.guild.id != _SERVER_ID:
+        if not message.guild or message.guild.id != _SERVER_ID or message.channel.id in _NO_LOG_CHANNELS:
             return
 
         images = DiscordImage.from_message(message, attachments_only=True)
