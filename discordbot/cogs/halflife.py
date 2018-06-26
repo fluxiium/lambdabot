@@ -49,8 +49,12 @@ class HalfLifeCog:
     @_moderator_only()
     @discord_command(name='verify', guild_only=True, hidden=True)
     async def _cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
-        await user.add_roles(discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE))
-        await ctx.send('user verified')
+        citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
+        if citizen_role not in user.roles:
+            await user.add_roles(citizen_role)
+            await ctx.send(f'{ctx.author.mention} user verified!')
+        else:
+            raise CommandError('This user is verified already!')
 
     @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
