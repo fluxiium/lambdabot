@@ -100,11 +100,18 @@ class MemeImage(models.Model):
             all_count = all_imgs.count()
             select_count = min(100, int(all_count * 0.5) or all_count)
 
+            pq1 = 0.35
+            pq2 = 0.30
+            pq3 = 0.20
+            pq4 = 0.15
+
+            assert pq1 + pq2 + pq3 + pq4 == 1.0
+
             # this looks ugly asf but it's a great way to make the bot prioritize images that have been used less
-            q1_imgs = all_imgs.filter(quartile=1)[0:1 + int(select_count * 0.5)]
-            q2_imgs = all_imgs.filter(quartile=2)[0:1 + int(select_count * 0.3) + int(select_count * 0.5) - q1_imgs.count()]
-            q3_imgs = all_imgs.filter(quartile=3)[0:1 + int(select_count * 0.15) + int(select_count * 0.5) - q1_imgs.count() + int(select_count * 0.3) - q2_imgs.count()]
-            q4_imgs = all_imgs.filter(quartile=4)[0:1 + int(select_count * 0.05) + int(select_count * 0.5) - q1_imgs.count() + int(select_count * 0.3) - q2_imgs.count() + int(select_count * 0.15) - q3_imgs.count()]
+            q1_imgs = all_imgs.filter(quartile=1)[0:1 + int(select_count * pq1)]
+            q2_imgs = all_imgs.filter(quartile=2)[0:1 + int(select_count * pq2) + int(select_count * pq1) - q1_imgs.count()]
+            q3_imgs = all_imgs.filter(quartile=3)[0:1 + int(select_count * pq3) + int(select_count * pq1) - q1_imgs.count() + int(select_count * pq2) - q2_imgs.count()]
+            q4_imgs = all_imgs.filter(quartile=4)[0:1 + int(select_count * pq4) + int(select_count * pq1) - q1_imgs.count() + int(select_count * pq2) - q2_imgs.count() + int(select_count * pq3) - q3_imgs.count()]
 
             queue_list = list(q1_imgs) + list(q2_imgs) + list(q3_imgs) + list(q4_imgs)
 
