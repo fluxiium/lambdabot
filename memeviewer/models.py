@@ -6,11 +6,12 @@ import lamdabotweb.settings as config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from functools import reduce
-from django.db import models, transaction, IntegrityError
+from django.db import models, transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from colorfield.fields import ColorField
+from psycopg2 import IntegrityError
 from PIL import Image
 from PIL import ImageFilter
 from util import struuid4, log_exc
