@@ -124,7 +124,7 @@ class ExtraCmdCog:
             text = num
             num = ''
         try:
-            howmany = max(1, min(10, int(num)))
+            howmany = max(1, min(len(langs), int(num)))
         except ValueError:
             howmany = 4
             text = f'{num} {text}'
