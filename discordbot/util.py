@@ -15,9 +15,7 @@ def get_prefix(_, msg: Message):
     return '!'
 
 
-def command_enabled(cmd, ctx: DiscordContext, sends_response=True):
-    if sends_response and ctx.channel_data is None:
-        return False
+def command_enabled(cmd, ctx: DiscordContext):
     name = isinstance(cmd, Command) and cmd.name or cmd
     return not ctx.server_data or (ctx.channel_data.command_enabled(name) and ctx.server_data.command_enabled(name))
 
@@ -29,6 +27,8 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
         if yack_only and ctx.author.id != 257499042039332866:
             return False
             # raise CommandError("Hey, you've got the wrong airlock, Mr. Freeman. You know I can't let you through here.")
+        if sends_response and not ctx.can_respond:
+            raise MissingPermissions(['send_messages'])
         if (guild_only or management) and ctx.guild is None:
             raise NoPrivateMessage('This command cannot be used in private messages.')
         if management and not ctx.is_manager:
@@ -42,13 +42,13 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
             hidden = True
         elif management:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx, sends_response) or ctx.guild is None or not ctx.is_manager
+                return not command_enabled(name, ctx) or ctx.guild is None or not ctx.is_manager
         elif guild_only:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx, sends_response) or ctx.guild is None
+                return not command_enabled(name, ctx) or ctx.guild is None
         else:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx, sends_response)
+                return not command_enabled(name, ctx)
 
     def decorator(f):
         cmdattrs = attrs

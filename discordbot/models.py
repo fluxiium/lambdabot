@@ -203,8 +203,6 @@ class DiscordContext(commands.Context):
 
     @property
     def channel_data(self):
-        if not getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None):
-            return None
         if self.__channel_data is None:
             self.__channel_data = DiscordChannel.objects.update_or_create(channel_id=str(self.channel.id), defaults={
                 'name': self.guild and self.channel.name or 'DM-' + str(self.channel.id),
@@ -220,6 +218,10 @@ class DiscordContext(commands.Context):
                 'name': self.author.name
             })[0]
         return self.__user_data
+
+    @property
+    def can_respond(self):
+        return getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None)
 
     @property
     def images(self):
