@@ -22,11 +22,13 @@ if config.DEBUG:
     _LOG_CHANNEL = 395616760302141450
     _MODERATORS_ROLE = 460730783259426818
     _CITIZEN_ROLE = 460730783259426818
+    _GAY_BABY_ROLE = 493054368313245696
 else:
     _SERVER_ID = 154305477323390976
     _LOG_CHANNEL = 154637540341710848
     _MODERATORS_ROLE = 406968787343245312
     _CITIZEN_ROLE = 460736996185341962
+    _GAY_BABY_ROLE = 486241262819737610
 
 
 def _moderator_only():
@@ -52,11 +54,21 @@ class HalfLifeCog:
     @discord_command(name='verify', guild_only=True, hidden=True)
     async def _cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
         citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
+        gay_baby_role = discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE)
         if citizen_role not in user.roles:
             await user.add_roles(citizen_role)
             await ctx.send(f'{ctx.author.mention} user verified!')
         else:
             raise CommandError('This user is verified already!')
+        await user.remove_roles(gay_baby_role)
+
+    @_moderator_only()
+    @discord_command(name='jail', guild_only=True, hidden=True)
+    async def _cmd_jail(self, ctx: DiscordContext, *, user: discord.Member):
+        citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
+        gay_baby_role = discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE)
+        await user.add_roles(gay_baby_role)
+        await user.remove_roles(citizen_role)
 
     @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
