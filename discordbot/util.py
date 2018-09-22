@@ -15,15 +15,15 @@ def get_prefix(_, msg: Message):
     return '!'
 
 
-def command_enabled(cmd, ctx: DiscordContext):
-    if ctx.channel_data is None:
+def command_enabled(cmd, ctx: DiscordContext, sends_response=True):
+    if sends_response and ctx.channel_data is None:
         return False
     name = isinstance(cmd, Command) and cmd.name or cmd
     return not ctx.server_data or (ctx.channel_data.command_enabled(name) and ctx.server_data.command_enabled(name))
 
 
 def discord_command(name, parent=None, group=False, management=False, guild_only=False, yack_only=False, image_required=False,
-                    invoke_without_command=True, enabled=command_enabled, pass_context=True, hidden=None, **attrs):
+                    invoke_without_command=True, enabled=command_enabled, pass_context=True, hidden=None, sends_response=True, **attrs):
 
     async def predicate(ctx: DiscordContext):
         if yack_only and ctx.author.id != 257499042039332866:
@@ -42,13 +42,13 @@ def discord_command(name, parent=None, group=False, management=False, guild_only
             hidden = True
         elif management:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx) or ctx.guild is None or not ctx.is_manager
+                return not command_enabled(name, ctx, sends_response) or ctx.guild is None or not ctx.is_manager
         elif guild_only:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx) or ctx.guild is None
+                return not command_enabled(name, ctx, sends_response) or ctx.guild is None
         else:
             def hidden(_, ctx):
-                return not command_enabled(name, ctx)
+                return not command_enabled(name, ctx, sends_response)
 
     def decorator(f):
         cmdattrs = attrs
