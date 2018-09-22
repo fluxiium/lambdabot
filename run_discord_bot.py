@@ -89,7 +89,7 @@ async def on_command_error(ctx: DiscordContext, exc):
         msg = str(exc) or "error :cry:"
     else:
         msg = ""
-    if msg and ctx.channel_data is not None:  # null ctx.channel_data means no permission to send messages
+    if msg and ctx.can_respond:
         await ctx.send(f"{ctx.author.mention} :warning: {msg}")
 
 print('loading cogs: ', end='')
