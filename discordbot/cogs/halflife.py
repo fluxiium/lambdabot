@@ -54,21 +54,20 @@ class HalfLifeCog:
     @discord_command(name='verify', guild_only=True, hidden=True)
     async def _cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
         citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
-        gay_baby_role = discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE)
         if citizen_role not in user.roles:
             await user.add_roles(citizen_role)
             await ctx.send(f'{ctx.author.mention} user verified!')
         else:
             raise CommandError('This user is verified already!')
-        await user.remove_roles(gay_baby_role)
 
     @_moderator_only()
-    @discord_command(name='jail', guild_only=True, hidden=True)
+    @discord_command(name='jail', guild_only=True, hidden=True, sends_response=False)
     async def _cmd_jail(self, ctx: DiscordContext, *, user: discord.Member):
-        citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
         gay_baby_role = discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE)
-        await user.add_roles(gay_baby_role)
-        await user.remove_roles(citizen_role)
+        if gay_baby_role in user.roles:
+            await user.remove_roles(gay_baby_role)
+        else:
+            await user.add_roles(gay_baby_role)
 
     @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
