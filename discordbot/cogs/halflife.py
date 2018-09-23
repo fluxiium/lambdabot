@@ -63,11 +63,12 @@ class HalfLifeCog:
     @_moderator_only()
     @discord_command(name='jail', guild_only=True, hidden=True, sends_response=False)
     async def _cmd_jail(self, ctx: DiscordContext, *, user: discord.Member):
-        gay_baby_role = discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE)
-        if gay_baby_role in user.roles:
-            await user.remove_roles(gay_baby_role)
-        else:
-            await user.add_roles(gay_baby_role)
+        await user.add_roles(discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE))
+
+    @_moderator_only()
+    @discord_command(name='unjail', guild_only=True, hidden=True, sends_response=False)
+    async def _cmd_unjail(self, ctx: DiscordContext, *, user: discord.Member):
+        await user.remove_roles(discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE))
 
     @discord_command(name='overwiki')
     async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
