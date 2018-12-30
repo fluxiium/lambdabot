@@ -315,14 +315,6 @@ class Meem(models.Model):
         return meem
 
     @property
-    def sourceimgs_in_slots(self):
-        rawimgs = json.loads(self.source_images)
-        imgs = {}
-        for slot in self.template_link.memetemplateslot_set.all():
-            imgs[slot] = MemeSourceImage.objects.get(name=rawimgs[str(slot.slot_order)])
-        return imgs
-
-    @property
     def sourceimgs(self):
         return list(map(lambda x: MemeSourceImage.objects.get(name=x[1]), json.loads(self.source_images).items()))
 
@@ -337,9 +329,6 @@ class Meem(models.Model):
     @property
     def info_url(self):
         return config.WEBSITE_URL + 'meme/' + self.meme_id
-
-    def get_absolute_url(self):
-        return self.info_url
 
     @property
     def admin_link(self):
@@ -368,7 +357,12 @@ class Meem(models.Model):
         if background is None:
             background = background_color
 
-        for slot, sourceimg in self.sourceimgs_in_slots.items():
+        rawimgs = json.loads(self.source_images)
+        sourceimgs_in_slots = {}
+        for slot in self.template_link.memetemplateslot_set.all():
+            sourceimgs_in_slots[slot] = MemeSourceImage.objects.get(name=rawimgs[str(slot.slot_order)])
+
+        for slot, sourceimg in sourceimgs_in_slots.items():
 
             source_image_original = Image.open(sourceimg.image_file).convert("RGBA")
 
