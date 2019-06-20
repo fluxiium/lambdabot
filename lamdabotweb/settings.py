@@ -18,7 +18,7 @@ if DEBUG:
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    MEDIA_URL = '/media/'
+    MEDIA_URL = 'http://192.168.0.20:8000/media/'
     IMAGEMAGICK_PATH = "C:\Program Files\ImageMagick-7.0.4-Q16\convert.exe"
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347870501194170368&permissions=51264&scope=bot'
     DATA_UPLOAD_MAX_NUMBER_FIELDS = None

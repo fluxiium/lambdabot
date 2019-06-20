@@ -1,7 +1,7 @@
 beautifulsoup4
 cleverwrap
 git+git://github.com/morchkovalski/discord.py.git@rewrite#egg=discord.py
-Django==2.0.8
+Django
 django-colorfield
 facebook-sdk==2.0.0
 html5lib
@@ -21,3 +21,5 @@ yarl<1.2
 djangorestframework
 markdown
 django-filters
+coreapi
+pyyaml

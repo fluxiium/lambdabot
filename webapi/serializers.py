@@ -28,4 +28,7 @@ class MeemSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Meem
         fields = ('number', 'meme_id', 'template_link', 'gen_date', 'source_images', 'url', 'info_url')
+    number = serializers.IntegerField(read_only=True)
+    meme_id = serializers.CharField(read_only=True)
+    gen_date = serializers.DateTimeField(read_only=True)
     template_link = serializers.HyperlinkedRelatedField(view_name='webapi:memetemplate-detail', lookup_field='name', queryset=models.MemeTemplate.objects.order_by('name'))
