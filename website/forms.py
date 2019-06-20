@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from discordbot.models import DiscordUser, DiscordChannel
 from memeviewer.models import MemeSourceImage, POOL_TYPE_SRCIMGS, POOL_TYPE_ALL, MemeImagePool
-import lamdabotweb.settings as config
+from website import settings
 
 
 class MemeSourceImageForm(forms.ModelForm):
@@ -25,8 +25,8 @@ class MemeSourceImageForm(forms.ModelForm):
 
     def clean_image_file(self):
         image = self.cleaned_data['image_file']
-        if image.size > config.MAX_SRCIMG_SIZE:
-            raise ValidationError('Image is too big (should be smaller than %(size)s KB)', params={'size': config.MAX_SRCIMG_SIZE / 1000})
+        if image.size > settings.MEEM_MAX_SRCIMG_SIZE:
+            raise ValidationError('Image is too big (should be smaller than %(size)s KB)', params={'size': settings.MEEM_MAX_SRCIMG_SIZE / 1000})
         return image
 
     captcha = ReCaptchaField()

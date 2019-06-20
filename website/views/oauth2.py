@@ -1,8 +1,8 @@
-import lamdabotweb.settings as config
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from website.discord_api import revoke_discord_api_token, refresh_discord_api_token
 from util import struuid4
+from website import settings
 
 
 def login(request):
@@ -10,7 +10,7 @@ def login(request):
     scope = 'identify'
     request.session['oauth2_state'] = state
     return redirect('https://discordapp.com/api/oauth2/authorize?client_id={0}&redirect_uri={1}&response_type=code&scope={2}&state={3}'.format(
-        config.OAUTH2_CLIENT_ID, config.OAUTH2_REDIRECT_URI, scope, state
+        settings.OAUTH2_CLIENT_ID, settings.OAUTH2_REDIRECT_URI, scope, state
     ))
 
 

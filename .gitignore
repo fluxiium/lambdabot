@@ -101,12 +101,9 @@ ENV/
 .idea
 /local
 desktop.ini
-/config.py
-/config.py~
 /db.sqlite3*
 /media
 /fixtures
 *.session
 /todo.txt
-/discord
 /static

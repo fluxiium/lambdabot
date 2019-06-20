@@ -1,9 +1,9 @@
 import shutil
-from typing import List, Union
-import lamdabotweb.settings as config
 import discord
 import requests
 import os
+import logging
+from typing import List, Union
 from django.db.models import Q
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
@@ -14,7 +14,7 @@ from django.db import models, transaction
 from tempfile import mkdtemp
 from util import headers, struuid4, is_url
 from memeviewer.models import Meem, MemeSourceImage, MemeImagePool, MemeTemplate, QueuedMemeImage
-import logging
+from discordbot import settings
 
 
 class CommandContext(models.Model):
@@ -260,7 +260,7 @@ class DiscordImage:
                 continue
             contenttype = r.headers.get('content-type')
             contentlength = r.headers.get('content-length')
-            if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= config.MAX_SRCIMG_SIZE:
+            if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= settings.MEEM_MAX_SRCIMG_SIZE:
                 actual_images.append(cls(url, filename or struuid4()))
                 if just_one and len(actual_images) == 1:
                     return actual_images[0]

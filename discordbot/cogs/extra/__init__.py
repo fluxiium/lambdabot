@@ -2,25 +2,24 @@ import random
 import re
 import requests
 import shutil
-from googletrans import Translator
-import lamdabotweb.settings as config
 import discord
+from googletrans import Translator
 from bs4 import BeautifulSoup
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, BucketType
+from discord.ext.commands import Bot, CommandError, Context, BucketType, Cog
 from discordbot.cogs.extra.dance import dance
-from discordbot.util import discord_command
 from util import headers
+from discordbot import settings
 
 
-class ExtraCmdCog:
+class ExtraCmdCog(Cog):
 
     def __init__(self, bot: Bot):
-        self.cog_name = "Cool stuff"
+        self.__cog_name__ = "Miscellaneous"
         self.bot = bot
 
-    @discord_command(name='led')
-    async def _cmd_led(self, ctx: Context, *, text):
+    @commands.command('led')
+    async def cmd_led(self, ctx: Context, *, text):
         """
         generate an LED sign
         (uses wigflip.com)
@@ -39,8 +38,8 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @discord_command(name='mario', usage='[name] <first_line> <message>')
-    async def _cmd_mario(self, ctx, first_line, message, arg3=''):
+    @commands.command(name='mario')
+    async def cmd_mario(self, ctx, first_line, message, arg3=''):
         """
         generate a mario GIF
         (uses wigflip.com)
@@ -70,8 +69,8 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @discord_command(name='noviews')
-    async def _cmd_noviews(self, ctx):
+    @commands.command(name='noviews')
+    async def cmd_noviews(self, ctx):
         """
         show a random youtube video with no views
         (uses petittube.com)
@@ -94,10 +93,10 @@ class ExtraCmdCog:
         else:
             raise CommandError()
 
-    @discord_command(name='dance', guild_only=True)
-    @commands.cooldown(config.DANCE_LIMIT, config.DANCE_COOLDOWN, BucketType.user)
+    @commands.command(name='dance', guild_only=True)
+    @commands.cooldown(settings.DANCE_LIMIT, settings.DANCE_COOLDOWN, BucketType.user)
     @commands.bot_has_permissions(attach_files=True)
-    async def _cmd_dance(self, ctx, *, text):
+    async def cmd_dance(self, ctx, *, text):
         """
         generate text using dancing letters
         (uses gifs from artie.com)
@@ -107,11 +106,11 @@ class ExtraCmdCog:
         await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
         shutil.rmtree(tmpdir)
 
-    @discord_command(name='googletrans', aliases=['gt'], usage='[num] (text)')
-    async def _cmd_googletrans(self, ctx, num, *, text=''):
+    @commands.command(name='googletrans', aliases=['gt'])
+    async def cmd_googletrans(self, ctx, num, *, text=''):
         """
-        google translate text num times into random languages and then back to english
-        (num = 4 by default)
+        run google translate on some text multiple times
+        (4 times by default)
         """
         langs = ["af", "sq", "ar", "be", "bg", "ca", "zh-CN", "zh-TW", "hr",
                  "cs", "da", "nl", "et", "tl", "fi", "fr", "gl", "de", "en",

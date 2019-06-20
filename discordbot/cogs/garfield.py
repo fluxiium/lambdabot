@@ -1,18 +1,17 @@
 import json
 import requests
-
-from discord.ext.commands import Bot, Context, CommandError
-from discordbot.util import discord_command
+from discord.ext import commands
+from discord.ext.commands import Bot, Context, CommandError, Cog
 from util import headers
 
 
-class GarfieldCog:
+class GarfieldCog(Cog):
     def __init__(self, bot: Bot):
-        self.cog_name = "Garfield"
+        self.__cog_name__ = "Garfield"
         self.bot = bot
 
-    @discord_command(name='gfwiki')
-    async def _cmd_wiki(self, ctx: Context, *, query=None):
+    @commands.command(name='gfwiki')
+    async def cmd_wiki(self, ctx: Context, *, query=None):
         """
         search the garfield wiki
         if no argument is given shows a random article

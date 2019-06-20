@@ -1,11 +1,11 @@
 import os
 import re
 from django.db.models import Q
-import lamdabotweb.settings as config
 from datetime import timedelta
 from django.core.management import BaseCommand
 from django.utils import timezone
 from memeviewer.models import Meem, MemeSourceImage, MemeTemplate, MemeImagePool
+from memeviewer import settings
 
 
 class Command(BaseCommand):
@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
         # delete meme images generated >MEEM_CLEANUP_DAYS days ago
 
-        for m in Meem.objects.filter(gen_date__lte=timezone.now() - timedelta(days=config.MEEM_CLEANUP_DAYS)):
+        for m in Meem.objects.filter(gen_date__lte=timezone.now() - timedelta(days=settings.MEEM_CLEANUP_DAYS)):
             try:
                 os.remove(m.local_path)
             except FileNotFoundError:
@@ -23,8 +23,8 @@ class Command(BaseCommand):
 
         # delete orphaned sourceimg/template files
 
-        sourceimg_dir = os.path.join(config.MEDIA_ROOT, 'sourceimg')
-        template_dir = os.path.join(config.MEDIA_ROOT, 'templates')
+        sourceimg_dir = os.path.join(settings.MEDIA_ROOT, 'sourceimg')
+        template_dir = os.path.join(settings.MEDIA_ROOT, 'templates')
         allowed_extensions = r'.*\.jpg|.*\.jpeg|.*\.png|.*\.webp|.*\.gif'
 
         deldir = os.path.join(sourceimg_dir, "deleted")

@@ -49,8 +49,6 @@ class DiscordServerAdmin(admin.ModelAdmin):
 class MemeImagePoolOwnershipInline(admin.TabularInline):
     model = MemeImagePoolOwnership
     extra = 0
-    # fields = ('owner', 'image_pool', 'shared_with', 'moderators', 'status')
-    # filter_vertical = ('shared_with', 'moderators')
     fields = ('owner', 'image_pool', 'status')
 
 
@@ -61,7 +59,6 @@ class DiscordUserAdmin(admin.ModelAdmin):
     ordering = ('name',)
     readonly_fields = ('submissions_link', 'memes_link')
     fields = ('user_id', 'name', 'blacklisted', 'submissions_link', 'memes_link')
-    # inlines = [MemeImagePoolOwnershipInline]
 
     def submissions_link(self, obj: DiscordUser):
         return list_url(MemeSourceImage, {

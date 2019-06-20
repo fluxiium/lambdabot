@@ -5,12 +5,42 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = bool(int(os.getenv('DEBUG', False)))
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
+
+# discord api stuff for website
+OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
+OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
+
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+DISCORD_STATUS = os.getenv('DISCORD_STATUS')
+
+CLEVERBOT_USER = os.getenv('CLEVERBOT_USER')
+CLEVERBOT_KEY = os.getenv('CLEVERBOT_KEY')
+
+TELEGRAM_API_ID = int(os.getenv('TELEGRAM_API_ID'))
+TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
+MURPHYBOT_TIMEOUT = int(os.getenv('MURPHYBOT_TIMEOUT'))
+
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_SITE_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
+NOCAPTCHA = True
+
+MEEM_MAX_SRCIMG_SIZE = int(os.getenv('MEEM_MAX_SRCIMG_SIZE'))
+MEEM_CLEANUP_DAYS = int(os.getenv('MEEM_CLEANUP_DAYS'))
+MEEM_LIMIT = int(os.getenv('MEEM_LIMIT'))
+MEEM_COOLDOWN = int(os.getenv('MEEM_COOLDOWN'))
+
+DANCE_MAX_W = int(os.getenv('DANCE_MAX_W'))
+DANCE_MAX_LEN = int(os.getenv('DANCE_MAX_LEN'))
+DANCE_LIMIT = int(os.getenv('DANCE_LIMIT'))
+DANCE_COOLDOWN = int(os.getenv('DANCE_COOLDOWN'))
+
 
 if DEBUG:
     WEBSITE_URL = 'http://192.168.0.20:8000/'
@@ -25,16 +55,28 @@ if DEBUG:
 else:
     WEBSITE_URL = 'https://lambdabot.morchkovalski.com/'
     ALLOWED_HOSTS = ['lambdabot.morchkovalski.com']
-    STATIC_ROOT = '/srv/static.morchkovalski.com'
-    STATIC_URL = 'https://static.morchkovalski.com/'
+    STATIC_ROOT = '/srv/static.morchkovalski.com/lambdabot'
+    STATIC_URL = 'https://static.morchkovalski.com/lambdabot/'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATICFILES_FINDERS = (
+        'django.contrib.staticfiles.finders.FileSystemFinder',
+        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+        'compressor.finders.CompressorFinder',
+    )
+    COMPRESS_ENABLED = True
+    COMPRESS_OFFLINE = True
+    COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter', 'compressor.filters.cssmin.CSSMinFilter']
     MEDIA_ROOT = '/srv/media.morchkovalski.com/lambdabot'
     MEDIA_URL = 'https://media.morchkovalski.com/lambdabot/'
     IMAGEMAGICK_PATH = '/usr/bin/convert'
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347798135214702603&permissions=51264&scope=bot'
 
-# django settings
-SECRET_KEY = os.getenv('SECRET_KEY')
+OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+DISCORD_API_ROOT = 'https://discordapp.com/api'
+OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
+OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
+OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
+
 ROOT_URLCONF = 'lamdabotweb.urls'
 FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
 WSGI_APPLICATION = 'lamdabotweb.wsgi.application'
@@ -88,7 +130,7 @@ DATABASES = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'memeviewer/../templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'memeviewer/../website/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -100,49 +142,3 @@ TEMPLATES = [
         },
     },
 ]
-
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder',
-]
-
-COMPRESS_OFFLINE = True
-COMPRESS_OFFLINE_CONTEXT = {}
-
-# discord api stuff for website
-OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
-OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
-
-DISCORD_API_ROOT = 'https://discordapp.com/api'
-OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
-OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
-OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
-OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
-
-RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_SITE_KEY')
-RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
-NOCAPTCHA = True
-
-# meme generator settings
-MAX_SRCIMG_SIZE = 1500000
-MEEM_CLEANUP_DAYS = 30
-
-# discord bot settings
-DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-DISCORD_BOT_ID = os.getenv('DISCORD_BOT_ID')
-DISCORD_WATCHDOG_TOKEN = os.getenv('DISCORD_WATCHDOG_TOKEN')
-DISCORD_STATUS = '!help'
-DISCORD_MEME_LIMIT = 5
-DISCORD_MEME_COOLDOWN = 60
-DANCE_MAX_W = 1000
-DANCE_MAX_LEN = 40
-DANCE_LIMIT = 2
-DANCE_COOLDOWN = 10
-
-CLEVERBOT_USER = os.getenv('CLEVERBOT_USER')
-CLEVERBOT_KEY = os.getenv('CLEVERBOT_KEY')
-
-TELEGRAM_API_ID = int(os.getenv('TELEGRAM_API_ID'))
-TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
-MURPHYBOT_TIMEOUT = 20

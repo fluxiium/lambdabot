@@ -1,16 +1,16 @@
 from discordbot.models import DiscordUser
-import lamdabotweb.settings as config
 from website.discord_api import refresh_discord_api_token, discord_api
+from website import settings
 
 
 def discord_oauth2_middleware(get_response):
     def middleware(request):
-        request.website_url = config.WEBSITE_URL
+        request.website_url = settings.WEBSITE_URL
 
         oauth2_session = refresh_discord_api_token(request)
         discord_user_data = discord_api(request, '/users/@me')
 
-        if config.DEBUG:
+        if settings.DEBUG:
             print(oauth2_session)
             print(discord_user_data)
 

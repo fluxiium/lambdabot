@@ -2,7 +2,7 @@ import re
 import os
 from django.core.management import BaseCommand
 from memeviewer.models import MemeSourceImage, MemeImagePool
-import lamdabotweb.settings as config
+from memeviewer import settings
 
 ALLOWED_EXTENSIONS = r'.*\.jpg|.*\.jpeg|.*\.png|.*\.webp|.*\.gif'
 
@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         pool = MemeImagePool.objects.get(name=options['pool'])
-        sourceimg_dir = os.path.join(config.MEDIA_ROOT, 'sourceimg')
+        sourceimg_dir = os.path.join(settings.MEDIA_ROOT, 'sourceimg')
         for file in os.listdir(sourceimg_dir):
             if re.match(ALLOWED_EXTENSIONS, file, re.IGNORECASE):
                 try:

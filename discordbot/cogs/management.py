@@ -5,23 +5,24 @@ import textwrap
 import traceback
 from contextlib import redirect_stdout
 from typing import Union, List
-
 import discord
-from discord.ext.commands import Bot, Command
+from discord.ext import commands
+from discord.ext.commands import Bot, Command, Cog
+from discordbot import checks
 from discordbot.models import DiscordContext, DiscordChannel, DiscordServer
-from discordbot.util import discord_command, CommandParam
+from discordbot.param_types import CommandParam
 
 
-class ManagementCog:
+class ManagementCog(Cog):
 
     def __init__(self, bot: Bot):
-        self.cog_name = "Management"
+        self.__cog_name__ = "Management"
         self.bot = bot
         self._last_result = None
         self._sessions = set()
 
     @staticmethod
-    async def __list_cmds(ctx: DiscordContext, data):
+    async def list_cmds(ctx: DiscordContext, data):
         return await ctx.send("{} currently disabled commands{}: ```{} ```".format(
             ctx.author.mention,
             isinstance(data, DiscordChannel) and f' in `#{ctx.channel.name}`' or '',
@@ -29,7 +30,7 @@ class ManagementCog:
         ))
 
     @staticmethod
-    async def __toggle_cmds(ctx: DiscordContext, cmds: List[Command], data: Union[DiscordChannel, DiscordServer], enable):
+    async def toggle_cmds(ctx: DiscordContext, cmds: List[Command], data: Union[DiscordChannel, DiscordServer], enable):
         cmd_names = []
         for cmd in cmds:
             if cmd.name not in ['svcmd', 'cmd']:
@@ -42,47 +43,55 @@ class ManagementCog:
             ' '.join(cmd_names),
         ))
 
-    @discord_command(name='svcmd', usage='[on <commands...> | off <commands...>]', group=True, management=True, enabled=True)
-    async def _cmd_svcmd(self, ctx: DiscordContext):
+    @checks.guild_only()
+    @commands.group(name='svcmd', hidden=True, invoke_without_command=True)
+    async def cmd_svcmd(self, ctx: DiscordContext):
         """
         enable/disable commands in this server
         if no argument is given, shows a list of currently disabled commands
         """
-        await self.__list_cmds(ctx, ctx.server_data)
+        await self.list_cmds(ctx, ctx.server_data)
 
-    @discord_command(parent=_cmd_svcmd, name='on', management=True, enabled=True)
-    async def _cmd_svcmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
-        await self.__toggle_cmds(ctx, cmds, ctx.server_data, True)
+    @checks.management_only()
+    @cmd_svcmd.command(name='on')
+    async def cmd_svcmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many = True)):
+        await self.toggle_cmds(ctx, cmds, ctx.server_data, True)
 
-    @discord_command(parent=_cmd_svcmd, name='off', management=True, enabled=True)
-    async def _cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
-        await self.__toggle_cmds(ctx, cmds, ctx.server_data, False)
+    @checks.management_only()
+    @cmd_svcmd.command(name='off')
+    async def cmd_svcmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many = True)):
+        await self.toggle_cmds(ctx, cmds, ctx.server_data, False)
 
-    @discord_command(name='cmd', usage='[on <commands...> | off <commands...>]', group=True, management=True, enabled=True)
-    async def _cmd_cmd(self, ctx: DiscordContext):
+    @checks.guild_only()
+    @commands.group(name='cmd', hidden=True, invoke_without_command=True)
+    async def cmd_cmd(self, ctx: DiscordContext):
         """
         enable/disable commands in this channel
         if no argument is given, shows a list of currently disabled commands
         """
-        await self.__list_cmds(ctx, ctx.channel_data)
+        await self.list_cmds(ctx, ctx.channel_data)
 
-    @discord_command(parent=_cmd_cmd, name='on', management=True, enabled=True)
-    async def _cmd_cmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
-        await self.__toggle_cmds(ctx, cmds, ctx.channel_data, True)
+    @checks.management_only()
+    @cmd_cmd.command(name='on')
+    async def cmd_cmd_on(self, ctx: DiscordContext, *, cmds: CommandParam(many = True)):
+        await self.toggle_cmds(ctx, cmds, ctx.channel_data, True)
 
-    @discord_command(parent=_cmd_cmd, name='off', management=True, enabled=True)
-    async def _cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many=True)):
-        await self.__toggle_cmds(ctx, cmds, ctx.channel_data, False)
+    @checks.management_only()
+    @cmd_cmd.command(name='off')
+    async def cmd_cmd_off(self, ctx: DiscordContext, *, cmds: CommandParam(many = True)):
+        await self.toggle_cmds(ctx, cmds, ctx.channel_data, False)
 
-    @discord_command(name='prefix', management=True)
-    async def _cmd_prefix(self, ctx: DiscordContext, prefix):
+    @checks.management_only()
+    @commands.command(name='prefix', hidden=True)
+    async def cmd_prefix(self, ctx: DiscordContext, prefix):
         ctx.server_data.prefix = prefix
         ctx.server_data.save()
         await ctx.send(f'{ctx.author.mention} command prefix on this server is now set to `{prefix}`')
 
     # noinspection PyBroadException
-    @discord_command(name='eval', aliases=['epic'], yack_only=True)
-    async def _eval(self, ctx: DiscordContext, *, body: str):
+    @checks.yackson_only()
+    @commands.command(name='eval', hidden=True)
+    async def cmd_eval(self, ctx: DiscordContext, *, body: str):
         """Evaluates a code"""
 
         env = {
@@ -125,8 +134,9 @@ class ManagementCog:
                 await ctx.send(f'```py\n{value}{ret}\n```')
 
     # noinspection PyBroadException
-    @discord_command(name='py', yack_only=True)
-    async def _py(self, ctx: DiscordContext):
+    @checks.yackson_only()
+    @commands.command(name='py', hidden=True)
+    async def cmd_py(self, ctx: DiscordContext):
         """Launches an interactive REPL session."""
         variables = {
             'ctx': ctx,

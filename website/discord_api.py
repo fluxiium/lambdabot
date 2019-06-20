@@ -1,9 +1,9 @@
 import json
+import requests
 from django.utils import timezone
 from requests import HTTPError
-import lamdabotweb.settings as config
-import requests
 from django.shortcuts import redirect
+from website import settings
 
 
 def discord_api(request, api_path):
@@ -16,7 +16,7 @@ def discord_api(request, api_path):
     refresh_after = 0 if current is None else current['refresh_after']
     if refresh_after < now:
         auth = 'Bearer ' + oauth2_session['access_token']
-        r = requests.get(config.DISCORD_API_ROOT + api_path, headers={'Authorization': auth})
+        r = requests.get(settings.DISCORD_API_ROOT + api_path, headers={'Authorization': auth})
         try:
             r.raise_for_status()
         except HTTPError:
@@ -56,11 +56,11 @@ def refresh_discord_api_token(request, code=None):
     else:
         return None
     data.update({
-        'client_id': config.OAUTH2_CLIENT_ID,
-        'client_secret': config.OAUTH2_CLIENT_SECRET,
-        'redirect_uri': config.OAUTH2_REDIRECT_URI,
+        'client_id': settings.OAUTH2_CLIENT_ID,
+        'client_secret': settings.OAUTH2_CLIENT_SECRET,
+        'redirect_uri': settings.OAUTH2_REDIRECT_URI,
     })
-    r = requests.post(config.OAUTH2_TOKEN_URL, data, {'Content-Type': 'application/x-www-form-urlencoded'})
+    r = requests.post(settings.OAUTH2_TOKEN_URL, data, {'Content-Type': 'application/x-www-form-urlencoded'})
     try:
         r.raise_for_status()
     except HTTPError:
@@ -75,7 +75,7 @@ def revoke_discord_api_token(request):
     oauth2_session = request.session.get('oauth2_session')
     discord_data = request.session.get('discord_api')
     if oauth2_session is not None:
-        requests.get(config.OAUTH2_REVOKE_URL, {'token': oauth2_session['access_token']})
+        requests.get(settings.OAUTH2_REVOKE_URL, {'token': oauth2_session['access_token']})
         del request.session['oauth2_session']
     if discord_data is not None:
         del request.session['discord_api']

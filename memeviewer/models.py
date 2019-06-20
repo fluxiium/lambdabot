@@ -2,7 +2,6 @@ import json
 import operator
 import os
 import re
-import lamdabotweb.settings as config
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from functools import reduce
@@ -16,6 +15,7 @@ from PIL import Image
 from PIL import ImageFilter
 from util import struuid4, log_exc
 from util.admin_utils import object_url
+from memeviewer import settings
 
 
 def next_meme_number():
@@ -328,15 +328,15 @@ class Meem(models.Model):
 
     @property
     def local_path(self):
-        return os.path.join(config.MEDIA_ROOT, 'memes', self.meme_id + '.jpg')
+        return os.path.join(settings.MEDIA_ROOT, 'memes', self.meme_id + '.jpg')
 
     @property
     def url(self):
-        return config.MEDIA_URL + 'memes/' + self.meme_id + '.jpg'
+        return settings.MEDIA_URL + 'memes/' + self.meme_id + '.jpg'
 
     @property
     def info_url(self):
-        return config.WEBSITE_URL + 'meme/' + self.meme_id
+        return settings.WEBSITE_URL + 'meme/' + self.meme_id
 
     def get_absolute_url(self):
         return self.info_url

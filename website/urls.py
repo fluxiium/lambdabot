@@ -1,7 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from website import views
-import lamdabotweb.settings as config
+from website import views, settings
 
 app_name = 'website'
 
@@ -14,7 +13,7 @@ urlpatterns = [
     path('oauth2_login/', views.oauth2.login, name='oauth2_login'),
     path('oauth2_logout/', views.oauth2.logout, name='oauth2_logout'),
     path('oauth2_callback/', views.oauth2.callback, name='oauth2_callback'),
-    path('invite/', RedirectView.as_view(url=config.BOT_INVITE_URL, permanent=True), name='bot_invite'),
+    path('invite/', RedirectView.as_view(url=settings.BOT_INVITE_URL, permanent=True), name='bot_invite'),
     path('submit/', views.submit, name='submit'),
     path('submit/<slug:channel_id>/', views.submit, name='submit_to_channel'),
 ]

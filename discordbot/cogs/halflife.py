@@ -3,75 +3,82 @@ import json
 import random
 import requests
 import textwrap
-import lamdabotweb.settings as config
-
 from bs4 import BeautifulSoup
 from discord import Embed, Message
 from discord.ext import commands
-from discord.ext.commands import CommandError, Bot
+from discord.ext.commands import CommandError, Bot, Cog
 from django.utils import timezone
-from discordbot.util import discord_command
 from util import headers
 from discordbot.models import DiscordImage, DiscordContext
+from discordbot import settings
 
-_IMG_ARCHIVE_CHANNEL = 441204229902827535
-_NO_LOG_CHANNELS = [460903023925788673, 381240135905312778, 436225212774613022, 407251146785292318, 406968735329419264,
-                    156833429143420928]
-if config.DEBUG:
-    _SERVER_ID = 395615515101495299
-    _LOG_CHANNEL = 395616760302141450
-    _MODERATORS_ROLE = 460730783259426818
-    _CITIZEN_ROLE = 460730783259426818
-    _GAY_BABY_ROLE = 493054368313245696
+IMG_ARCHIVE_CHANNEL = 441204229902827535
+NO_LOG_CHANNELS = [460903023925788673, 381240135905312778, 436225212774613022, 407251146785292318, 406968735329419264,
+                   156833429143420928]
+if settings.DEBUG:
+    SERVER_ID = 395615515101495299
+    LOG_CHANNEL = 395616760302141450
+    MODERATORS_ROLE = 460730783259426818
+    CITIZEN_ROLE = 460730783259426818
+    GAY_BABY_ROLE = 493054368313245696
 else:
-    _SERVER_ID = 154305477323390976
-    _LOG_CHANNEL = 154637540341710848
-    _MODERATORS_ROLE = 406968787343245312
-    _CITIZEN_ROLE = 460736996185341962
-    _GAY_BABY_ROLE = 486241262819737610
+    SERVER_ID = 154305477323390976
+    LOG_CHANNEL = 154637540341710848
+    MODERATORS_ROLE = 406968787343245312
+    CITIZEN_ROLE = 460736996185341962
+    GAY_BABY_ROLE = 486241262819737610
 
 
-def _moderator_only():
+def moderators_only():
     async def predicate(ctx):
-        return ctx.is_manager or _MODERATORS_ROLE in [r.id for r in ctx.author.roles]
+        return ctx.is_manager or MODERATORS_ROLE in [r.id for r in ctx.author.roles]
     return commands.check(predicate)
 
 
-class HalfLifeCog:
+def hldiscord_only():
+    def predicate(ctx: DiscordContext):
+        return ctx.guild and ctx.guild.id == SERVER_ID
+    return commands.check(predicate)
+
+
+class HalfLifeCog(Cog):
     def __init__(self, bot: Bot):
-        self.cog_name = "Half-Life"
+        self.__cog_name__ = "Half-Life"
         self.bot = bot
 
     @property
-    def __log_channel(self):
-        return self.bot.get_channel(_LOG_CHANNEL)
+    def get_log_channel(self):
+        return self.bot.get_channel(LOG_CHANNEL)
 
     @property
-    def __img_archive_channel(self):
-        return self.bot.get_channel(_IMG_ARCHIVE_CHANNEL)
+    def get_img_archive_channel(self):
+        return self.bot.get_channel(IMG_ARCHIVE_CHANNEL)
 
-    @_moderator_only()
-    @discord_command(name='verify', guild_only=True, hidden=True)
-    async def _cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
-        citizen_role = discord.utils.get(ctx.guild.roles, id=_CITIZEN_ROLE)
+    @moderators_only()
+    @hldiscord_only()
+    @commands.command(name='verify', hidden=True)
+    async def cmd_verify(self, ctx: DiscordContext, *, user: discord.Member):
+        citizen_role = discord.utils.get(ctx.guild.roles, id=CITIZEN_ROLE)
         if citizen_role not in user.roles:
             await user.add_roles(citizen_role)
             await ctx.send(f'{ctx.author.mention} user verified!')
         else:
             raise CommandError('This user is verified already!')
 
-    @_moderator_only()
-    @discord_command(name='jail', guild_only=True, hidden=True, sends_response=False)
-    async def _cmd_jail(self, ctx: DiscordContext, *, user: discord.Member):
-        await user.add_roles(discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE))
+    @moderators_only()
+    @hldiscord_only()
+    @commands.command(name='jail', hidden=True)
+    async def cmd_jail(self, ctx: DiscordContext, *, user: discord.Member):
+        await user.add_roles(discord.utils.get(ctx.guild.roles, id=GAY_BABY_ROLE))
 
-    @_moderator_only()
-    @discord_command(name='unjail', guild_only=True, hidden=True, sends_response=False)
-    async def _cmd_unjail(self, ctx: DiscordContext, *, user: discord.Member):
-        await user.remove_roles(discord.utils.get(ctx.guild.roles, id=_GAY_BABY_ROLE))
+    @moderators_only()
+    @hldiscord_only()
+    @commands.command(name='unjail', hidden=True)
+    async def cmd_unjail(self, ctx: DiscordContext, *, user: discord.Member):
+        await user.remove_roles(discord.utils.get(ctx.guild.roles, id=GAY_BABY_ROLE))
 
-    @discord_command(name='overwiki')
-    async def _cmd_wiki(self, ctx: DiscordContext, *, query=None):
+    @commands.command(name='overwiki')
+    async def cmd_wiki(self, ctx: DiscordContext, *, query=None):
         """
         search the half-life overwiki
         if no argument is given shows a random article
@@ -152,7 +159,7 @@ class HalfLifeCog:
         await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
 
     async def on_message_delete(self, message: Message):
-        if not message.guild or message.guild.id != _SERVER_ID or message.channel.id in _NO_LOG_CHANNELS:
+        if not message.guild or message.guild.id != SERVER_ID or message.channel.id in NO_LOG_CHANNELS:
             return
 
         images = DiscordImage.from_message(message, attachments_only=True)
@@ -162,7 +169,7 @@ class HalfLifeCog:
 
         for att in images:
             att_path = att.save()
-            msg_archived = await self.__img_archive_channel.send(file=discord.File(att_path))
+            msg_archived = await self.get_img_archive_channel.send(file=discord.File(att_path))
             att.cleanup()
             att = msg_archived.attachments[0]
 
@@ -181,7 +188,7 @@ class HalfLifeCog:
                 text="ID: {0}".format(message.author.id),
             )
 
-            await self.__log_channel.send(embed=embed)
+            await self.get_log_channel.send(embed=embed)
 
 
 def setup(bot: Bot):
