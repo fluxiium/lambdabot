@@ -12,5 +12,4 @@ urlpatterns = [
     path('generate/<str:template>/', views.meme_preview, name='meme_preview_template'),
     path('invite/', RedirectView.as_view(url=settings.BOT_INVITE_URL, permanent=True), name='bot_invite'),
     path('submit/', views.submit, name='submit'),
-    path('submit/<slug:channel_id>/', views.submit, name='submit_to_channel'),
 ]

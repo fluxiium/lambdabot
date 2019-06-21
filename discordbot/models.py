@@ -101,14 +101,14 @@ class DiscordUser(models.Model):
     name = models.CharField(max_length=512, blank=True, default='')
     blacklisted = models.BooleanField(default=False)
 
-    def available_pools(self, channel_data: Union[DiscordChannel, List[DiscordChannel]]=None):
-        if isinstance(channel_data, DiscordChannel):
-            channel_data = [channel_data]
-        avail = MemeImagePool.objects.filter(Q(memeimagepoolownership=None) | Q(memeimagepoolownership__status=POOL_PUBLIC) | Q(memeimagepoolownership__owner=self) | Q(memeimagepoolownership__shared_with=self))
-        if channel_data:
-            channel_avail = MemeImagePool.objects.filter(Q(discordchannel__in=channel_data) | Q(pk__in=map(lambda c: c.submission_pool.pk, channel_data)))
-            avail = MemeImagePool.objects.filter(Q(pk__in=avail.values_list('pk', flat=True)) | Q(pk__in=channel_avail.values_list('pk', flat=True)))
-        return avail
+    @property
+    def available_pools(self):
+        return MemeImagePool.objects.filter(
+            Q(memeimagepoolownership=None) |
+            Q(memeimagepoolownership__status=POOL_PUBLIC) |
+            Q(memeimagepoolownership__owner=self) |
+            Q(memeimagepoolownership__shared_with=self)
+        ).distinct()
 
     @property
     def moderated_pools(self):

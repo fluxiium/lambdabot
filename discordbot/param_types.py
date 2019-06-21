@@ -20,7 +20,7 @@ class ImagePoolParam(commands.Converter):
         else:
             pool_names = [argument]
         if self.avail_only:
-            obj = ctx.user_data.available_pools(ctx.channel_data)
+            obj = ctx.user_data.available_pools
         elif self.moderated_only:
             obj = ctx.user_data.moderated_pools
         else:
