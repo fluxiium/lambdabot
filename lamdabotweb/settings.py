@@ -35,6 +35,7 @@ MEEM_MAX_SRCIMG_SIZE = int(os.getenv('MEEM_MAX_SRCIMG_SIZE'))
 MEEM_CLEANUP_DAYS = int(os.getenv('MEEM_CLEANUP_DAYS'))
 MEEM_LIMIT = int(os.getenv('MEEM_LIMIT'))
 MEEM_COOLDOWN = int(os.getenv('MEEM_COOLDOWN'))
+MEEM_QUEUE_LENGTH = int(os.getenv('MEEM_QUEUE_LENGTH'))
 
 DANCE_MAX_W = int(os.getenv('DANCE_MAX_W'))
 DANCE_MAX_LEN = int(os.getenv('DANCE_MAX_LEN'))

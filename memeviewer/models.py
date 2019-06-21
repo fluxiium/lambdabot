@@ -68,8 +68,6 @@ class MemeImage(models.Model):
     accepted = models.NullBooleanField(default=None, blank=True, null=True)
     add_date = models.DateTimeField(default=timezone.now, verbose_name='Date added')
     change_date = models.DateTimeField(default=timezone.now, verbose_name='Last changed')
-    random_usages = models.IntegerField(default=0)
-    quartile = models.IntegerField(default=1)  # updated off-line based on random_usages
     image_type = None
 
     @transaction.atomic
@@ -82,10 +80,6 @@ class MemeImage(models.Model):
     def __str__(self):
         return self.friendly_name or self.name
 
-    def inc_counter(self):
-        self.random_usages += 1
-        self.save()
-
     @classmethod
     @transaction.atomic
     def next(cls, image_pools, queue_id):
@@ -97,21 +91,7 @@ class MemeImage(models.Model):
         # if empty, make new queue
         if result.count() == 0:
 
-            all_imgs = cls.objects.filter(accepted=True).filter(image_pool__in=image_pools).order_by('?')
-            all_count = all_imgs.count()
-            select_count = min(100, int(all_count * 0.5) or all_count)
-
-            pq = [35, 30, 20, 15]
-            assert sum(pq) == 100
-            pq = list(map(lambda x: x / 100, pq))
-
-            # this looks ugly asf but it's a great way to make the bot prioritize images that have been used less
-            q1_imgs = all_imgs.filter(quartile=1)[0:1 + int(select_count * pq[0])]
-            q2_imgs = all_imgs.filter(quartile=2)[0:1 + int(select_count * pq[1]) + int(select_count * pq[0]) - q1_imgs.count()]
-            q3_imgs = all_imgs.filter(quartile=3)[0:1 + int(select_count * pq[2]) + int(select_count * pq[0]) - q1_imgs.count() + int(select_count * pq[1]) - q2_imgs.count()]
-            q4_imgs = all_imgs.filter(quartile=4)[0:1 + int(select_count * pq[3]) + int(select_count * pq[0]) - q1_imgs.count() + int(select_count * pq[1]) - q2_imgs.count() + int(select_count * pq[2]) - q3_imgs.count()]
-
-            queue_list = list(q1_imgs) + list(q2_imgs) + list(q3_imgs) + list(q4_imgs)
+            queue_list = cls.objects.filter(accepted=True).filter(image_pool__in=image_pools).order_by('?')[:settings.MEEM_QUEUE_LENGTH]
 
             if len(queue_list) == 0:
                 raise NotEnoughImages('No images found')
@@ -145,7 +125,6 @@ class MemeSourceImage(MemeImage):
             models.Index(fields=['friendly_name'], name='idx_srcimg_fname'),
             models.Index(fields=['add_date'], name='idx_srcimg_adddate'),
             models.Index(fields=['change_date'], name='idx_srcimg_chdate'),
-            models.Index(fields=['random_usages'], name='idx_srcimg_usages'),
         ]
 
     image_file = models.ImageField(upload_to='sourceimg/', max_length=256)
@@ -171,7 +150,6 @@ class MemeTemplate(MemeImage):
             models.Index(fields=['friendly_name'], name='idx_template_fname'),
             models.Index(fields=['add_date'], name='idx_template_adddate'),
             models.Index(fields=['change_date'], name='idx_template_chdate'),
-            models.Index(fields=['random_usages'], name='idx_template_usages'),
         ]
 
     bg_image_file = models.ImageField(upload_to='templates/', max_length=256, null=True, default=None,
@@ -297,13 +275,9 @@ class Meem(models.Model):
                 if attempts > 5:
                     raise NotEnoughImages('Not enough source images for template ' + templ.name)
             source_files[slot.slot_order] = source_file.name
-            if saveme:
-                source_file.inc_counter()
             prev_slot_id = slot.slot_order
         meem = Meem(template_link=templ, source_images=json.dumps(source_files))
         if saveme:
-            if template is None:
-                templ.inc_counter()
             succ = False
             while not succ:
                 try:
