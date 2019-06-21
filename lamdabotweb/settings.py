@@ -115,6 +115,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'discord_oauth2.middleware.discord_oauth2_middleware',
+    'website.middleware.website_middleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
