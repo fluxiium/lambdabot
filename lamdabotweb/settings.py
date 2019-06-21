@@ -56,8 +56,8 @@ if DEBUG:
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347870501194170368&permissions=51264&scope=bot'
     DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 else:
-    WEBSITE_URL = 'https://lambdabot.morchkovalski.com/'
-    ALLOWED_HOSTS = ['lambdabot.morchkovalski.com']
+    WEBSITE_URL = 'https://lambda.bot.nu/'
+    ALLOWED_HOSTS = ['lambda.bot.nu', 'lambdabot.morchkovalski.com']
     STATIC_ROOT = '/srv/static.morchkovalski.com/lambdabot'
     STATIC_URL = 'https://static.morchkovalski.com/lambdabot/'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

@@ -2,7 +2,7 @@
 
 This is a discord bot written using [discord.py](https://github.com/Rapptz/discord.py) and [django](https://www.djangoproject.com/) whose main purpose is generating random Half-Life memes by combining one or more source images with a meme template (inspired by [ShitpostBot 5000](https://www.shitpostbot.com/)). It can do a whole bunch of other things as well.
 
-[Add LambdaBot to your server](http://lambdabot.morchkovalski.com/invite)
+[Add LambdaBot to your server](http://lambda.bot.nu/invite)
 
 Once added to the server, no further configuration of the bot is required.
 
