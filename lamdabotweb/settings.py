@@ -75,12 +75,7 @@ else:
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347798135214702603&permissions=51264&scope=bot'
 
 LOGIN_URL = WEBSITE_URL + 'discord_oauth2/'
-
 DISCORD_OAUTH2_REDIRECT_URI = WEBSITE_URL + 'discord_oauth2/callback'
-DISCORD_API_ROOT = 'https://discordapp.com/api'
-DISCORD_OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
-DISCORD_OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
-DISCORD_OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
 
 ROOT_URLCONF = 'lamdabotweb.urls'
 FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
