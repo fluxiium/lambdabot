@@ -1,6 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
-from discordbot.models import DiscordMeem, DiscordServer, DiscordChannel, DiscordSourceImgSubmission, DiscordUser
+from discordbot.models import DiscordMeem, DiscordServer, DiscordChannel, DiscordSourceImgSubmission
 from memeviewer.models import Meem, MemeImagePool, MemeTemplate, MemeSourceImage
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -49,22 +49,20 @@ def meme_preview(request, template=None):
 def submit(request, channel_id=None):
     channel = None
     # todo: what if not logged in through discord?
-    discord_user, _ = DiscordUser.objects.get_or_create(user_id=request.discord_user.discord_id,
-                                                        defaults={'name': request.discord_user.name})
     if channel_id:
         try:
-            channel = discord_user.discordchannel_set.get(channel_id=channel_id)
+            channel = request.discord_user.discordchannel_set.get(channel_id=channel_id)
         except DiscordChannel.DoesNotExist:
             return redirect('website:submit')  # todo: error msg
     if request.method == 'POST':
-        form = MemeSourceImageForm(discord_user, channel, request.POST, request.FILES)
+        form = MemeSourceImageForm(request.discord_user, channel, request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            DiscordSourceImgSubmission.objects.create(sourceimg=form.instance, discord_user=discord_user, discord_channel=channel)
+            DiscordSourceImgSubmission.objects.create(sourceimg=form.instance, discord_user=request.discord_user, discord_channel=channel)
             return render(request, 'website/submit.html', {'success': True})  # todo: dank u msg
         else:
             print(form.errors)
             return render(request, 'website/submit.html', {'form': form, 'success': False})  # todo: errors
     else:
-        form = MemeSourceImageForm(discord_user, channel)
+        form = MemeSourceImageForm(request.discord_user, channel)
     return render(request, 'website/submit.html', {'form': form})
