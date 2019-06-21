@@ -25,9 +25,9 @@
 
 {% block content %}{% endblock %}
 <br>
-{% if request.user_data %}
+{% if request.user.is_authenticated %}
     <p id="login_info">
-        logged in as {{ request.user_data.name }} :: <a href="{% url 'website:oauth2_logout' %}">log out</a>
+        logged in as {{ request.discord_or_django_username }} :: <a href="{% url 'discord_oauth2:logout' %}">log out</a>
     </p>
     <br>
 {% endif %}

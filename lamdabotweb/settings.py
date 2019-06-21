@@ -14,8 +14,8 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 
 # discord api stuff for website
-OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID')
-OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET')
+DISCORD_OAUTH2_CLIENT_ID = os.getenv('DISCORD_OAUTH2_CLIENT_ID')
+DISCORD_OAUTH2_CLIENT_SECRET = os.getenv('DISCORD_OAUTH2_CLIENT_SECRET')
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_STATUS = os.getenv('DISCORD_STATUS')
@@ -49,7 +49,7 @@ if DEBUG:
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
-    IMAGEMAGICK_PATH = "C:\Program Files\ImageMagick-7.0.4-Q16\convert.exe"
+    IMAGEMAGICK_PATH = 'C:\\Program Files\\ImageMagick-7.0.4-Q16\\convert.exe'
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347870501194170368&permissions=51264&scope=bot'
     DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 else:
@@ -71,11 +71,13 @@ else:
     IMAGEMAGICK_PATH = '/usr/bin/convert'
     BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347798135214702603&permissions=51264&scope=bot'
 
-OAUTH2_REDIRECT_URI = WEBSITE_URL + 'oauth2_callback'
+LOGIN_URL = WEBSITE_URL + 'discord_oauth2/'
+
+DISCORD_OAUTH2_REDIRECT_URI = WEBSITE_URL + 'discord_oauth2/callback'
 DISCORD_API_ROOT = 'https://discordapp.com/api'
-OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
-OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
-OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
+DISCORD_OAUTH2_AUTH_URL = DISCORD_API_ROOT + '/oauth2/authorize'
+DISCORD_OAUTH2_TOKEN_URL = DISCORD_API_ROOT + '/oauth2/token'
+DISCORD_OAUTH2_REVOKE_URL = DISCORD_API_ROOT + '/oauth2/token/revoke'
 
 ROOT_URLCONF = 'lamdabotweb.urls'
 FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
@@ -100,6 +102,7 @@ INSTALLED_APPS = [
     'twitterbot',
     'memeviewer',
     'captcha',
+    'discord_oauth2',
     'website',
     'django.contrib.admin',
 ]
@@ -113,7 +116,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'website.middleware.discord_oauth2_middleware',
+    'discord_oauth2.middleware.discord_oauth2_middleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'discord_oauth2.auth.DiscordOAuth2Backend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 DATABASES = {

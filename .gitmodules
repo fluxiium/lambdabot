@@ -1,0 +1,3 @@
+[submodule "discord_oauth2"]
+	path = discord_oauth2
+	url = https://github.com/realyackson/discord_oauth2.git
