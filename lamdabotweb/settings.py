@@ -41,6 +41,9 @@ DANCE_MAX_LEN = int(os.getenv('DANCE_MAX_LEN'))
 DANCE_LIMIT = int(os.getenv('DANCE_LIMIT'))
 DANCE_COOLDOWN = int(os.getenv('DANCE_COOLDOWN'))
 
+FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
+FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
+
 
 if DEBUG:
     WEBSITE_URL = 'http://192.168.0.20:8000/'

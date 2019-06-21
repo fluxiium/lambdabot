@@ -1,8 +1,6 @@
 from django.core.management import BaseCommand
 from facebookbot.models import FacebookPage
 
-_API_URL = 'https://graph.facebook.com/v2.10/'
-
 
 class Command(BaseCommand):
     help = 'Gets a permanent access token for your facebook page'
