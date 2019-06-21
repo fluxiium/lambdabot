@@ -7,7 +7,7 @@ from util.admin_utils import list_url
 @admin.register(FacebookPage)
 class FacebookPageAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'page_id', 'enabled')
-    fields = ('page_id', 'name', 'app_id', 'app_secret', 'token', 'image_pools', 'enabled', 'memes_link')
+    fields = ('page_id', 'name', 'token', 'image_pools', 'enabled', 'memes_link')
     readonly_fields = ('memes_link',)
     ordering = ('name',)
 
