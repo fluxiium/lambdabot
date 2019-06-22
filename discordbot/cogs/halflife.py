@@ -1,7 +1,7 @@
+import aiohttp
 import discord
 import json
 import random
-import requests
 import textwrap
 from bs4 import BeautifulSoup
 from discord import Embed, Message
@@ -87,35 +87,34 @@ class HalfLifeCog(Cog):
         article = None
         was_random = False
 
-        async with ctx.typing():
+        async with ctx.typing(), aiohttp.ClientSession() as http_ses:
             if not query:
                 was_random = True
-                response = requests.get(
-                    '{0}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json'.format(wiki_url),
+                async with http_ses.get(
+                    f'{wiki_url}/api.php?action=query&generator=random&grnnamespace=0&grnlimit=1&prop=info&inprop=url&format=json',
                     headers=headers,
-                )
-                article_data = json.loads(response.text)
-                article = next(iter(article_data['query']['pages'].values()))
-
-            else:
-                response = requests.get(
-                    '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(wiki_url, query),
-                    headers=headers,
-                )
-                article_data = json.loads(response.text)
-                if article_data.get('query') is not None:
+                ) as r:
+                    article_data = json.loads(await r.text())
                     article = next(iter(article_data['query']['pages'].values()))
 
-        proceed = False
-        soup = None
+            else:
+                async with http_ses.get(
+                    f'{wiki_url}/api.php?action=query&generator=search&gsrsearch={query}&gsrlimit=1&prop=info&inprop=url&format=json',
+                    headers=headers,
+                ) as r:
+                    article_data = json.loads(await r.text())
+                    if article_data.get('query') is not None:
+                        article = next(iter(article_data['query']['pages'].values()))
 
-        async with ctx.typing():
+            proceed = False
+            soup = None
+
             while not proceed:
                 if article is None:
                     raise CommandError("article not found :cry:")
 
-                response = requests.get(article['fullurl'], headers=headers)
-                soup = BeautifulSoup(response.text, "html5lib")
+                async with http_ses.get(article['fullurl'], headers=headers) as r:
+                    soup = BeautifulSoup(await r.text(), "html5lib")
 
                 heading = soup.select_one('#firstHeading')
                 if not was_random or heading is None or not heading.getText().lower().endswith('(disambiguation)'):
@@ -126,14 +125,13 @@ class HalfLifeCog(Cog):
                     if random_page is None:
                         article = None
                     else:
-                        response = requests.get(
-                            '{0}/api.php?action=query&generator=search&gsrsearch={1}&gsrlimit=1&prop=info&inprop=url&format=json'.format(
-                                wiki_url, random_page),
+                        async with http_ses.get(
+                            f'{wiki_url}/api.php?action=query&generator=search&gsrsearch={random_page}&gsrlimit=1&prop=info&inprop=url&format=json',
                             headers=headers,
-                        )
-                        article_data = json.loads(response.text)
-                        if article_data.get('query') is not None:
-                            article = next(iter(article_data['query']['pages'].values()))
+                        ) as r:
+                            article_data = json.loads(await r.text())
+                            if article_data.get('query') is not None:
+                                article = next(iter(article_data['query']['pages'].values()))
 
         pic_tag = soup.select_one('td.infoboximage > a > img')
         if pic_tag is None:
@@ -150,13 +148,13 @@ class HalfLifeCog(Cog):
         )
         embed.set_footer(
             text="Combine Overwiki",
-            icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png".format(wiki_url)
+            icon_url="http://combineoverwiki.net/images/1/12/HLPverse.png",
         )
 
         if pic_tag is not None:
-            embed.set_thumbnail(url="{0}{1}".format(wiki_url, pic_tag['src']))
+            embed.set_thumbnail(url=f"{wiki_url}{pic_tag['src']}")
 
-        await ctx.send("{} {}".format(ctx.author.mention, article['fullurl']), embed=embed)
+        await ctx.send(f"{ctx.author.mention} {article['fullurl']}", embed=embed)
 
     async def on_message_delete(self, message: Message):
         if not message.guild or message.guild.id != SERVER_ID or message.channel.id in NO_LOG_CHANNELS:
@@ -174,9 +172,7 @@ class HalfLifeCog(Cog):
             att = msg_archived.attachments[0]
 
             embed = Embed(
-                description="**Attachment sent by {0} deleted in <#{1}>**\n{2}".format(
-                    message.author.mention, message.channel.id, att.proxy_url
-                ),
+                description=f"**Attachment sent by {message.author.mention} deleted in <#{message.channel.id}>**\n{att.proxy_url}",
                 color=0xFF470F,
                 timestamp=timezone.now()
             )
@@ -185,7 +181,7 @@ class HalfLifeCog(Cog):
                 icon_url=message.author.avatar_url
             )
             embed.set_footer(
-                text="ID: {0}".format(message.author.id),
+                text=f"ID: {message.author.id}",
             )
 
             await self.get_log_channel.send(embed=embed)
