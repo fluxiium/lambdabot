@@ -59,13 +59,12 @@ class ExtraCmdCog(Cog):
         attempt = 0
         videourl = None
 
-        async with ctx.typing():
+        async with ctx.typing(), aiohttp.ClientSession() as http_ses:
             while videourl is None and attempt < 5:
                 # noinspection PyBroadException
                 try:
-                    async with aiohttp.ClientSession() as http_ses:
-                        async with http_ses.get('http://www.petittube.com', headers=headers) as r:
-                            soup = BeautifulSoup(await r.text(), "html5lib")
+                    async with http_ses.get('http://www.petittube.com', headers=headers) as r:
+                        soup = BeautifulSoup(await r.text(), "html5lib")
                     videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
                 except Exception:
                     attempt += 1

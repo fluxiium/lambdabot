@@ -19,8 +19,10 @@ async def talk(msg: discord.Message, msg_text):
         'nick': str(msg.author.id),
     }
 
+    http_ses = aiohttp.ClientSession()
+
     if not sessions.get(msg.author):
-        async with msg.channel.typing(), aiohttp.ClientSession() as http_ses:
+        async with msg.channel.typing():
             await http_ses.post('https://cleverbot.io/1.0/create', json=body)
         sessions[msg.author] = True
 
@@ -30,13 +32,14 @@ async def talk(msg: discord.Message, msg_text):
     attempt = 0
     while not response and attempt < 50:
         attempt += 1
-        async with msg.channel.typing(), aiohttp.ClientSession() as http_ses:
-            async with http_ses.post('https://cleverbot.io/1.0/ask', json=body) as r:
-                r = json.loads(await r.text())
-        if r['status'] == 'success':
-            response = r['response']
-        else:
-            response = 'error :cry:'
+        async with msg.channel.typing(), http_ses.post('https://cleverbot.io/1.0/ask', json=body) as r:
+            r = json.loads(await r.text())
+            if r['status'] == 'success':
+                response = r['response']
+            else:
+                response = 'error :cry:'
+
+    await http_ses.close()
 
     if msg.guild:
         await msg.channel.send(f"{msg.author.mention} {response}")
