@@ -19,27 +19,24 @@ async def talk(msg: discord.Message, msg_text):
         'nick': str(msg.author.id),
     }
 
-    http_ses = aiohttp.ClientSession()
+    async with msg.channel.typing(), aiohttp.ClientSession() as http_ses:
+        if not sessions.get(msg.author):
+            async with msg.channel.typing():
+                await http_ses.post('https://cleverbot.io/1.0/create', json=body)
+            sessions[msg.author] = True
 
-    if not sessions.get(msg.author):
-        async with msg.channel.typing():
-            await http_ses.post('https://cleverbot.io/1.0/create', json=body)
-        sessions[msg.author] = True
+        body['text'] = msg_text
 
-    body['text'] = msg_text
-
-    response = ''
-    attempt = 0
-    while not response and attempt < 50:
-        attempt += 1
-        async with msg.channel.typing(), http_ses.post('https://cleverbot.io/1.0/ask', json=body) as r:
-            r = json.loads(await r.text())
-            if r['status'] == 'success':
-                response = r['response']
-            else:
-                response = 'error :cry:'
-
-    await http_ses.close()
+        response = ''
+        attempt = 0
+        while not response and attempt < 50:
+            attempt += 1
+            async with http_ses.post('https://cleverbot.io/1.0/ask', json=body) as r:
+                r = json.loads(await r.text())
+                if r['status'] == 'success':
+                    response = r['response']
+                else:
+                    response = 'error :cry:'
 
     if msg.guild:
         await msg.channel.send(f"{msg.author.mention} {response}")
