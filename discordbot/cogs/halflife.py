@@ -160,13 +160,13 @@ class HalfLifeCog(Cog):
         if not message.guild or message.guild.id != SERVER_ID or message.channel.id in NO_LOG_CHANNELS:
             return
 
-        images = DiscordImage.from_message(message, attachments_only=True)
+        images = await DiscordImage.from_message(message, attachments_only=True)
 
         if len(images) == 0:
             return
 
         for att in images:
-            att_path = att.save()
+            att_path = await att.save()
             msg_archived = await self.get_img_archive_channel.send(file=discord.File(att_path))
             att.cleanup()
             att = msg_archived.attachments[0]

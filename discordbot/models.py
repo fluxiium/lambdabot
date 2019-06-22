@@ -1,9 +1,8 @@
+import aiohttp
 import shutil
 import discord
-import requests
 import os
 import logging
-from typing import List, Union
 from django.db.models import Q
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
@@ -175,7 +174,7 @@ class DiscordMeem(models.Model):
 
 
 class DiscordContext(commands.Context):
-    __images = None
+    images = None
     __is_manager = None
     __server_data = None
     __channel_data = None
@@ -223,13 +222,6 @@ class DiscordContext(commands.Context):
     def can_respond(self):
         return getattr(self.channel.permissions_for(self.guild and self.guild.me or self.bot.user), 'send_messages', None)
 
-    @property
-    def images(self):
-        if self.__images:
-            return self.__images
-        self.__images = DiscordImage.from_message(self.message)
-        return self.__images
-
 
 class DiscordImage:
     def __init__(self, url, filename=None):
@@ -238,7 +230,7 @@ class DiscordImage:
         self.tmpdir = None
 
     @classmethod
-    def from_message(cls, msg: Message, attachments_only=False, just_one=False):
+    async def from_message(cls, msg: Message, attachments_only=False, just_one=False):
         images = {}
         for attachment in msg.attachments:
             images[attachment.proxy_url] = attachment.filename
@@ -253,17 +245,18 @@ class DiscordImage:
                 if is_url(url):
                     images[url] = None
         actual_images = []
-        for url, filename in images.items():
-            try:
-                r = requests.head(url, headers=headers)
-            except (ValueError, requests.exceptions.ConnectionError):
-                continue
-            contenttype = r.headers.get('content-type')
-            contentlength = r.headers.get('content-length')
-            if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= settings.MEEM_MAX_SRCIMG_SIZE:
-                actual_images.append(cls(url, filename or struuid4()))
-                if just_one and len(actual_images) == 1:
-                    return actual_images[0]
+        async with aiohttp.ClientSession() as http_ses:
+            for url, filename in images.items():
+                try:
+                    r = await http_ses.head(url, headers=headers)
+                except (ValueError, aiohttp.ClientError):
+                    continue
+                contenttype = r.headers.get('content-type')
+                contentlength = r.headers.get('content-length')
+                if contenttype and 'image' in contenttype and contentlength and int(contentlength) <= settings.MEEM_MAX_SRCIMG_SIZE:
+                    actual_images.append(cls(url, filename or struuid4()))
+                    if just_one and len(actual_images) == 1:
+                        return actual_images[0]
         if not attachments_only and len(actual_images) == 0:  # get last image from channel
             try:
                 channel_data = DiscordChannel.objects.get(channel_id=msg.channel.id)
@@ -276,14 +269,15 @@ class DiscordImage:
         else:
             return actual_images
 
-    def save(self, filename_override=None):
+    async def save(self, filename_override=None):
         self.tmpdir = mkdtemp(prefix="lambdabot_attach_")
         filename = os.path.join(self.tmpdir, filename_override or self.filename)
         url = self.url
         logging.info(f'saving image: {url} -> {filename}')
-        attachment = requests.get(url, headers=headers)
-        with open(filename, 'wb') as attachment_file:
-            attachment_file.write(attachment.content)
+        async with aiohttp.ClientSession() as http_ses:
+            async with http_ses.get(url, headers=headers) as r:
+                with open(filename, 'wb') as attachment_file:
+                    attachment_file.write(await r.read())
         return filename
 
     def cleanup(self):

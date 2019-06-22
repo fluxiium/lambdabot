@@ -51,6 +51,7 @@ async def on_ready():
 @bot.event
 async def on_message(msg: discord.Message):
     ctx = await bot.get_context(msg, cls=DiscordContext)
+    ctx.images = await DiscordImage.from_message(msg)
     if ctx.is_blacklisted:
         return
     if len(ctx.images) > 0:
@@ -68,7 +69,7 @@ async def on_message_edit(_, msg: discord.Message):
     ctx = await bot.get_context(msg, cls=DiscordContext)
     if ctx.is_blacklisted:
         return
-    image = DiscordImage.from_message(msg, just_one=True)
+    image = await DiscordImage.from_message(msg, just_one=True)
     if image:
         DiscordChannel.objects.filter(channel_id=msg.channel.id).update(recent_image=image.url)
 

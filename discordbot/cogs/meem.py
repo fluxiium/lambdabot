@@ -57,7 +57,7 @@ class MemeGeneratorCog(Cog):
         imgcount = len(ctx.images)
         async with ctx.typing():
             for img in ctx.images:
-                submitted_file = img.save()
+                submitted_file = await img.save()
                 srcimg = MemeSourceImage(image_pool=pool, friendly_name=img.filename)
                 srcimg.image_file.save(srcimg.name + '.jpg', File(open(submitted_file, "rb")))
                 srcimg.save()
