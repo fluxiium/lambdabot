@@ -1,5 +1,5 @@
+import aiohttp
 import discord
-import requests
 import json
 import lamdabotweb.settings as config
 import logging
@@ -20,8 +20,8 @@ async def talk(msg: discord.Message, msg_text):
     }
 
     if not sessions.get(msg.author):
-        async with msg.channel.typing():
-            requests.post('https://cleverbot.io/1.0/create', json=body)
+        async with msg.channel.typing(), aiohttp.ClientSession() as http_ses:
+            await http_ses.post('https://cleverbot.io/1.0/create', json=body)
         sessions[msg.author] = True
 
     body['text'] = msg_text
@@ -30,9 +30,9 @@ async def talk(msg: discord.Message, msg_text):
     attempt = 0
     while not response and attempt < 50:
         attempt += 1
-        async with msg.channel.typing():
-            r = requests.post('https://cleverbot.io/1.0/ask', json=body)
-            r = json.loads(r.text)
+        async with msg.channel.typing(), aiohttp.ClientSession() as http_ses:
+            async with http_ses.post('https://cleverbot.io/1.0/ask', json=body) as r:
+                r = json.loads(await r.text())
         if r['status'] == 'success':
             response = r['response']
         else:
