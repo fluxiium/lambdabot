@@ -54,7 +54,6 @@ if DEBUG:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
     IMAGEMAGICK_PATH = 'C:\\Program Files\\ImageMagick-7.0.4-Q16\\convert.exe'
-    BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347870501194170368&permissions=51264&scope=bot'
     DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 else:
     WEBSITE_URL = 'https://lambda.bot.nu/'
@@ -73,10 +72,10 @@ else:
     MEDIA_ROOT = '/srv/media.morchkovalski.com/lambdabot'
     MEDIA_URL = 'https://media.morchkovalski.com/lambdabot/'
     IMAGEMAGICK_PATH = '/usr/bin/convert'
-    BOT_INVITE_URL = 'https://discordapp.com/api/oauth2/authorize?client_id=347798135214702603&permissions=51264&scope=bot'
 
 LOGIN_URL = WEBSITE_URL + 'discord_oauth2/'
 DISCORD_OAUTH2_REDIRECT_URI = WEBSITE_URL + 'discord_oauth2/callback'
+BOT_INVITE_URL = f'https://discordapp.com/api/oauth2/authorize?client_id={DISCORD_OAUTH2_CLIENT_ID}&permissions=51264&scope=bot'
 
 ROOT_URLCONF = 'lamdabotweb.urls'
 FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
