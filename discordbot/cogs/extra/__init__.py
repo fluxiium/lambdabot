@@ -1,6 +1,6 @@
+import aiohttp
 import random
 import re
-import requests
 import shutil
 import discord
 from googletrans import Translator
@@ -24,13 +24,9 @@ class ExtraCmdCog(Cog):
         generate an LED sign
         (uses wigflip.com)
         """
-        async with ctx.typing():
-            response = requests.post('http://wigflip.com/signbot/', data={
-                'T': text,
-                'S': 'L',
-            }, headers=headers)
-
-            soup = BeautifulSoup(response.text, "html5lib")
+        async with ctx.typing(), aiohttp.ClientSession() as http_ses:
+            async with http_ses.post('http://wigflip.com/signbot/', data={'T': text, 'S': 'L'}, headers=headers) as r:
+                soup = BeautifulSoup(await r.text(), "html5lib")
             img = soup.select_one('#output img')
 
         if img is not None:
@@ -39,29 +35,14 @@ class ExtraCmdCog(Cog):
             raise CommandError()
 
     @commands.command(name='mario')
-    async def cmd_mario(self, ctx, first_line, message, arg3=''):
+    async def cmd_mario(self, ctx, title, message, name=''):
         """
         generate a mario GIF
         (uses wigflip.com)
         """
-        if arg3:
-            name = first_line
-            title = message
-            msgtext = arg3
-        else:
-            name = None
-            title = first_line
-            msgtext = message
-
-        async with ctx.typing():
-            response = requests.post('http://wigflip.com/thankyoumario/', data={
-                'name': name,
-                'title': title,
-                'lines': msgtext,
-                'double': 'y',
-            }, headers=headers)
-
-            soup = BeautifulSoup(response.text, "html5lib")
+        async with ctx.typing(), aiohttp.ClientSession() as http_ses:
+            async with http_ses.post('http://wigflip.com/thankyoumario/', data={'name': name, 'title': title, 'lines': message, 'double': 'y'}, headers=headers) as r:
+                soup = BeautifulSoup(await r.text(), "html5lib")
             img = soup.select_one('#output img')
 
         if img is not None:
@@ -82,8 +63,9 @@ class ExtraCmdCog(Cog):
             while videourl is None and attempt < 5:
                 # noinspection PyBroadException
                 try:
-                    response = requests.get('http://www.petittube.com', headers=headers)
-                    soup = BeautifulSoup(response.text, "html5lib")
+                    async with aiohttp.ClientSession() as http_ses:
+                        async with http_ses.get('http://www.petittube.com', headers=headers) as r:
+                            soup = BeautifulSoup(await r.text(), "html5lib")
                     videourl = re.search('/(\w+)\?', soup.select_one('iframe')['src']).groups()[0]
                 except Exception:
                     attempt += 1
@@ -102,7 +84,7 @@ class ExtraCmdCog(Cog):
         (uses gifs from artie.com)
         """
         async with ctx.typing():
-            tmpdir = dance(text)
+            tmpdir = await dance(text)
         await ctx.send(file=discord.File(tmpdir + '/dance.gif'))
         shutil.rmtree(tmpdir)
 

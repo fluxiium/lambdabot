@@ -1,4 +1,4 @@
-import subprocess
+import asyncio
 from PIL import Image
 from tempfile import mkdtemp
 from discordbot import settings
@@ -28,7 +28,7 @@ def _make_frame(i, text):
     return bg
 
 
-def dance(text):
+async def dance(text):
     tmpdir = mkdtemp(prefix="lambdabot_dance_")
     text = text[:settings.DANCE_MAX_LEN].replace('?', '_').lower()
     for i in range(14):
@@ -38,6 +38,6 @@ def dance(text):
             frame = frame.resize([int(scale_factor * d) for d in frame.size], Image.ANTIALIAS)
         frame.save('%s/%d.png' % (tmpdir, i))
     # convert -dispose previous -delay 20 -loop 0 *.png img.gif
-    process = subprocess.Popen('"{0}" -dispose 2 -delay 20 -loop 0 "{1}/*.png" "{1}/dance.gif"'.format(settings.IMAGEMAGICK_PATH, tmpdir), shell=True)
-    process.wait()
+    process = await asyncio.create_subprocess_shell(f'"{settings.IMAGEMAGICK_PATH}" -dispose 2 -delay 20 -loop 0 "{tmpdir}/*.png" "{tmpdir}/dance.gif"')
+    await process.wait()
     return tmpdir
