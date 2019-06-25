@@ -80,7 +80,6 @@ BOT_INVITE_URL = f'https://discordapp.com/api/oauth2/authorize?client_id={DISCOR
 ROOT_URLCONF = 'lamdabotweb.urls'
 FIXTURE_DIRS = {os.path.join(BASE_DIR, "fixtures")}
 WSGI_APPLICATION = 'lamdabotweb.wsgi.application'
-AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = False
@@ -88,6 +87,7 @@ USE_L10N = True
 USE_TZ = True
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -102,7 +102,6 @@ INSTALLED_APPS = [
     'captcha',
     'discord_oauth2',
     'website',
-    'django.contrib.admin',
 ]
 
 MIDDLEWARE = [
@@ -137,7 +136,6 @@ DATABASES = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'memeviewer/../website/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
