@@ -29,7 +29,7 @@ class FacebookPage(models.Model):
         print(post_status)
         comment_status = api.put_comment(
             post_status['id'],
-            "template and source images: {0}".format(meme.info_url)
+            f"template and source images: {meme.info_url}"
         )
         print("comment added!")
         print(comment_status)
@@ -45,7 +45,7 @@ class FacebookPage(models.Model):
             headers=headers
         )
         long_token = json.loads(response.text)['access_token']
-        response = requests.get('{0}me/accounts?access_token={1}'.format(FACEBOOK_API_ROOT, long_token), headers=headers)
+        response = requests.get(f'{FACEBOOK_API_ROOT}me/accounts?access_token={long_token}', headers=headers)
         for page in json.loads(response.text)['data']:
             if page['id'] == self.page_id:
                 self.token = page['access_token']
@@ -67,4 +67,4 @@ class FacebookMeem(models.Model):
     post = models.CharField(max_length=40, blank=True, default='')
 
     def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.page)
+        return f"{self.meme.number} - {self.page}"

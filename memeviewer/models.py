@@ -54,7 +54,7 @@ class MemeImagePool(models.Model):
     pool_type = models.IntegerField(choices=POOL_TYPES, default=POOL_TYPE_ALL)
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.friendly_name)
+        return f'{self.name} ({self.friendly_name})'
 
 
 class MemeImage(models.Model):
@@ -230,7 +230,7 @@ class MemeTemplateSlot(models.Model):
     cover = models.BooleanField(default=False, verbose_name='Cover')
 
     def __str__(self):
-        return "{0} - slot ({1}, {2})".format(self.template, self.x, self.y)
+        return f"{self.template} - slot ({self.x}, {self.y})"
 
 
 # noinspection PyProtectedMember

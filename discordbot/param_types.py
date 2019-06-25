@@ -40,7 +40,7 @@ class MemeTemplateParam(commands.Converter):
         elif argument:
             template = MemeTemplate.find(image_pools=ctx.channel_data.image_pools.all(), name=argument)
         if not template:
-            raise BadArgument("template `{0}` not found :cry:".format(argument))
+            raise BadArgument(f"template `{argument}` not found :cry:")
         return template
 
 

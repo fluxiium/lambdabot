@@ -30,7 +30,7 @@ class ExtraCmdCog(Cog):
             img = soup.select_one('#output img')
 
         if img is not None:
-            await ctx.send("{} {}".format(ctx.author.mention, img['src']))
+            await ctx.send(f"{ctx.author.mention} {img['src']}")
         else:
             raise CommandError()
 
@@ -46,7 +46,7 @@ class ExtraCmdCog(Cog):
             img = soup.select_one('#output img')
 
         if img is not None:
-            await ctx.send("{} {}".format(ctx.author.mention, img['src']))
+            await ctx.send(f"{ctx.author.mention} {img['src']}")
         else:
             raise CommandError()
 
@@ -70,7 +70,7 @@ class ExtraCmdCog(Cog):
                     attempt += 1
 
         if videourl is not None:
-            await ctx.send("{} https://youtu.be/{}".format(ctx.author.mention, videourl))
+            await ctx.send(f"{ctx.author.mention} https://youtu.be/{videourl}")
         else:
             raise CommandError()
 
@@ -121,7 +121,7 @@ class ExtraCmdCog(Cog):
         async with ctx.typing():
             for lang in langs:
                 text = translator.translate(text, dest=lang).text
-        await ctx.send('{} **{}** ```{} ```'.format(ctx.author.mention, ' ➔ '.join([start] + langs), text))
+        await ctx.send(f'{ctx.author.mention} **{" ➔ ".join([start] + langs)}** ```{text} ```')
 
 
 def setup(bot: Bot):

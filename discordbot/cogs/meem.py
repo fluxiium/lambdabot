@@ -91,7 +91,7 @@ class MemeGeneratorCog(Cog):
             ctx.author.mention,
             ctx.channel.name,
             ' '.join(pools),
-            ctx.is_manager and '\navailable pools: ```{} ```'.format(' '.join(avail)) or '',
+            ctx.is_manager and f'\navailable pools: ```{" ".join(avail)} ```' or '',
         ))
 
     @staticmethod
@@ -138,7 +138,7 @@ class MemeGeneratorCog(Cog):
         assert isinstance(pool, MemeImagePool)
         ctx.channel_data.submission_pool = pool
         ctx.channel_data.save()
-        await ctx.send("{} submission pool for `#{}` set to `{}`".format(ctx.author.mention, ctx.channel.name, pool))
+        await ctx.send(f"{ctx.author.mention} submission pool for `#{ctx.channel.name}` set to `{pool}`")
 
 
 def setup(bot: Bot):

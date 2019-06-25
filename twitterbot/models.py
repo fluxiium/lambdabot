@@ -39,7 +39,7 @@ class TwitterPage(models.Model):
         return TwitterMeem.objects.create(meme=meme, page=self, post=status.id)
 
     def __str__(self):
-        return '{0} (@{1})'.format(self.name or '?', self.handle or '?')
+        return f'{self.name or "?"} (@{self.handle or "?"})'
 
 
 @receiver(m2m_changed, sender=TwitterPage.image_pools.through)
@@ -58,4 +58,4 @@ class TwitterMeem(models.Model):
     post = models.CharField(max_length=40, blank=True, default='')
 
     def __str__(self):
-        return "{0} - {1}".format(self.meme.number, self.page)
+        return f"{self.meme.number} - {self.page}"
