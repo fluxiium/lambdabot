@@ -13,7 +13,7 @@ class SocialLinkInline(admin.TabularInline):
     extra = 0
     can_delete = False
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, **kwargs):
         return False
 
 
