@@ -85,7 +85,7 @@ async def send_error_msg(ctx: DiscordContext, msg):
 @bot.event
 async def on_command_error(ctx: DiscordContext, exc):
     if isinstance(exc, CommandOnCooldown):
-        await send_error_msg(ctx, "You're memeing too fast! Please wait {int(exc.retry_after)} seconds.")
+        await send_error_msg(ctx, f"You're memeing too fast! Please wait {int(exc.retry_after)} seconds.")
     elif isinstance(exc, DisabledCommand):
         await send_error_msg(ctx, f"`{ctx.command}` is disabled here")
     elif isinstance(exc, MissingPermissions):
