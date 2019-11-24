@@ -27,12 +27,12 @@ class FacebookPage(models.Model):
         post_status = api.put_photo(open(meme.local_path, 'rb'))
         print("post added!")
         print(post_status)
-        comment_status = api.put_comment(
-            post_status['id'],
-            f"template and source images: {meme.info_url}"
-        )
-        print("comment added!")
-        print(comment_status)
+        # comment_status = api.put_comment(
+        #     post_status['id'],
+        #     f"template and source images: {meme.info_url}"
+        # )
+        # print("comment added!")
+        # print(comment_status)
         return FacebookMeem.objects.create(meme=meme, page=self, post=post_status['post_id'])
 
     def update_token(self, temp_token):
