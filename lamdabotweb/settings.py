@@ -47,8 +47,8 @@ FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
 
 
 if DEBUG:
-    WEBSITE_URL = 'http://192.168.0.20:8000/'
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '192.168.0.20']
+    WEBSITE_URL = 'http://192.168.100.11:8000/'
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '192.168.100.11']
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     STATIC_URL = '/static/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

@@ -19,6 +19,9 @@ def get_prefix(_, msg: Message):
             pass
     return '!'
 
+
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"  # todo: fix this later
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 bot = commands.Bot(command_prefix=get_prefix, case_insensitive=True, help_command=HelpCommand())
 
