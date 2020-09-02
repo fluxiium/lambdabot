@@ -17,7 +17,7 @@ class CleverMurphyBot(Cog):
         if ctx.is_blacklisted:
             return
 
-        msg_text = msg.content.strip()
+        msg_text = msg.content.strip().replace('<@!', '<@')
         dm = msg.guild is None
 
         if (not self.bot.user.mentioned_in(msg) and not dm) or (msg.author == self.bot.user) or msg_text.startswith(await self.bot.get_prefix(msg)):

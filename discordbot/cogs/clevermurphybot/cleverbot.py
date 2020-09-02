@@ -13,6 +13,10 @@ sessions = {}
 
 
 async def talk(msg: discord.Message, msg_text):
+     pass
+
+
+async def talk(msg: discord.Message, msg_text):
     body = {
         'user': config.CLEVERBOT_USER,
         'key': config.CLEVERBOT_KEY,
